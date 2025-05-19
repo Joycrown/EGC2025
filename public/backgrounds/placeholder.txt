@@ -1,0 +1,12 @@
+For development, replace with actual images:
+
+1. conference-1.jpg - A church conference or gathering scene
+2. conference-2.jpg - Worship or praise scene
+3. conference-3.jpg - Group activity or team building scene
+
+Recommended sources:
+- Church's own media archives
+- Unsplash.com (free high-quality images)
+- Pexels.com (free high-quality images)
+
+Each image should be landscape orientation and high resolution (at least 1920x1080px).
