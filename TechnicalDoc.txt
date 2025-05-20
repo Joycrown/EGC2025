@@ -1,0 +1,315 @@
+EGC Games Specification Document
+Overview
+This document details the games to be implemented in the EGC Web App for team competition duringthe conference. All games are designed with the following principles:
+1.
+Audio-only communication
+in the Main Game Room
+2.
+Direct interaction
+with the game field via typing, touching, or drawing
+3.
+Objective scoring
+with clear right/wrong outcomes
+4.
+Turn-based gameplay
+with automated microphone management
+5.
+Automated validation
+of answers without subjective judging
+6.
+Fair competition
+with equal opportunity for all teams
+Game Format
+Each team plays multiple rounds of each game
+Games have allocated time limits (typically 5-10 minutes per game session)
+Team with the highest point total across their rounds is declared the winner
+Points are tracked and accumulated across all games for overall conference standings
+Selected Games
+1. Tic-Tac-Toe
+Game Mechanics:
+Classic 3x3 grid with X and O markers
+Teams alternate turns placing their marker
+First to form a row of three markers (horizontal, vertical, or diagonal) wins the round
+Best of 5 rounds determines the winner
+Interaction Method:
+Teams use touch/click interaction to select grid position for marker placement
+Grid cells light up when hovered to indicate potential selection
+Scoring:
+1 point for each round won
+Bonus point for winning 3 consecutive rounds
+Maximum possible score: 6 points
+Time Allocation:
+30 seconds per turn
+8 minutes maximum per match (to accommodate multiple rounds)
+Use Case Example:
+Team A and Team B are playing. The system displays a 3x3 grid. When it's Team A'sturn, their microphones activate for discussion. A designated Team A player clicks on their chosenposition, and an X appears. Team A's mics are then muted, and Team B's activate. Team B clicks theirchosen position for an O. This continues until Team A connects three Xs diagonally and wins the round.The system records the win, resets the board, and starts round 2 with Team B going first.
+2. Sudoku Relay
+Game Mechanics:
+9x9 grid partially filled with numbers
+Teams take turns filling in one cell per turn
+System validates each entry immediately
+First team to correctly complete their assigned cells wins
+Interaction Method:
+Teams click/tap on empty cell and type number (1-9)
+Submit button to confirm entry
+Scoring:
+1 point for each correctly placed number
+-1 point for incorrect entries
+5 bonus points for completing an entire row, column, or 3x3 box
+Maximum possible score varies by puzzle difficulty
+Time Allocation:
+45 seconds per turn
+10 minutes maximum per game
+Use Case Example:
+A 9x9 Sudoku grid appears with about 40% filled. Team C's microphones activate fortheir turn. After discussion, a team member clicks on an empty cell and types "7". When they click submit,the system validates the entry. The cell turns green, confirming the correct placement, and 1 point isawarded. If they had completed a row with this entry, they would receive 5 bonus points. Play passes toTeam D who selects another empty cell and enters a number.
+3. Hangman with Biblical Terms
+Game Mechanics:
+Hidden biblical words or phrases represented by blank spaces
+Teams guess one letter at a time
+Correct guesses reveal letter positions; incorrect guesses build the hangman figure
+Team must solve the word before the hangman is complete (typically 6 incorrect guesses)
+Interaction Method:
+Teams type their letter guess in an input field
+Alternatively, they can click/tap on an on-screen alphabet
+Scoring:
+1 point for each correct letter guessed
+5 bonus points for solving the complete word/phrase
+-1 point for each incorrect guess
+Maximum possible score depends on word length
+Time Allocation:
+30 seconds per turn
+6 minutes maximum per game
+Use Case Example:
+The system displays "_ _ _ _ _ _
+" (7 blanks). Team B's microphones activate, and theydiscuss which letter to guess. A team member types "E" and submits. The display updates to "
+E _ _ _ E _"revealing two Es. Team B gets another turn because they guessed correctly. They guess "R" which isn't inthe word, so part of the hangman is drawn. Team B's mics mute and Team C's activate for their turn. Thiscontinues until either the word "BETHANY" is revealed or the hangman is completed.
+4. Crossword Puzzle Race
+Game Mechanics:
+Biblical-themed crossword puzzle with clues
+Teams take turns selecting and answering clues
+System validates answers immediately
+Points awarded based on correct answers and word length
+Interaction Method:
+Teams click/tap on a clue number to select it
+Type answer in the corresponding cells
+Submit button to confirm answer
+Scoring:
+1 point per letter in correctly answered words
+3 bonus points for completing intersecting words simultaneously
+No penalty for incorrect answers, but no points awarded
+Maximum possible score depends on puzzle size
+Time Allocation:
+45 seconds per turn
+12 minutes maximum per game
+Use Case Example:
+A biblical crossword puzzle appears. Team D selects clue "5-Across: King who builtthe Temple" by clicking on number 5. The corresponding cells are highlighted for input. After discussion,a team member types "SOLOMON" and submits. The system validates this as correct, fills in the letters ingreen, and awards 7 points. If this answer completed a connecting down word as well, they would receive3 bonus points. Play passes to the next team who selects another clue.
+5. Word Chain
+Game Mechanics:
+Starting with a biblical word, teams add words that begin with the last letter of the previous word
+All words must be related to biblical/church themes
+System validates word legitimacy and connection
+No repetition of words allowed
+Interaction Method:
+Teams type their word in an input field
+Submit button to confirm entry
+Scoring:
+Points equal to the length of valid words (e.g., "PSALM" = 5 points)
+Double points for words longer than 7 letters
+No points for invalid or repeated words
+Maximum score depends on team creativity and biblical knowledge
+Time Allocation:
+40 seconds per turn
+8 minutes maximum per game
+Use Case Example:
+The game begins with the word "GOSPEL". Team A must provide a word starting with"L". Their microphones activate and after discussion, a team member types "LOCUSTS" and submits. Thesystem validates this as acceptable and awards 7 points. Team B must now provide a word starting with"S", and they submit "SAMSON" for 6 points. This continues until a team cannot think of a valid wordwithin the time limit or provides an invalid entry.
+6. Bible Verse Completion
+Game Mechanics:
+System displays partial Bible verses with missing words
+Teams must complete the verse by typing the missing words
+Automated scoring based on accuracy
+Progressive difficulty levels
+Interaction Method:
+Teams type the missing text in provided blank fields
+Submit button to confirm answer
+Scoring:
+10 points for exact completion
+5 points for semantically correct but not exact wording
+0 points for incorrect completions
+Bonus points for difficult verses (3-5 points)
+Maximum possible score varies by verse selection
+Time Allocation:
+45 seconds per turn
+10 minutes maximum per game
+Use Case Example:
+The system displays: "For God so loved the world, that he gave his only begottenSon, that whosoever _________ in him should not perish, but have everlasting life." Team C's microphonesactivate, and they discuss the missing word. A team member types "believeth" and submits. The systemchecks against the correct answer and awards 10 points for an exact match. If they had typed "believes,"they might receive 5 points for being semantically correct. Play passes to the next team with a new verse.
+7. Word Blitz
+Game Mechanics:
+Set of 9-12 random letters displayed
+Teams form as many biblical/church-related words as possible
+Minimum 3-letter words
+Dictionary validation ensures fairness
+Interaction Method:
+Teams type words in rapid succession in an input field
+Submit button after each word
+Word list displays all valid words found
+Scoring:
+1 point for 3-letter words
+2 points for 4-letter words
+3 points for 5-letter words
+5 points for 6+ letter words
+Maximum score depends on letter combination and team speed
+Time Allocation:
+60 seconds per team turn (all words must be submitted within this time)
+8 minutes maximum per game (to allow all teams to play)
+Use Case Example:
+The system displays the letters "SEPTNHAOMS". Team B's microphones activate, andthey have 60 seconds to find as many words as possible. Team members call out words while adesignated person types and submits them rapidly: "AMEN" (1 point), "STONE" (2 points), "PATHS" (2points), "HOPE" (1 point), "ANTHEM" (3 points). The system validates each word against a biblicaldictionary in real-time. After 60 seconds, their words and final score are displayed, and play passes toTeam C with a new set of letters.
+8. Name That Tune - Hymns Edition
+Game Mechanics:
+Short clips (5-10 seconds) of well-known hymns or worship songs played
+Teams must identify the song title and/or artist
+Multiple difficulty levels (easy, medium, hard)
+Automated matching against correct answers
+Interaction Method:
+Teams type their answer in an input field after hearing the clip
+Submit button to confirm answer
+Scoring:
+5 points for correctly identifying song title
+3 additional points for correctly identifying artist/composer
+Bonus points for difficult songs (1-5 points)
+Maximum possible score varies by song selection
+Time Allocation:
+20 seconds to answer after clip plays
+8 minutes maximum per game
+Use Case Example:
+The system plays a 7-second audio clip of a hymn. Team D's microphones activate,and they discuss what they just heard. A team member types "Amazing Grace - John Newton" andsubmits. The system verifies the answer, awarding 5 points for the correct song title and 3 points for thecorrect composer. The game continues with different hymn clips for each team, with points talliedthroughout.
+9. Bible Trivia Blitz
+Game Mechanics:
+Rapid-fire biblical questions with multiple choice answers
+Questions appear one at a time
+Teams answer as many questions as possible within time limit
+Progressive difficulty increases point values
+Interaction Method:
+Teams click/tap on their chosen answer (A, B, C, or D)
+Next button appears after each answer to progress
+Scoring:
+1 point for easy questions
+2 points for medium questions
+3 points for difficult questions
+No penalty for incorrect answers
+Maximum score depends on number of questions answered correctly
+Time Allocation:
+90 seconds per team to answer as many questions as possible
+10 minutes maximum per game (allowing all teams to participate)
+Use Case Example:
+Team A's microphones activate and a 90-second timer begins. Questions appear oneafter another: "Who was the first king of Israel?" with options displayed. A team member clicks "B. Saul"which is correct, earning 1 point. The next question appears immediately. Team A answers as manyquestions as possible within their time limit. When time expires, their final score is displayed, and Team Bbegins their 90-second round with different questions.
+10. Scripture Scramble
+Game Mechanics:
+Words from a Bible verse are scrambled/out of order
+Teams must arrange words in correct order to form the verse
+System validates the arrangement automatically
+Multiple difficulty levels based on verse length and complexity
+Interaction Method:
+Teams drag and drop words into correct positions
+Submit button to check arrangement
+Scoring:
+10 points for completely correct arrangement
+5 points for partially correct arrangement (> 75% correct)
+2 points for minimally correct arrangement (50-75% correct)
+Bonus points for difficult verses (3-5 points)
+Maximum possible score varies by verse selection
+Time Allocation:
+60 seconds per turn
+8 minutes maximum per game
+Use Case Example:
+The system displays scrambled words: "life the am I resurrection and the". Team C'smicrophones activate, and they discuss the correct order. A designated team member drags and dropsthe words to form "I am the resurrection and the life". They submit their arrangement, and the systemverifies it as correct, awarding 10 points. Play passes to the next team with a new scrambled verse.
+11. Bible Categories
+Game Mechanics:
+Categories related to the Bible displayed (e.g., Books, Prophets, Women in the Bible)
+Teams must provide valid entries for the given category
+No repetition allowed (across all teams)
+System validates entries against a comprehensive database
+Interaction Method:
+Teams type their entry in an input field
+Submit button to confirm entry
+Scoring:
+1 point for each valid entry
+3 bonus points for obscure/uncommon entries (predetermined by system)
+No points for invalid or repeated entries
+Maximum score depends on biblical knowledge and creativity
+Time Allocation:
+30 seconds per turn
+10 minutes maximum per game
+Use Case Example:
+The category "Women in the Bible" is displayed. Team A's microphones activate, andthey discuss potential answers. A team member types "Ruth" and submits. The system validates this ascorrect and awards 1 point. Team B follows with "Esther" for 1 point. Later in the game, Team D submits"Jael" which is both correct and considered uncommon, earning them 1+3=4 points. Play continues untilteams exhaust their knowledge or time runs out.
+12. Connect the Dots - Bible Stories
+Game Mechanics:
+Series of events from a Bible story presented out of order
+Teams must connect events in the correct chronological sequence
+Multiple stories to play through
+System validates connections automatically
+Interaction Method:
+Teams drag lines to connect events in order
+Alternatively, teams number the events sequentially
+Submit button to check sequence
+Scoring:
+10 points for completely correct sequence
+1 point deducted for each event out of place
+Bonus points for difficult stories (3-5 points)
+Maximum possible score varies by story complexity
+Time Allocation:
+45 seconds per turn
+8 minutes maximum per game
+Use Case Example:
+The system displays events from David's life: "Defeats Goliath", "Anointed bySamuel", "Plays harp for Saul", "Becomes king", "Spares Saul's life". Team B's microphones activate, andthey discuss the correct order. A team member numbers or connects these events in the order theybelieve is correct. They submit their sequence, and the system compares it to the correct order. If theyplaced 4 out of 5 events correctly, they would receive 10-1=9 points. Play passes to the next team withevents from another Bible story.
+Technical Implementation Notes
+Game Interface Requirements
+1.
+Main Game Room Interface:
+Clean, distraction-free design
+Clear indication of whose turn it is
+Prominent timer display
+Team score counters
+Turn history log
+2.
+Common Room Interface:
+Mirror of game progress in real-time
+Live chat sidebar for spectators
+Team standings and statistics
+Upcoming game schedule
+Input Methods
+All games must support:
+Touch/click interactions for mobile and desktop
+Keyboard input for text-based games
+Drag-and-drop functionality where applicable
+Clear submit/confirm buttons for all actions
+Accessibility Considerations
+Color-blind friendly visual indicators (not relying solely on color)
+Keyboard navigation options
+Screen reader compatibility for text elements
+Adequate text size and contrast
+Technical Validation
+Server-side validation for all answers to prevent cheating
+Biblical dictionary and knowledge base for answer checking
+Response time monitoring to ensure fair play
+Backup scoring system in case of technical issues
+Scheduling and Points System
+Game Session Format
+Each game played in rotation
+All teams play same game before moving to next game
+2-3 games per conference day
+Final day features championship games with top teams
+Overall Scoring
+Points from all games accumulated throughout conference
+Daily leaderboard updates
+Team rankings displayed prominently
+Trophy/recognition for overall conference champion
+Tie-Breaking System
+In case of tied scores:
+1.
+Head-to-head results
+2.
+Performance in "Bible Verse Completion" (designated tie-breaker game)
+3.
+Total correct answers across all games
+4.
+Total time used (less time is better)

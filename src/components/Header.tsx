@@ -16,98 +16,105 @@ export default function Header() {
       document.body.style.overflow = '';
     };
   }, [mobileMenuOpen]);
-  
+
   return (
-    <nav className="bg-white py-2 sm:py-2.5 md:py-3 px-3 sm:px-8 md:px-12 flex items-center justify-between relative shadow-md">
-      {/* Logo and church name - responsive sizing */}
-      <div className="flex items-center">
-        <Image 
-          src="/images/GofamintLogo.png" 
-          alt="The Gospel Faith Mission International Logo" 
-          width={48}
-          height={48}
-          className="mr-2 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12"
-          priority
-        />
-        <div className="text-gray-900">
-          <h2 className="text-xs sm:text-sm md:text-base font-bold leading-tight">THE GOSPEL FAITH MISSION INT&apos;L</h2>
-          <p className="text-[8px] sm:text-[10px] md:text-xs">PACE SETTERS ASSEMBLY, OBANLA DISTRICT</p>
-        </div>
-      </div>
-      
-      {/* Desktop navigation with responsive spacing */}
-      <div className="hidden md:flex items-center space-x-4 lg:space-x-8">
-        <Link href="/" className="text-gray-800 hover:text-red-500 font-medium text-sm lg:text-base">Home</Link>
-        <Link href="/about" className="text-gray-800 hover:text-red-500 font-medium text-sm lg:text-base">About</Link>
-        <Link href="/schedule" className="text-gray-800 hover:text-red-500 font-medium text-sm lg:text-base">Schedule</Link>
-        <Link href="/speakers" className="text-gray-800 hover:text-red-500 font-medium text-sm lg:text-base">Speakers</Link>
-        <Link href="/contact" className="text-gray-800 hover:text-red-500 font-medium text-sm lg:text-base">Contact</Link>
-      </div>
-      
-      {/* Register button - responsive sizing */}
-      <Link 
-        href="/register" 
-        className="bg-red-600 text-white px-4 py-1.5 lg:px-6 lg:py-2 rounded-md font-bold text-xs lg:text-sm hidden md:block hover:bg-red-700 transition-colors duration-300"
-      >
-        REGISTER
-      </Link>
-      
-      {/* Mobile menu button with better tap target */}
-      <button 
-        className="md:hidden text-gray-800 focus:outline-none z-50 p-1"
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        aria-label="Toggle mobile menu"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
-        </svg>
-      </button>
-      
-      {/* Mobile menu with animation */}
-      <div 
-        className={`md:hidden fixed inset-0 bg-white z-40 transform transition-transform duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
-      >
-        {/* Mobile header with logo */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <div className="flex items-center">
-            <Image 
-              src="/images/GofamintLogo.png" 
-              alt="The Gospel Faith Mission International Logo" 
-              width={32}
-              height={32}
-              className="mr-2"
-            />
-            <span className="font-bold text-sm">EGC CONFERENCE</span>
+    <nav className="bg-white py-2 sm:py-2.5 lg:py-1 px-3 sm:px-8 lg:px-5 relative shadow-md">
+      <div className="w-full flex items-center justify-between">
+        {/* COLUMN 1: Logo and church name - left side */}
+        <div className="flex items-center flex-shrink-0">
+          <Image 
+            src="/images/GofamintLogo.png" 
+            alt="The Gospel Faith Mission International Logo" 
+            width={48}
+            height={48}
+            className="mr-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16"
+            priority
+          />
+          <div className="text-gray-900">
+            <h2 className="text-xs sm:text-sm md:text-base lg:text-md xl:text-md font-bold leading-tight">THE GOSPEL FAITH MISSION INT&apos;L</h2>
+            <p className="text-[8px] sm:text-[10px] md:text-xs lg:text-xs">PACE SETTERS ASSEMBLY, AKURE</p>
           </div>
+        </div>
+        
+        {/* COLUMN 2: Desktop navigation links - center */}
+        <div className="hidden lg:flex items-center justify-center flex-1 px-4">
+          <div className="flex items-center space-x-4 xl:space-x-5">
+            <Link href="/" className="text-gray-800 hover:text-red-500 font-medium text-base xl:text-md">Home</Link>
+            <Link href="/schedule" className="text-gray-800 hover:text-red-500 font-medium text-base xl:text-md">Schedule</Link>
+            <Link href="/egc-games" className="text-gray-800 hover:text-red-500 font-medium text-base xl:text-md">EGC Games</Link>
+            <Link href="/contact" className="text-gray-800 hover:text-red-500 font-medium text-base xl:text-md">Contact</Link>
+          </div>
+        </div>
+        
+        {/* COLUMN 3: Action buttons - right side */}
+        <div className="hidden lg:flex items-center space-x-3 xl:space-x-2 flex-shrink-0">
+          <Link 
+            href="/register" 
+            className="bg-red-600 text-white px-6 py-2 xl:px-8 xl:py-2 rounded-md font-bold text-sm xl:text-md hover:bg-red-700 transition-colors duration-300"
+          >
+            REGISTER
+          </Link>
+          <Link 
+            href="/login" 
+            className="bg-blue-600 text-white px-6 py-2 xl:px-8 xl:py-2 rounded-md font-bold text-sm xl:text-md hover:bg-blue-700 transition-colors duration-300"
+          >
+            LOGIN
+          </Link>
+        </div>
+        
+        {/* Mobile/Tablet menu button */}
+        <button 
+          className="lg:hidden text-gray-800 focus:outline-none z-50 p-1"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle mobile menu"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+          </svg>
+        </button>
+      </div>
+      
+      {/* Mobile/Tablet menu with animation - compact design */}
+      <div 
+        className={`lg:hidden fixed top-16 right-0 w-64 h-auto bg-white z-40 rounded-bl-lg shadow-lg transform transition-transform duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        {/* Mobile menu close button (X) */}
+        <div className="flex justify-end p-2 border-b border-gray-200">
           <button 
-            onClick={() => setMobileMenuOpen(false)} 
-            className="text-gray-800 p-2"
+            onClick={() => setMobileMenuOpen(false)}
+            className="p-1.5 rounded-full hover:bg-gray-100"
             aria-label="Close menu"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        
-        {/* Mobile menu items */}
-        <div className="flex flex-col items-center space-y-5 mt-10 px-4">
-          <Link href="/" className="text-gray-800 hover:text-red-500 font-medium text-lg w-full text-center py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Home</Link>
-          <Link href="/about" className="text-gray-800 hover:text-red-500 font-medium text-lg w-full text-center py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>About</Link>
-          <Link href="/schedule" className="text-gray-800 hover:text-red-500 font-medium text-lg w-full text-center py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Schedule</Link>
-          <Link href="/speakers" className="text-gray-800 hover:text-red-500 font-medium text-lg w-full text-center py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Speakers</Link>
-          <Link href="/contact" className="text-gray-800 hover:text-red-500 font-medium text-lg w-full text-center py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
-        </div>
-        
-        {/* Mobile register button */}
-        <div className="absolute bottom-10 left-0 right-0 flex justify-center">
-          <Link 
-            href="/register" 
-            className="bg-red-600 hover:bg-red-700 text-white px-10 py-3 rounded-md font-bold text-lg transition-colors duration-300"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            REGISTER NOW
-          </Link>
+
+        {/* Mobile menu items - compact version */}
+        <div className="flex flex-col py-2 px-4">
+          <Link href="/" className="text-gray-800 hover:text-red-500 font-medium text-base py-2.5 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Home</Link>
+          <Link href="/schedule" className="text-gray-800 hover:text-red-500 font-medium text-base py-2.5 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Schedule</Link>
+          <Link href="/egc-games" className="text-gray-800 hover:text-red-500 font-medium text-base py-2.5 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>EGC Games</Link>
+          <Link href="/contact" className="text-gray-800 hover:text-red-500 font-medium text-base py-2.5 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
+          
+          {/* Mobile action buttons */}
+          <div className="flex space-x-2 mt-3">
+            <Link 
+              href="/register" 
+              className="bg-red-600 text-white text-sm flex-1 py-2 rounded-md font-bold text-center hover:bg-red-700 transition-colors duration-300"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              REGISTER
+            </Link>
+            <Link 
+              href="/login" 
+              className="bg-blue-600 text-white text-sm flex-1 py-2 rounded-md font-bold text-center hover:bg-blue-700 transition-colors duration-300"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              LOGIN
+            </Link>
+          </div>
         </div>
       </div>
     </nav>

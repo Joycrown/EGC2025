@@ -45,6 +45,9 @@ module.exports = {
         'xl': '1rem',
         '2xl': '1.5rem',
         '3xl': '2rem',
+      },
+      animation: {
+        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       }
     },
   },

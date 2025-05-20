@@ -1,0 +1,167 @@
+¬¬¬¬¬EGC Web App - Product Requirements Document
+Document Control
+•	Document Title: EGC Web App Product Requirements Document
+•	Version: 1.0
+•	Date: May 13, 2025
+•	Status: Draft
+1. Introduction
+1.1 Purpose
+The EGC Web App is designed to facilitate member registration for church conferences, organize participants into teams, coordinate virtual gaming competitions, and provide real-time information during conferences.
+1.2 Product Overview
+The EGC Web App is a comprehensive church conference management platform with features for member registration, automated team assignment, ID card generation, communication, and virtual games coordination between teams.
+1.3 Scope
+This PRD covers the following features:
+•	Member registration and data collection
+•	Team assignment algorithm
+•	ID generation and distribution
+•	Communication automation
+•	Conference countdown display
+•	EGC Games coordination system
+•	Virtual game rooms with role-based permissions
+2. User Registration & Profiles
+2.1 Registration Flow
+Users must register with the following required information:
+•	First name
+•	Middle name
+•	Last name
+•	Date of birth (day and month only)
+•	Email address
+•	Phone number (WhatsApp number)
+•	Occupation/What do you do?
+•	Role selection (Participant, Volunteer, or Minister)
+2.2 Team Assignment
+The system will automatically assign members to teams based on their birth month according to the following logic:
+•	12 months will be divided into 4 teams (3 months per team)
+•	Example team distribution: 
+o	Team 1: January, May, September, 
+o	Team 2: February, June, October
+o	Team 3: March, July, November
+o	Team 4: April, August, December
+2.3 ID Generation
+Upon successful registration, the system will generate a unique ID card containing:
+•	User's initials and first name
+•	Occupation
+•	EGC team/group
+•	Activity status (Volunteer, Participant, or Minister)
+2.4 Post-Registration Communication
+After successful registration, the system will automatically:
+•	Send a confirmation email containing: 
+o	Registration success message
+o	Digital ID card
+o	WhatsApp group link for the assigned EGC team
+•	Add the user to the respective team's database
+3. Conference Features
+3.1 Main Conference Dashboard
+•	Real-time countdown to the conference start
+•	Conference agenda display
+•	Team standings and statistics
+•	Upcoming game schedules
+3.2 EGC Games System
+3.2.1 Game Setup
+•	Support for multiple game types
+•	System to coordinate games between the four teams
+•	Point tracking and scoreboard
+•	Game scheduling and notifications
+3.2.2 Team Registration for Games
+•	Interface for team leaders to register members for specific games
+•	Automated email notifications and reminders to registered players
+•	Ability to modify team rosters before game start
+3.2.3 Virtual Game Rooms
+Participant Types
+1.	Active Players
+o	Members registered to play in a specific game
+o	Have microphone access when it's their team's turn
+o	Can interact with the game field
+o	Limited to registered team members only
+2.	Spectators
+o	Members who are not registered for the current game
+o	Can view the game but cannot participate
+o	No microphone access
+o	Cannot interact with the game field
+Game Room Controls
+•	Automatic microphone management: 
+o	Team microphones automatically enabled during their turn
+o	Team microphones automatically disabled when it's not their turn
+o	All spectators' microphones permanently disabled
+•	Timer system for each team's turn
+•	Visual indicators for whose turn it is
+3.2.4 Game Progression
+•	Clear indication of current game status
+•	Real-time score updates
+•	Time remaining for current turn and overall game
+•	Automatic progression between game stages
+3.2.5 Post-Game
+•	Automatic point allocation to winning team
+•	Updated team standings
+•	Game room closure until next scheduled game
+•	Notification of next game and time
+4. Technical Requirements
+4.1 Platform
+•	Web-based application accessible on desktop and mobile devices
+•	Responsive design for multi-device compatibility
+•	Progressive Web App capabilities for mobile
+4.2 Database
+•	Secure user data storage
+•	Team management and organization
+•	Game logs and history
+•	Score tracking
+4.3 Integration Requirements
+•	Email system for notifications
+•	WhatsApp API for group invitations
+•	Virtual meeting room technology
+•	Real-time audio/video streaming
+4.4 Security
+•	User authentication and authorization
+•	Data encryption
+•	Privacy protection
+•	Role-based access control
+5. Business Rules
+5.1 Team Assignment Rules
+•	Birth month determines team assignment
+•	Each team should have approximately equal distribution of members
+•	Team assignments are permanent for the duration of the conference
+5.2 Game Rules
+•	Each team must register players for each game
+•	Teams compete in a round-robin format
+•	Points are awarded based on game outcomes
+•	Final standings determine the conference champion
+5.3 Communication Rules
+•	Automatic notifications for registration confirmation
+•	Game reminders sent to registered players
+•	Team communication facilitated through WhatsApp groups
+6. User Scenarios
+6.1 New Member Registration
+1.	User visits EGC web app registration page
+2.	User completes registration form with personal details and role
+3.	System assigns user to a team based on birth month
+4.	System generates ID card with user details and team assignment
+5.	System sends confirmation email with ID card and WhatsApp group link
+6.	User joins team WhatsApp group using provided link
+6.2 Game Participation
+1.	Team leader registers members for a specific game
+2.	Registered members receive email notifications and reminders
+3.	At game time, registered members join the special game room
+4.	System controls microphone access based on turns
+5.	Team members collaborate during their turn
+6.	Game concludes with a winner and points allocation
+7.	System updates team standings and schedules the next game
+7. Success Metrics
+7.1 User Engagement
+•	Registration completion rate
+•	WhatsApp group participation
+•	Game participation rates
+7.2 System Performance
+•	System uptime during games
+•	Response time for user actions
+•	Error rates during peak usage
+7.3 Conference Success
+•	Member satisfaction ratings
+•	Team engagement levels
+•	Overall conference participation
+8. Future Considerations
+•	Mobile app development
+•	Enhanced analytics dashboard
+•	Additional game types
+•	Integration with church management systems
+•	Multilingual support
+

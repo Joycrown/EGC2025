@@ -1,0 +1,163 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User schema (registration data, team assignments)
+model User {
+  id              String    @id
+  email           String    @unique
+  password        String
+  fullName        String
+  phoneNumber     String?
+  birthDate       Int
+  birthMonth      Int
+  gender          String
+  isVerified      Boolean   @default(false)
+  verificationToken String?
+  resetToken      String?
+  resetTokenExpiry DateTime?
+  role            Role      @default(PARTICIPANT)
+  team            Team?     @relation(fields: [teamId], references: [id])
+  teamId          String?
+  teamName        String?
+  gameParticipations GameParticipation[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum Role {
+  ADMIN
+  COORDINATOR
+  PARTICIPANT
+  VOLUNTEER
+}
+
+// Conference schema (schedule, agenda)
+model ConferenceEvent {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  startTime   DateTime
+  endTime     DateTime
+  venue       String
+  eventType   EventType
+  speakers    SpeakerAssignment[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum EventType {
+  GENERAL_SESSION
+  WORKSHOP
+  BREAKOUT
+  MEAL
+  GAME
+  SPECIAL
+}
+
+// Speaker model
+model Speaker {
+  id          String    @id @default(cuid())
+  name        String
+  bio         String?
+  image       String?
+  events      SpeakerAssignment[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Many-to-many relationship between speakers and events
+model SpeakerAssignment {
+  id          String    @id @default(cuid())
+  event       ConferenceEvent @relation(fields: [eventId], references: [id])
+  eventId     String
+  speaker     Speaker @relation(fields: [speakerId], references: [id])
+  speakerId   String
+  role        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([eventId, speakerId])
+}
+
+// Teams schema (team data, standings)
+model Team {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  color       String
+  logo        String?
+  members     User[]
+  games       Game[]
+  points      Int       @default(0)
+  wins        Int       @default(0)
+  losses      Int       @default(0)
+  draws       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Games schema (game data, scores, history)
+model Game {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  gameType    GameType
+  startTime   DateTime
+  endTime     DateTime?
+  venue       String
+  teams       Team[]
+  participants GameParticipation[]
+  scores      GameScore[]
+  status      GameStatus @default(SCHEDULED)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model GameParticipation {
+  id          String    @id @default(cuid())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String
+  game        Game      @relation(fields: [gameId], references: [id])
+  gameId      String
+  position    String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, gameId])
+}
+
+model GameScore {
+  id          String    @id @default(cuid())
+  game        Game      @relation(fields: [gameId], references: [id])
+  gameId      String
+  teamName    String
+  score       Int
+  timestamp   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum GameType {
+  FOOTBALL
+  VOLLEYBALL
+  BASKETBALL
+  QUIZ
+  RELAY_RACE
+  TUG_OF_WAR
+  OTHER
+}
+
+enum GameStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
