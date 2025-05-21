@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-export default function RegistrationSuccess() {
+// Component that uses searchParams
+function RegistrationSuccessContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email') || '';
   const [countdown, setCountdown] = useState(5);
@@ -70,5 +71,28 @@ export default function RegistrationSuccess() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function RegistrationSuccess() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-gray-50">
+        <div className="max-w-md w-full bg-white shadow-lg rounded-lg overflow-hidden">
+          <div className="bg-green-500 px-6 py-4">
+            <h2 className="text-xl font-bold text-white">Registration Successful!</h2>
+          </div>
+          <div className="px-6 py-8 text-center">
+            <div className="animate-pulse inline-flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+              <div className="h-8 w-8 rounded-full border-4 border-green-600 border-t-transparent animate-spin"></div>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Loading confirmation...</h3>
+          </div>
+        </div>
+      </div>
+    }>
+      <RegistrationSuccessContent />
+    </Suspense>
   );
 }

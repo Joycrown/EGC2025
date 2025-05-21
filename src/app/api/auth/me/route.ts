@@ -4,6 +4,9 @@ import { cookies } from 'next/headers';
 import { findUserById, getTeamNameByBirthMonth, getWhatsAppLinkByTeam } from '@/lib/auth/userService';
 import { verifyToken } from '@/lib/auth/utils';
 
+// Mark this route as dynamic since it uses cookies
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     // Get auth token from cookies

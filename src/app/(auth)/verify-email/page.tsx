@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 
-export default function VerifyEmail() {
+// Component that uses searchParams
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   
@@ -106,5 +107,24 @@ export default function VerifyEmail() {
         </div>
       )}
     </motion.div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function VerifyEmail() {
+  return (
+    <Suspense fallback={<div className="w-full flex flex-col items-center justify-center text-center">
+      <div className="w-24 h-24 mb-6 relative">
+        <div className="w-full h-full rounded-full border-4 border-gray-200">
+          <div className="w-full h-full rounded-full border-4 border-t-red-600 animate-spin"></div>
+        </div>
+      </div>
+      <h1 className="text-3xl font-bold text-gray-900 mb-4">Email Verification</h1>
+      <div className="p-6 rounded-lg mb-8 max-w-lg bg-blue-50 text-blue-700">
+        <p className="text-lg">Loading verification page...</p>
+      </div>
+    </div>}>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }
