@@ -20,19 +20,23 @@ export const comparePasswords = async (password: string, hashedPassword: string)
 };
 
 // JWT Token generation and verification
-export const generateToken = (payload: TokenPayload, expiresIn = '7d'): string => {
-  const secret = process.env.JWT_SECRET as string;
+export const generateToken = (payload: TokenPayload, expiresIn: string | number = '7d'): string => {
+  const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('JWT_SECRET is not defined in environment variables');
   }
+  
+  // TypeScript will complain about the type of expiresIn, but this is correct according to the jsonwebtoken docs
+  // @ts-expect-error - The 'expiresIn' parameter type is string | number in jsonwebtoken library
   return sign(payload, secret, { expiresIn });
 };
 
 export const verifyToken = (token: string): TokenPayload => {
-  const secret = process.env.JWT_SECRET as string;
+  const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('JWT_SECRET is not defined in environment variables');
   }
+  // This is a safe cast since we know the structure of our JWT tokens
   return verify(token, secret) as TokenPayload;
 };
 

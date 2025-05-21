@@ -75,12 +75,14 @@ export async function GET(request: NextRequest) {
       
       // Only log in development environment
       if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
         console.log(`Welcome email sent to ${user.email}`);
       }
     } catch (emailError) {
       // Log email error but don't fail the verification process
       // Use a safe logging approach
       const logEmailError = () => {
+        // eslint-disable-next-line no-console
         console.error('Error sending welcome email:', emailError);
       };
       
@@ -89,6 +91,7 @@ export async function GET(request: NextRequest) {
         logEmailError();
       } else {
         // In production, just log that an error occurred without details
+        // eslint-disable-next-line no-console
         console.error('Error sending welcome email');
       }
     }
@@ -104,9 +107,11 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     // Log errors with environment check
     if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
       console.error('Email verification error:', error);
     } else {
       // In production, log without detailed error information
+      // eslint-disable-next-line no-console
       console.error('Email verification error occurred');
     }
     return NextResponse.json(

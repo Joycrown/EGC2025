@@ -48,7 +48,9 @@ export async function POST(request: NextRequest) {
           baseUrl = process.env.NEXT_PUBLIC_PRODUCTION_URL;
         }
         
+        // eslint-disable-next-line no-console
         console.log(`Verification token for ${user.email}: ${verificationToken}`);
+        // eslint-disable-next-line no-console
         console.log(`Verification URL: ${baseUrl}/verify-email?token=${verificationToken}`);
       };
       
