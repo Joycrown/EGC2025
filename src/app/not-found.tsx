@@ -35,12 +35,12 @@ export default function NotFound() {
       >
         <div className="bg-gradient-to-r from-red-600 to-red-900 p-5 text-white text-center">
           <h3 className="text-xl font-bold">Our Website is Under Construction</h3>
-          <p className="opacity-90">We're working hard to bring you a great experience</p>
+          <p className="opacity-90">We&apos;re working hard to bring you a great experience</p>
         </div>
         
         <div className="p-6">
           <p className="text-gray-700 mb-6">
-            The page you're looking for isn't available yet. We're building the EGC Conference 2025
+            The page you&apos;re looking for isn&apos;t available yet. We&apos;re building the EGC Conference 2025
             website and adding new features every day. Please check back soon!
           </p>
           
@@ -53,7 +53,7 @@ export default function NotFound() {
               </div>
               <div className="ml-3">
                 <p className="text-sm text-yellow-700">
-                  <strong>Have you registered yet?</strong> Make sure you're ready for the Emerging Generals' Conference 2025 
+                  <strong>Have you registered yet?</strong> Make sure you&apos;re ready for the Emerging Generals&apos; Conference 2025 
                   by registering today!
                 </p>
               </div>

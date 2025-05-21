@@ -8,6 +8,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Note: Prisma will use DATABASE_URL by default, but our code will dynamically select
+  // between DATABASE_URL and PROD_DATABASE_URL based on the environment
 }
 
 // User schema (registration data, team assignments)

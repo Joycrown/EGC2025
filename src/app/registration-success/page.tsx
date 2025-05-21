@@ -49,9 +49,9 @@ export default function RegistrationSuccess() {
             <h3 className="text-lg font-medium text-gray-900 mb-2">Thank you for registering!</h3>
             <p className="text-sm text-gray-600 max-w-xs mx-auto">
               {email ? (
-                <>We've sent a verification link to <span className="font-semibold">{email}</span>. Please check your email to verify your account and join your team.</>
+                <>We&apos;ve sent a verification link to <span className="font-semibold">{email}</span>. Please check your email to verify your account and join your team.</>
               ) : (
-                <>We've sent a verification link to your email. Please check your inbox to verify your account and join your team.</>
+                <>We&apos;ve sent a verification link to your email. Please check your inbox to verify your account and join your team.</>
               )}
             </p>
           </div>

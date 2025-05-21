@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
@@ -24,14 +25,27 @@ export default function Dashboard() {
     seconds: 0
   });
 
-  // Conference date - July 4, 2025
-  const conferenceDate = new Date('2025-07-04T00:00:00');
+  // Conference date - July 4, 2025 (memoized to prevent re-renders)
+  const conferenceDate = useMemo(() => new Date('2025-07-04T00:00:00'), []);
 
+  // Effect for user data fetching - only run once
   useEffect(() => {
-    // Get user info from localStorage or session
+    // Track if component is mounted to prevent state updates after unmount
+    let isMounted = true;
+    
+    // Get user info from API
     const fetchUserData = async () => {
       try {
-        const response = await fetch('/api/auth/me');
+        const response = await fetch('/api/auth/me', {
+          // Add cache control headers to prevent excessive requests
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (!isMounted) return; // Don't proceed if component unmounted
+        
         if (response.ok) {
           const data = await response.json();
           // Access the user property from the response
@@ -54,15 +68,26 @@ export default function Dashboard() {
           router.push('/login');
         }
       } catch (error) {
+        if (!isMounted) return;
         console.error('Error fetching user data:', error);
         router.push('/login');
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchUserData();
+    
+    // Cleanup function to prevent memory leaks
+    return () => {
+      isMounted = false;
+    };
+  }, [router]); // Only depend on router
 
+  // Separate effect for countdown timer
+  useEffect(() => {
     // Set up countdown timer
     const interval = setInterval(() => {
       const now = new Date();
@@ -88,7 +113,7 @@ export default function Dashboard() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [router]);
+  }, [conferenceDate]); // Only depend on conferenceDate
 
   if (loading) {
     return (

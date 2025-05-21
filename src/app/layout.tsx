@@ -5,14 +5,18 @@ import type { Metadata } from 'next';
 // Load fonts
 const inter = Inter({ 
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
   variable: '--font-inter',
+  preload: true,
 });
 
 const outfit = Outfit({ 
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
   variable: '--font-outfit',
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -55,7 +59,13 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-16x16.png', sizes: '16x16' },
+      { url: '/favicon-32x32.png', sizes: '32x32' },
+      { url: '/icon-192x192.png', sizes: '192x192' },
+      { url: '/icon-512x512.png', sizes: '512x512' },
+    ],
     shortcut: '/favicon-16x16.png',
     apple: '/apple-touch-icon.png',
   },

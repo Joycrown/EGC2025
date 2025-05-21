@@ -39,8 +39,21 @@ export async function POST(request: NextRequest) {
     
     // For debugging in development environment
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`Verification token for ${user.email}: ${verificationToken}`);
-      console.log(`Verification URL: ${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${verificationToken}`);
+      // Safely log verification information during development
+      // These logs are suppressed in production
+      const logVerificationInfo = () => {
+        // Get the appropriate base URL based on environment
+        let baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        if (process.env.APP_ENV === 'production' && process.env.NEXT_PUBLIC_PRODUCTION_URL) {
+          baseUrl = process.env.NEXT_PUBLIC_PRODUCTION_URL;
+        }
+        
+        console.log(`Verification token for ${user.email}: ${verificationToken}`);
+        console.log(`Verification URL: ${baseUrl}/verify-email?token=${verificationToken}`);
+      };
+      
+      // Only execute in development
+      logVerificationInfo();
     }
     
     // Send verification email

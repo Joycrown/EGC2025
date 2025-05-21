@@ -72,10 +72,25 @@ export async function GET(request: NextRequest) {
           userId: user.id
         }
       ));
-      console.log(`Welcome email sent to ${user.email}`);
+      
+      // Only log in development environment
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`Welcome email sent to ${user.email}`);
+      }
     } catch (emailError) {
       // Log email error but don't fail the verification process
-      console.error('Error sending welcome email:', emailError);
+      // Use a safe logging approach
+      const logEmailError = () => {
+        console.error('Error sending welcome email:', emailError);
+      };
+      
+      // Only log detailed errors in development
+      if (process.env.NODE_ENV !== 'production') {
+        logEmailError();
+      } else {
+        // In production, just log that an error occurred without details
+        console.error('Error sending welcome email');
+      }
     }
     
     // Return success response
@@ -87,7 +102,13 @@ export async function GET(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('Email verification error:', error);
+    // Log errors with environment check
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Email verification error:', error);
+    } else {
+      // In production, log without detailed error information
+      console.error('Email verification error occurred');
+    }
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

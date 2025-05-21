@@ -2,12 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 
 export default function VerifyEmail() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   
@@ -36,9 +34,9 @@ export default function VerifyEmail() {
 
         setStatus('success');
         setMessage(data.message || 'Your email has been verified successfully!');
-      } catch (err: any) {
+      } catch (err: unknown) {
         setStatus('error');
-        setMessage(err.message || 'Failed to verify email');
+        setMessage(err instanceof Error ? err.message : 'Failed to verify email');
       }
     };
     
@@ -101,7 +99,7 @@ export default function VerifyEmail() {
                 Back to Registration
               </Link>
               <p className="text-sm text-gray-600 mt-4">
-                If you're having trouble, please contact our support team at support@egcconference.org
+                If you&apos;re having trouble, please contact our support team at support@egcconference.org
               </p>
             </>
           )}

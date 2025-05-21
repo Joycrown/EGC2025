@@ -52,7 +52,15 @@ export async function sendEmailAsync({ to, subject, html }: EmailOptions): Promi
 }
 
 export function generateVerificationEmail(to: string, token: string): EmailOptions {
-  const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`;
+  // Get the appropriate base URL based on environment
+  let baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  
+  // If we're in production environment, use the production URL
+  if (process.env.APP_ENV === 'production' && process.env.NEXT_PUBLIC_PRODUCTION_URL) {
+    baseUrl = process.env.NEXT_PUBLIC_PRODUCTION_URL;
+  }
+  
+  const verificationLink = `${baseUrl}/verify-email?token=${token}`;
   return {
     to,
     subject: 'Verify your email for EGC Conference 2025',

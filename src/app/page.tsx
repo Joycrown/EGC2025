@@ -345,7 +345,7 @@ export default function Home() {
                   </div>
                   
                   {/* Third image */}
-                  <div className="absolute bottom-[-220px] left-[-2%] w-[45%] lg:left-[15%] lg:w-[35%] aspect-square rounded-full overflow-hidden border-4 border-white shadow-xl z-25">
+                  <div className="absolute bottom-[-220px] left-[-2%] w-[45%] lg:left-[17%] lg:w-[35%] aspect-square rounded-full overflow-hidden border-4 border-white shadow-xl z-25">
                     <Image 
                       src="/images/churchimage3.jpg" 
                       alt="Worship" 

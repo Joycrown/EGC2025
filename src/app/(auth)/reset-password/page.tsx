@@ -47,8 +47,8 @@ export default function ResetPassword() {
       }
 
       setSuccessMessage(data.message || 'Password reset link has been sent to your email');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to request password reset');
     } finally {
       setLoading(false);
     }
@@ -95,8 +95,8 @@ export default function ResetPassword() {
       setTimeout(() => {
         router.push('/login');
       }, 3000);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to request password reset');
     } finally {
       setLoading(false);
     }
