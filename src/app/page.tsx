@@ -206,7 +206,7 @@ export default function Home() {
                 >
                   <div className="absolute inset-0 bg-gradient-to-tr from-red-500/20 to-transparent z-10"></div>
                   <Image 
-                    src="/images/churchimage3.jpg" 
+                    src="/images/Churchimage3.jpg" 
                     alt="Worship" 
                     width={400} 
                     height={400} 
@@ -347,7 +347,7 @@ export default function Home() {
                   {/* Third image */}
                   <div className="absolute bottom-[-220px] left-[-2%] w-[45%] lg:left-[17%] lg:w-[35%] aspect-square rounded-full overflow-hidden border-4 border-white shadow-xl z-25">
                     <Image 
-                      src="/images/churchimage3.jpg" 
+                      src="/images/Churchimage3.jpg" 
                       alt="Worship" 
                       width={300} 
                       height={300} 

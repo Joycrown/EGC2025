@@ -20,7 +20,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       alt: 'Worship session at EGC Conference'
     },
     {
-      image: '/images/churchimage3.jpg',
+      image: '/images/Churchimage3.jpg',
       alt: 'Prayer time at EGC Conference'
     },
     {
