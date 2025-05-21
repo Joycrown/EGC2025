@@ -1,6 +1,9 @@
 import prisma from '../db/prismaClient';
 import { hashPassword } from './utils';
 
+// Import the Prisma types
+import { Role } from '@prisma/client';
+
 // Define types based on our Prisma schema
 type User = {
   id: string;
@@ -15,7 +18,7 @@ type User = {
   verificationToken: string | null;
   resetToken: string | null;
   resetTokenExpiry: Date | null;
-  role: string; // 'ADMIN' | 'COORDINATOR' | 'PARTICIPANT'
+  role: Role; // Use the Prisma Role enum
   teamId: string | null;
   teamName: string | null;
   createdAt: Date;
@@ -34,7 +37,7 @@ export interface RegisterUserData {
   birthDate: number;
   birthMonth: number;
   gender: string;
-  role?: string; // Added role field
+  role?: Role; // Use the Prisma Role enum
 }
 
 // Generate a custom EGC user ID with format EGC25-XXXX (random 4 digits)
@@ -112,7 +115,7 @@ export async function createUser(userData: RegisterUserData): Promise<User> {
       birthMonth: userData.birthMonth,
       gender: userData.gender,
       verificationToken: null, // Will be set separately
-      role: userData.role || 'PARTICIPANT', // Use role from request or default to PARTICIPANT
+      role: userData.role || Role.PARTICIPANT // Use role from request or default to PARTICIPANT
     },
   });
   
