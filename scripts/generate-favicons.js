@@ -1,6 +1,6 @@
-const sharp = require('sharp');
-const fs = require('fs');
-const path = require('path');
+import sharp from 'sharp';
+import fs from 'fs';
+import path from 'path';
 
 // Paths
 const logoPath = path.join(__dirname, '../public/images/GofamintLogo.png');
@@ -8,7 +8,7 @@ const publicDir = path.join(__dirname, '../public');
 
 async function generateFavicons() {
   try {
-    console.log('Starting favicon generation...');
+    // Starting favicon generation
     
     // Ensure the logo exists
     if (!fs.existsSync(logoPath)) {
@@ -39,7 +39,7 @@ async function generateFavicons() {
         .toFile(path.join(publicDir, `icon-${size}x${size}.png`));
     }
     
-    console.log('Favicon generation complete!');
+    // Favicon generation complete
   } catch (error) {
     console.error('Error generating favicons:', error);
   }

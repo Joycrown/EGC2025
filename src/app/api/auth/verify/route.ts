@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyUser, getTeamNameByBirthMonth } from '@/lib/auth/userService';
-import { sendEmail, generateWelcomeEmail } from '@/lib/email/emailService';
+// Import SMTP email methods but comment them out as we're now using the API method
+// import { sendEmail, generateWelcomeEmail } from '@/lib/email/emailService';
+import { sendWelcomeEmailViaApi } from '@/lib/email/brevoApiService';
 import prisma from '@/lib/db/prismaClient';
 
 export async function GET(request: NextRequest) {
@@ -63,7 +65,8 @@ export async function GET(request: NextRequest) {
       // Get team name based on birth month
       const teamName = getTeamNameByBirthMonth(user.birthMonth);
       
-      await sendEmail(generateWelcomeEmail(
+      // Send welcome email using Brevo API (more reliable than SMTP)
+      await sendWelcomeEmailViaApi(
         user.email,
         {
           fullName: user.fullName,
@@ -71,12 +74,23 @@ export async function GET(request: NextRequest) {
           teamName: teamName,
           userId: user.id
         }
-      ));
+      );
+      
+      // Fallback to SMTP method if needed
+      // await sendEmail(generateWelcomeEmail(
+      //   user.email,
+      //   {
+      //     fullName: user.fullName,
+      //     role: user.role,
+      //     teamName: teamName,
+      //     userId: user.id
+      //   }
+      // ));
       
       // Only log in development environment
       if (process.env.NODE_ENV !== 'production') {
         // eslint-disable-next-line no-console
-        console.log(`Welcome email sent to ${user.email}`);
+        // Welcome email sent successfully
       }
     } catch (emailError) {
       // Log email error but don't fail the verification process

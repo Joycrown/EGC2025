@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { findUserByEmail, setPasswordResetToken } from '@/lib/auth/userService';
 import { generateResetToken } from '@/lib/auth/utils';
-import { sendEmail, generatePasswordResetEmail } from '@/lib/email/emailService';
+import { sendPasswordResetEmailViaApi } from '@/lib/email/brevoApiService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,11 +35,11 @@ export async function POST(request: NextRequest) {
     // Save reset token and expiry time to user
     await setPasswordResetToken(user.id, resetToken, expiryTime);
     
-    // Send password reset email
-    await sendEmail(generatePasswordResetEmail(
+    // Send password reset email via Brevo API
+    await sendPasswordResetEmailViaApi(
       user.email,
       resetToken
-    ));
+    );
     
     // Return success response
     return NextResponse.json({

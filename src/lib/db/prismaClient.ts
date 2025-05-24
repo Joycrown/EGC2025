@@ -14,10 +14,8 @@ const getDbUrl = () => {
   
   // Log which database we're connecting to (only in development)
   if (process.env.NODE_ENV !== 'production') {
-    console.log(`📡 [Database] Connecting to ${isProduction ? 'PRODUCTION' : 'LOCAL'} database`);
-    // Show first part of URL for verification (hide credentials)
-    const visibleUrl = dbUrl ? `${dbUrl.split('@')[1] || 'unknown-db'}` : 'undefined-url';
-    console.log(`📡 [Database] Database host: ${visibleUrl.split('/')[0]}`);
+    // Database connection to ${isProduction ? 'PRODUCTION' : 'LOCAL'} database
+    // Comment out debugging info for production code
   }
   
   return dbUrl;

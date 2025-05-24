@@ -10,62 +10,55 @@ export const verificationEmailTemplate = (verificationLink: string, year: number
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verify Your Email</title>
+  <title>Email Verification</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9fafb;">
-  <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; margin: 0 auto; background-color: #f9fafb;">
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f7fa;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" style="background-color: #f5f7fa;">
     <tr>
       <td align="center" style="padding: 20px 0;">
-        <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <!-- Main Email Container -->
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" border="0" style="background-color: #ffffff; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
           <!-- Header with Logo -->
           <tr>
-            <td style="padding: 0;">
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td style="background-color: #111827; padding: 20px 0; text-align: center;">
-                    <img src="${emailConfig.logoUrl}" alt="GOFAMINT Logo" style="max-width: 100px; height: auto;">
-                  </td>
-                </tr>
-                <tr>
-                  <td style="background: linear-gradient(135deg, #e53e3e 0%, #9f1239 100%); padding: 20px; text-align: center;">
-                    <h1 style="color: white; margin: 0; padding: 0; font-size: 24px; font-weight: 700;">EGC CONFERENCE 2025</h1>
-                    <p style="color: white; margin: 10px 0 0; font-size: 16px; opacity: 0.9;">Emerging Generals' Conference</p>
-                  </td>
-                </tr>
-              </table>
+            <td align="center" bgcolor="#111827" style="padding: 25px 0;">
+              <img src="${emailConfig.logoUrl}" alt="GOFAMINT Logo" width="80" style="display: block; margin: 0 auto;">
+            </td>
+          </tr>
+          
+          <!-- Banner -->
+          <tr>
+            <td align="center" bgcolor="#e53e3e" style="padding: 20px; color: #ffffff;">
+              <h1 style="margin: 0; font-size: 22px; font-weight: bold;">EGC CONFERENCE 2025</h1>
+              <p style="margin: 5px 0 0; font-size: 14px;">Emerging Generals' Conference</p>
             </td>
           </tr>
           
           <!-- Main Content -->
           <tr>
             <td style="padding: 30px 40px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
                 <tr>
-                  <td>
-                    <h2 style="color: #111827; margin: 0 0 20px; font-size: 20px; font-weight: 600;">Email Verification</h2>
-                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 15px;">Thank you for registering for the Emerging Generals' Conference 2025!</p>
-                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 25px;">To complete your registration, please verify your email address by clicking the button below:</p>
+                  <td style="padding-bottom: 20px;">
+                    <h2 style="margin: 0 0 20px; color: #111827; font-size: 18px;">Email Verification</h2>
+                    <p style="margin: 0 0 15px; color: #4b5563; font-size: 14px; line-height: 1.5;">Thank you for registering for the Emerging Generals' Conference 2025!</p>
+                    <p style="margin: 0 0 25px; color: #4b5563; font-size: 14px; line-height: 1.5;">To complete your registration, please verify your email address by clicking the button below:</p>
                   </td>
                 </tr>
+                
+                <!-- Button -->
                 <tr>
-                  <td align="center" style="padding: 15px 0 25px;">
-                    <table role="presentation" cellpadding="0" cellspacing="0">
+                  <td align="center" style="padding: 10px 0 25px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td style="background-color: #e53e3e; border-radius: 6px; box-shadow: 0 4px 6px rgba(229, 62, 62, 0.25);">
-                          <a href="${verificationLink}" target="_blank" style="display: inline-block; padding: 14px 30px; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none;">Verify Email Address</a>
+                        <td align="center" bgcolor="#e53e3e" style="border-radius: 4px;">
+                          <a href="${verificationLink}" target="_blank" style="display: inline-block; padding: 12px 25px; font-size: 14px; color: #ffffff; font-weight: bold; text-decoration: none;">Verify Email Address</a>
                         </td>
                       </tr>
                     </table>
                   </td>
                 </tr>
-                <tr>
-                  <td style="padding: 0 0 25px;">
-                    <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0 0 5px;">If the button above doesn't work, copy and paste the following link into your browser:</p>
-                    <p style="color: #3b82f6; font-size: 14px; line-height: 1.6; margin: 0; word-break: break-all;">
-                      <a href="${verificationLink}" style="color: #3b82f6; text-decoration: none;">${verificationLink}</a>
-                    </p>
-                  </td>
-                </tr>
+                
+                
               </table>
             </td>
           </tr>
@@ -85,9 +78,9 @@ export const verificationEmailTemplate = (verificationLink: string, year: number
           
           <!-- Footer -->
           <tr>
-            <td style="background-color: #f9fafb; padding: 20px 40px; text-align: center;">
-              <p style="color: #6b7280; font-size: 14px; margin: 0 0 10px;">THE GOSPEL FAITH MISSION INTERNATIONAL</p>
-              <p style="color: #9ca3af; font-size: 12px; margin: 0;">&copy; ${year} EGC Conference. All rights reserved.</p>
+            <td style="padding: 0 30px 30px; text-align: center;">
+              <p style="margin: 0; color: #6b7280; font-size: 12px;">THE GOSPEL FAITH MISSION INTERNATIONAL</p>
+              <p style="margin: 5px 0 0; color: #9ca3af; font-size: 12px;">&copy; ${year} EGC Conference. All rights reserved.</p>
             </td>
           </tr>
         </table>
@@ -111,126 +104,181 @@ export const welcomeEmailTemplate = (userData: {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Welcome to EGC Conference 2025</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9fafb;">
-  <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; margin: 0 auto; background-color: #f9fafb;">
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f7fa;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" style="background-color: #f5f7fa;">
     <tr>
       <td align="center" style="padding: 20px 0;">
-        <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <!-- Main Email Container -->
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" border="0" style="background-color: #ffffff; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
           <!-- Header with Logo -->
           <tr>
-            <td style="padding: 0;">
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td style="background-color: #111827; padding: 20px 0; text-align: center;">
-                    <img src="${emailConfig.logoUrl}" alt="GOFAMINT Logo" style="max-width: 100px; height: auto;">
-                  </td>
-                </tr>
-                <tr>
-                  <td style="${getTeamGradient(userData.teamName)} padding: 20px; text-align: center;">
-                    <h1 style="color: white; margin: 0; padding: 0; font-size: 24px; font-weight: 700;">EGC CONFERENCE 2025</h1>
-                    <p style="color: white; margin: 10px 0 0; font-size: 16px; opacity: 0.9;">Welcome to Team ${userData.teamName}!</p>
-                  </td>
-                </tr>
-              </table>
+            <td align="center" bgcolor="#111827" style="padding: 25px 0;">
+              <img src="${emailConfig.logoUrl}" alt="GOFAMINT Logo" width="80" style="display: block; margin: 0 auto;">
+            </td>
+          </tr>
+          
+          <!-- Banner -->
+          <tr>
+            <td align="center" bgcolor="#e53e3e" style="padding: 20px; color: #ffffff;">
+              <h1 style="margin: 0; font-size: 22px; font-weight: bold;">EGC CONFERENCE 2025</h1>
+              <p style="margin: 5px 0 0; font-size: 14px;">Welcome to Team ${userData.teamName}!</p>
             </td>
           </tr>
           
           <!-- Main Content -->
           <tr>
             <td style="padding: 30px 40px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
                 <tr>
-                  <td>
-                    <h2 style="color: #111827; margin: 0 0 20px; font-size: 20px; font-weight: 600;">Welcome, ${userData.fullName}!</h2>
-                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 15px;">Thank you for verifying your email. Your registration for the Emerging Generals' Conference 2025 is now complete!</p>
-                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 25px;">Here are your registration details:</p>
+                  <td style="padding-bottom: 20px;">
+                    <h2 style="margin: 0 0 20px; color: #111827; font-size: 18px;">Registration Complete</h2>
+                    <p style="margin: 0 0 20px; color: #4b5563; font-size: 14px; line-height: 1.5;">Thank you for verifying your email. Your registration for the EGC Conference 2025 is now complete!</p>
+                    <p style="margin: 0 0 25px; color: #6d28d9; font-size: 16px; font-weight: bold;">Here are your registration details:</p>
                   </td>
                 </tr>
+                
+                <!-- Participant Card -->
                 <tr>
-                  <td style="padding: 0 0 25px;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #e5e7eb; border-radius: 8px;">
+                  <td style="padding: 0 0 30px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" style="border: 1px solid #e5e7eb; border-radius: 4px;">
+                      <!-- Card Header -->
                       <tr>
-                        <td style="padding: 12px 20px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb;">
-                          <p style="color: #6b7280; font-size: 14px; margin: 0;">Participant ID</p>
-                        </td>
-                        <td style="padding: 12px 20px; border-bottom: 1px solid #e5e7eb;">
-                          <p style="color: #111827; font-weight: 500; font-size: 14px; margin: 0;">${userData.userId}</p>
+                        <td align="center" bgcolor="#111827" style="padding: 12px; color: #ffffff;">
+                          <p style="margin: 0; font-size: 14px; font-weight: bold;">PARTICIPANT DETAILS</p>
                         </td>
                       </tr>
+                      
+                      <!-- Card Content -->
                       <tr>
-                        <td style="padding: 12px 20px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb;">
-                          <p style="color: #6b7280; font-size: 14px; margin: 0;">Role</p>
-                        </td>
-                        <td style="padding: 12px 20px; border-bottom: 1px solid #e5e7eb;">
-                          <p style="color: #111827; font-weight: 500; font-size: 14px; margin: 0;">${userData.role}</p>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 20px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb;">
-                          <p style="color: #6b7280; font-size: 14px; margin: 0;">Team</p>
-                        </td>
-                        <td style="padding: 12px 20px; border-bottom: 1px solid #e5e7eb;">
-                          <p style="color: ${getTeamColor(userData.teamName)}; font-weight: 700; font-size: 14px; margin: 0;">Team ${userData.teamName}</p>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 12px 20px; background-color: #f9fafb;">
-                          <p style="color: #6b7280; font-size: 14px; margin: 0;">Conference Dates</p>
-                        </td>
-                        <td style="padding: 12px 20px;">
-                          <p style="color: #111827; font-weight: 500; font-size: 14px; margin: 0;">July 4-10, 2025</p>
+                        <td style="padding: 15px;">
+                          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
+                            <!-- Name -->
+                            <tr>
+                              <td width="40%" style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb;">
+                                <p style="margin: 0; color: #6b7280; font-size: 13px;">Name</p>
+                              </td>
+                              <td width="60%" style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">
+                                <p style="margin: 0; color: #111827; font-weight: bold; font-size: 13px;">${userData.fullName}</p>
+                              </td>
+                            </tr>
+                            
+                            <!-- Participant ID -->
+                            <tr>
+                              <td width="40%" style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb;">
+                                <p style="margin: 0; color: #6b7280; font-size: 13px;">ID</p>
+                              </td>
+                              <td width="60%" style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">
+                                <p style="margin: 0; color: #111827; font-size: 13px;">${userData.userId}</p>
+                              </td>
+                            </tr>
+                            
+                            <!-- Role -->
+                            <tr>
+                              <td width="40%" style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb;">
+                                <p style="margin: 0; color: #6b7280; font-size: 13px;">Role</p>
+                              </td>
+                              <td width="60%" style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">
+                                <p style="margin: 0; color: #111827; font-weight: bold; font-size: 13px;">${userData.role}</p>
+                              </td>
+                            </tr>
+                            
+                            <!-- Team -->
+                            <tr>
+                              <td width="40%" style="padding: 10px 12px; background-color: #f9fafb;">
+                                <p style="margin: 0; color: #6b7280; font-size: 13px;">Team</p>
+                              </td>
+                              <td width="60%" style="padding: 10px 12px;">
+                                <p style="margin: 0; color: #e53e3e; font-weight: bold; font-size: 13px;">Team ${userData.teamName}</p>
+                              </td>
+                            </tr>
+                          </table>
                         </td>
                       </tr>
                     </table>
                   </td>
                 </tr>
+                
+                <!-- WhatsApp Join -->
                 <tr>
-                  <td align="center" style="padding: 5px 0 25px;">
-                    <table role="presentation" cellpadding="0" cellspacing="0">
+                  <td style="padding-bottom: 30px;">
+                    <p style="margin: 0 0 15px; color: #4b5563; font-size: 14px; text-align: center;">Join your team's WhatsApp group to connect with fellow team members!</p>
+                    <!-- WhatsApp Button -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
                       <tr>
-                        <td style="background-color: #25D366; border-radius: 6px; box-shadow: 0 4px 6px rgba(37, 211, 102, 0.25);">
-                          <a href="${whatsappLink}" target="_blank" style="display: inline-block; padding: 14px 24px; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none;">
-                            <img src="https://i.ibb.co/DGH7PLM/whatsapp-icon.png" alt="WhatsApp" style="height: 18px; width: 18px; vertical-align: middle; margin-right: 8px;">  Join Team ${userData.teamName} Group
+                        <td align="center" bgcolor="#eab308" style="border-radius: 4px;">
+                          <a href="${whatsappLink}" target="_blank" style="display: inline-block; padding: 12px 20px; font-size: 14px; color: #ffffff; font-weight: bold; text-decoration: none;">
+                            <img src="https://i.ibb.co/DGH7PLM/whatsapp-icon.png" alt="WhatsApp" width="18" height="18" style="display: inline; vertical-align: middle; margin-right: 8px;">Join Team WhatsApp
                           </a>
                         </td>
                       </tr>
                     </table>
                   </td>
                 </tr>
+                
+                <!-- Important Information -->
                 <tr>
-                  <td>
-                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #e5e7eb; border-radius: 8px; margin: 0 0 25px;">
+                  <td style="padding: 0 0 20px;">
+                    <h3 style="margin: 0 0 15px; color: #111827; font-size: 16px; font-weight: bold;">Important Information</h3>
+                    
+                    <!-- Date & Venue -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" style="margin-bottom: 15px;">
                       <tr>
-                        <td style="padding: 20px;">
-                          <h3 style="color: #111827; margin: 0 0 15px; font-size: 18px; font-weight: 600;">Next Steps</h3>
-                          <ul style="color: #4b5563; font-size: 15px; line-height: 1.6; margin: 0; padding-left: 22px;">
-                            <li style="margin-bottom: 10px;">Mark your calendar for <strong>July 4-10, 2025</strong></li>
-                            <li style="margin-bottom: 10px;">Download the conference schedule (will be sent closer to the date)</li>
-                            <li style="margin-bottom: 10px;">Connect with fellow attendees through your team WhatsApp group</li>
-                            <li>Watch out for regular updates in your email</li>
-                          </ul>
+                        <td width="24" valign="top">
+                          <img src="https://i.ibb.co/FXwg99q/calendar-icon.png" alt="Date" width="20" height="20" style="display: block;">
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <p style="margin: 0; color: #111827; font-weight: bold; font-size: 14px;">July 4-10, 2025</p>
+                          <p style="margin: 0; color: #6b7280; font-size: 13px;">GOFAMINT Akure</p>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Theme -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" style="margin-bottom: 15px;">
+                      <tr>
+                        <td width="24" valign="top">
+                          <img src="https://i.ibb.co/bzzkC7N/theme-icon.png" alt="Theme" width="20" height="20" style="display: block;">
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <p style="margin: 0; color: #111827; font-weight: bold; font-size: 14px;">2025 Covenant Exchange</p>
+                          <p style="margin: 0; color: #6b7280; font-size: 13px;">Conference Theme</p>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Team Assignment -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
+                      <tr>
+                        <td width="24" valign="top">
+                          <img src="https://i.ibb.co/M9BF3JV/team-icon.png" alt="Team" width="20" height="20" style="display: block;">
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <p style="margin: 0; color: #e53e3e; font-weight: bold; font-size: 14px;">Team ${userData.teamName}</p>
+                          <p style="margin: 0; color: #6b7280; font-size: 13px;">Your assigned team for activities</p>
                         </td>
                       </tr>
                     </table>
                   </td>
                 </tr>
+                
+                <!-- Final Message -->
                 <tr>
-                  <td>
-                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">If you have any questions, feel free to reply to this email or contact the EGC planning committee.</p>
-                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0;">We look forward to seeing you at EGC 2025!</p>
+                  <td style="padding-bottom: 20px;">
+                    <p style="margin: 0 0 10px; color: #4b5563; font-size: 14px; line-height: 1.5;">If you have any questions, feel free to reply to this email or contact the EGC planning committee.</p>
+                    <p style="margin: 0; color: #111827; font-size: 15px; font-weight: bold;">We look forward to seeing you at EGC 2025! 🎉</p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
           
-          <!-- Decorative Element -->
+          <!-- Yellow Separator -->
           <tr>
             <td>
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
                 <tr>
-                  <td style="background-color: #f9fafb; padding: 0 40px;">
-                    <div style="height: 2px; background: linear-gradient(90deg, #eab308, #e53e3e, #3b82f6, #8b5cf6); border-radius: 4px;"></div>
+                  <td style="padding: 0 30px;">
+                    <div style="height: 1px; background-color: #eab308; margin: 30px 0;"></div>
                   </td>
                 </tr>
               </table>
@@ -239,9 +287,9 @@ export const welcomeEmailTemplate = (userData: {
           
           <!-- Footer -->
           <tr>
-            <td style="background-color: #f9fafb; padding: 20px 40px; text-align: center;">
-              <p style="color: #6b7280; font-size: 14px; margin: 0 0 10px;">THE GOSPEL FAITH MISSION INTERNATIONAL</p>
-              <p style="color: #9ca3af; font-size: 12px; margin: 0;">&copy; ${year} EGC Conference. All rights reserved.</p>
+            <td style="padding: 0 30px 30px; text-align: center;">
+              <p style="margin: 0; color: #6b7280; font-size: 12px;">THE GOSPEL FAITH MISSION INTERNATIONAL</p>
+              <p style="margin: 5px 0 0; color: #9ca3af; font-size: 12px;">&copy; ${year} EGC Conference. All rights reserved.</p>
             </td>
           </tr>
         </table>
@@ -252,25 +300,100 @@ export const welcomeEmailTemplate = (userData: {
 </html>
 `;
 
-// Helper functions for email templates
-function getTeamColor(teamName: string): string {
-  const colorMap: {[key: string]: string} = {
-    'Bethel': '#eab308',  // amber-500
-    'Judah': '#e53e3e',   // red-600
-    'Salem': '#3b82f6',   // blue-600
-    'Shiloh': '#8b5cf6'   // purple-600
-  };
-  
-  return colorMap[teamName] || '#e53e3e';
-}
+export const passwordResetEmailTemplate = (resetLink: string, year: number) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Reset</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f7fa;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" style="background-color: #f5f7fa;">
+    <tr>
+      <td align="center" style="padding: 20px 0;">
+        <!-- Main Email Container -->
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" border="0" style="background-color: #ffffff; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+          <!-- Header with Logo -->
+          <tr>
+            <td align="center" bgcolor="#111827" style="padding: 25px 0;">
+              <img src="${emailConfig.logoUrl}" alt="GOFAMINT Logo" width="80" style="display: block; margin: 0 auto;">
+            </td>
+          </tr>
+          
+          <!-- Banner -->
+          <tr>
+            <td align="center" bgcolor="#e53e3e" style="padding: 20px; color: #ffffff;">
+              <h1 style="margin: 0; font-size: 22px; font-weight: bold;">EGC CONFERENCE 2025</h1>
+              <p style="margin: 5px 0 0; font-size: 14px;">Password Reset Request</p>
+            </td>
+          </tr>
+          
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 30px 40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
+                <tr>
+                  <td style="padding-bottom: 20px;">
+                    <h2 style="margin: 0 0 20px; color: #111827; font-size: 18px;">Reset Your Password</h2>
+                    <p style="margin: 0 0 15px; color: #4b5563; font-size: 14px; line-height: 1.5;">We received a request to reset your password for your EGC Conference 2025 account.</p>
+                    <p style="margin: 0 0 25px; color: #4b5563; font-size: 14px; line-height: 1.5;">If you didn't make this request, you can safely ignore this email. Otherwise, click the button below to create a new password:</p>
+                  </td>
+                </tr>
+                
+                <!-- Button -->
+                <tr>
+                  <td align="center" style="padding: 10px 0 25px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td align="center" bgcolor="#e53e3e" style="border-radius: 4px;">
+                          <a href="${resetLink}" target="_blank" style="display: inline-block; padding: 12px 25px; font-size: 14px; color: #ffffff; font-weight: bold; text-decoration: none;">Reset Password</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+               
+                
+                
+                <!-- Security Note -->
+                <tr>
+                  <td style="padding: 15px; background-color: #f7f7f7; border-left: 4px solid #eab308;">
+                    <p style="margin: 0 0 5px; color: #111827; font-size: 14px; font-weight: bold;">⚠️ This link expires in 1 hour</p>
+                    <p style="margin: 0; color: #4b5563; font-size: 13px;">For security reasons, the password reset link will only be valid for 1 hour from the time this email was sent.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Yellow Separator -->
+          <tr>
+            <td>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
+                <tr>
+                  <td style="padding: 0 30px;">
+                    <div style="height: 1px; background-color: #eab308; margin: 30px 0;"></div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 0 30px 30px; text-align: center;">
+              <p style="margin: 0; color: #6b7280; font-size: 12px;">THE GOSPEL FAITH MISSION INTERNATIONAL</p>
+              <p style="margin: 5px 0 0; color: #9ca3af; font-size: 12px;">&copy; ${year} EGC Conference. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
 
-function getTeamGradient(teamName: string): string {
-  const gradientMap: {[key: string]: string} = {
-    'Bethel': 'background: linear-gradient(135deg, #eab308 0%, #d97706 100%)',
-    'Judah': 'background: linear-gradient(135deg, #e53e3e 0%, #9f1239 100%)',
-    'Salem': 'background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
-    'Shiloh': 'background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)'
-  };
-  
-  return gradientMap[teamName] || 'background: linear-gradient(135deg, #e53e3e 0%, #9f1239 100%)';
-}
+// Note: Team utility functions are now imported from '../utils/teamUtils'

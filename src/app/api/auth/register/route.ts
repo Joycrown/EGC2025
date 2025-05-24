@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser, findUserByEmail, setVerificationToken } from '@/lib/auth/userService';
 import { generateVerificationToken } from '@/lib/auth/utils';
-import { sendEmail, generateVerificationEmail } from '@/lib/email/emailService';
+// Import SMTP email methods but comment them out as we're now using the API method
+// import { sendEmail, generateVerificationEmail } from '@/lib/email/emailService';
+import { sendVerificationEmailViaApi } from '@/lib/email/brevoApiService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,29 +42,32 @@ export async function POST(request: NextRequest) {
     // For debugging in development environment
     if (process.env.NODE_ENV !== 'production') {
       // Safely log verification information during development
-      // These logs are suppressed in production
-      const logVerificationInfo = () => {
-        // Get the appropriate base URL based on environment
-        let baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        if (process.env.APP_ENV === 'production' && process.env.NEXT_PUBLIC_PRODUCTION_URL) {
-          baseUrl = process.env.NEXT_PUBLIC_PRODUCTION_URL;
+      // For development and debugging purposes only
+      const logVerificationDetails = () => {
+        // In production environment, skip logging
+        if (process.env.NODE_ENV === 'production') {
+          return;
         }
         
-        // eslint-disable-next-line no-console
-        console.log(`Verification token for ${user.email}: ${verificationToken}`);
-        // eslint-disable-next-line no-console
-        console.log(`Verification URL: ${baseUrl}/verify-email?token=${verificationToken}`);
+        // All console logs removed for production code
       };
       
       // Only execute in development
-      logVerificationInfo();
+      logVerificationDetails();
     }
     
-    // Send verification email
-    await sendEmail(generateVerificationEmail(
+    // Send verification email via Brevo API (more reliable than SMTP)
+    await sendVerificationEmailViaApi(
       user.email,
-      verificationToken
-    ));
+      verificationToken,
+      userData.fullName
+    );
+    
+    // Fallback to SMTP method if needed
+    // await sendEmail(generateVerificationEmail(
+    //   user.email,
+    //   verificationToken
+    // ));
     
     // Return success response (exclude password from response)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import nodemailer from 'nodemailer';
 import { verificationEmailTemplate, welcomeEmailTemplate } from './emailTemplates';
 
@@ -8,21 +7,48 @@ export interface EmailOptions {
   html: string;
 }
 
-// Create reusable transporter object using SMTP transport
+/**
+ * Creates a nodemailer transporter using SMTP configuration from environment variables
+ * @returns Nodemailer transporter
+ */
 function createTransporter() {
   return nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: false, // TLS is used on port 587
     auth: {
       user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_APP_PASSWORD, // App password, not regular password
+      pass: process.env.EMAIL_APP_PASSWORD,
     },
   });
 }
 
-// Send email using the configured transporter
+
+
+/**
+ * Verifies SMTP configuration is working
+ * @returns Promise<boolean> True if verification succeeds
+ */
+export async function verifyEmailConfig(): Promise<boolean> {
+  try {
+    const transporter = createTransporter();
+    await transporter.verify();
+    return true;
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      // Log detailed error info in development only
+      console.error('SMTP connection verification failed:', 
+        error instanceof Error ? error.message : error);
+    }
+    return false;
+  }
+}
+
+/**
+ * Send email using the configured transporter
+ * @param options Email options (to, subject, html)
+ * @returns Promise<boolean> True if email was sent successfully
+ */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
     // Create transporter
@@ -30,24 +56,30 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
 
     // Setup email data
     const mailOptions = {
-      from: `"EGC Conference" <${process.env.EMAIL_USER}>`,
+      from: `"Gofamint Pace Setters Akure" <${process.env.EMAIL_USER}>`,
       to: options.to,
       subject: options.subject,
       html: options.html,
     };
 
     // Send mail with defined transport object
-    const info = await transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
     
     return true;
   } catch (error) {
-    console.error('Error sending email:', error);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Error sending email:', 
+        error instanceof Error ? error.message : error);
+    }
     return false;
   }
 }
 
+/**
+ * Send email asynchronously (fire and forget)
+ * @param options Email options (to, subject, html)
+ */
 export async function sendEmailAsync({ to, subject, html }: EmailOptions): Promise<void> {
-  if (process.env.NODE_ENV !== 'production') { /* empty */ }
   await sendEmail({ to, subject, html });
 }
 
