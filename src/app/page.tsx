@@ -118,7 +118,7 @@ export default function Home() {
       {/* Hero Section - with separate mobile/tablet and desktop layouts */}
       <section 
         aria-labelledby="hero-heading" 
-        className="relative h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] w-full overflow-hidden"
+        className="relative lg:h-[calc(100vh-64px)] lg:max-h-[calc(100vh-64px)] min-h-[calc(100vh-64px)] w-full lg:overflow-hidden overflow-y-auto overflow-x-hidden"
       >
         <h1 id="hero-heading" className="sr-only">EGC Conference 2025 - The Gospel Faith Mission International</h1>
         {/* Background overlay */}
@@ -146,11 +146,11 @@ export default function Home() {
         <div className="absolute bottom-0 right-0 w-80 h-80 bg-red-600 rounded-full translate-x-1/3 translate-y-1/3 hidden lg:block"></div>
         
         {/* Special layouts: mobile & tablet vs desktop */}
-        <div className="relative z-20 w-full h-[calc(100vh-64px)]">
+        <div className="relative z-20 w-full lg:h-[calc(100vh-64px)] min-h-[calc(100vh-64px)]">
           {/* Mobile & Tablet Layout - Stacked & Centered (with responsive enhancements for tablet) */}
-          <div className="lg:hidden flex flex-col h-full pt-2 sm:pt-4 pb-[110px] sm:pb-[100px]">
+          <div className="lg:hidden flex flex-col min-h-full pt-[2vh] sm:pt-[3vh] pb-[120px] xs:pb-[130px] sm:pb-[130px]">
             {/* Welcome message - optimized for tablet */}
-            <div className="text-center md:mt-10">
+            <div className="text-center md:mt-10 mb-[1vh] sm:mb-[2vh]">
               <div className="inline-flex items-center bg-black/30 px-3 sm:px-5 py-1 sm:py-1.5 rounded-full shadow-lg">
                 <span className="text-yellow-400 mr-1 sm:mr-2">★</span>
                 <p className="text-yellow-400 font-medium text-sm sm:text-3xl">Welcome to EGC Conference</p>
@@ -159,9 +159,9 @@ export default function Home() {
             </div>
             
             {/* Main content area - with responsive enhancements for tablet */}
-            <div className="flex-1 flex flex-col items-center justify-start pt-1 sm:pt-4 px-6 sm:px-10 sm:max-w-2xl sm:mx-auto">
+            <div className="flex-1 flex flex-col items-center justify-between pt-1 sm:pt-4 px-6 sm:px-10 sm:max-w-2xl sm:mx-auto">
               {/* Conference title - with better layout and visual hierarchy - enhanced for tablet */}
-              <h1 className="text-center mb-2 sm:mb-3">
+              <h1 className="text-center mb-[2vh] sm:mb-[3vh]">
                 <div className="relative inline-block">
                   <span className="block text-2xl xs:text-3xl sm:text-7xl font-black tracking-wide relative z-10">Emerging</span>
                   <span className="block text-2xl xs:text-3xl sm:text-6xl bg-gradient-to-r text-red-500 bg-clip-text font-black tracking-wider relative z-20 transform -translate-y-1 scale-110">Generals&apos;</span>
@@ -170,7 +170,7 @@ export default function Home() {
               </h1>
               
               {/* Creative modern staggered image layout with auto-rotating images - enhanced for tablet */}
-              <div className="w-full h-[230px] xs:h-[240px] sm:h-[280px] my-1 sm:my-2 relative">
+              <div className="w-full h-[30vh] xs:h-[32vh] sm:h-[38vh] my-[2vh] sm:my-[3vh] relative">
                 {/* Decorative elements - modern circles */}
                 <div className="absolute left-[15%] bottom-[20%] w-[25%] aspect-square rounded-full border border-white/20 backdrop-blur-sm z-10 mix-blend-overlay opacity-60"></div>
                 <div className="absolute right-[20%] top-[15%] w-[18%] aspect-square rounded-full border border-white/30 backdrop-blur-sm z-10 mix-blend-overlay opacity-40"></div>
@@ -241,25 +241,28 @@ export default function Home() {
               </div>
               
               {/* Description text - responsive sizing - optimized for tablet */}
-              <p className="text-xs xs:text-sm sm:text-lg md:text-[22px] text-center text-gray-300 mt-1 sm:mt-2 md:mt-5 mb-0 max-w-[85%] sm:max-w-[80%] md:max-w-[90%] leading-tight sm:leading-tight">
+              <p className="text-xs xs:text-sm sm:text-lg md:text-[22px] text-center text-gray-300 mt-[2vh] sm:mt-[3vh] mb-0 max-w-[85%] sm:max-w-[80%] md:max-w-[90%] leading-tight sm:leading-tight">
               Join us for an amazing conference experience with engaging activities, and spiritual growth opportunities.
               </p>
               
-              {/* Conference date - yellow accent, responsive sizing */}
-              <div className="text-yellow-400 font-medium text-center text-sm xs:text-base sm:text-2xl my-2 sm:mb-3 ">
-                4th-6th July, 2025
+              {/* Bottom content wrapper to create consistent spacing */}
+              <div className="mt-auto mb-[6vh] xs:mb-[7vh] sm:mb-[8vh] flex flex-col items-center">
+                {/* Conference date - yellow accent, responsive sizing */}
+                <div className="text-yellow-400 font-medium text-center text-sm xs:text-base sm:text-2xl my-2 sm:mb-3 ">
+                  4th-6th July, 2025
+                </div>
+  
+                {/* Responsive CTA button */}
+                <Link 
+                  href="/register" 
+                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold text-sm xs:text-base sm:text-xl md:text-3xl py-2 sm:py-2.5 px-5 xs:px-6 sm:px-10 md:px-10 md:py-3 rounded-full shadow-lg sm:shadow-xl ring-2 sm:ring-4 ring-red-500/30 flex items-center justify-center transform transition-all duration-300 hover:scale-105"
+                >
+                  REGISTER NOW
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-6 sm:w-6 ml-1 sm:ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
               </div>
-
-              {/* Responsive CTA button */}
-              <Link 
-                href="/register" 
-                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold text-sm xs:text-base sm:text-xl md:text-3xl py-2 sm:py-2.5 md:mt-5 px-5 xs:px-6 sm:px-10 md:px-10 md:py-3 rounded-full shadow-lg sm:shadow-xl ring-2 sm:ring-4 ring-red-500/30 flex items-center justify-center transform transition-all duration-300 hover:scale-105"
-              >
-                REGISTER NOW
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-6 sm:w-6 ml-1 sm:ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>  
             </div>
           </div>
 
@@ -364,33 +367,33 @@ export default function Home() {
           </div>
         </div>
         
-        {/* Countdown display - completely repositioned to avoid Register button */}
-        <div className="fixed xs:absolute bottom-0 md:bottom-[6%] lg:bottom-4 left-1/2 transform -translate-x-1/2 z-50 bg-black/90 p-2 lg:p-3 rounded-t-xl shadow-2xl w-auto max-w-[95%] xs:max-w-none">
+        {/* Countdown display - fixed positioning that maintains consistent spacing */}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-50 bg-black/90 p-2 lg:p-3 rounded-t-xl shadow-2xl w-auto max-w-[95%] xs:max-w-none">
           <h4 className="text-center mb-1.5 text-white text-[11px] sm:text-sm md:text-lg font-bold tracking-wide">COUNTDOWN TO EGC&apos;25</h4>
           
           <div className="flex space-x-2">
             {/* Days - matching exact red from reference */}
-            <div className="w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] md:w-[52px] md:h-[52px] lg:w-[50px] lg:h-[50px] rounded-md bg-red-600 flex flex-col items-center justify-center">
-              <span className="text-base sm:text-lg md:text-2xl  font-bold text-white">{timeLeft.days}</span>
-              <span className="text-[7px] sm:text-[8px] md:text-[12px] lg:text-[12px] text-white font-bold uppercase">DAYS</span>
+            <div className="w-[40px] h-[40px] xs:w-[42px] xs:h-[42px] sm:w-[46px] sm:h-[46px] md:w-[52px] md:h-[52px] lg:w-[50px] lg:h-[50px] rounded-md bg-red-600 flex flex-col items-center justify-center">
+              <span className="text-sm xs:text-base sm:text-lg md:text-2xl font-bold text-white">{timeLeft.days}</span>
+              <span className="text-[6px] xs:text-[7px] sm:text-[8px] md:text-[12px] lg:text-[12px] text-white font-bold uppercase">DAYS</span>
             </div>
             
             {/* Hours - matching exact gold from reference */}
-            <div className="w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] md:w-[52px] md:h-[52px] lg:w-[50px] lg:h-[50px] rounded-md bg-yellow-500 flex flex-col items-center justify-center">
-              <span className="text-base sm:text-lg md:text-2xl font-bold text-white">{timeLeft.hours}</span>
-              <span className="text-[7px] sm:text-[8px] md:text-[12px] lg:text-[12px] text-white font-bold uppercase">HRS</span>
+            <div className="w-[40px] h-[40px] xs:w-[42px] xs:h-[42px] sm:w-[46px] sm:h-[46px] md:w-[52px] md:h-[52px] lg:w-[50px] lg:h-[50px] rounded-md bg-yellow-500 flex flex-col items-center justify-center">
+              <span className="text-sm xs:text-base sm:text-lg md:text-2xl font-bold text-white">{timeLeft.hours}</span>
+              <span className="text-[6px] xs:text-[7px] sm:text-[8px] md:text-[12px] lg:text-[12px] text-white font-bold uppercase">HRS</span>
             </div>
             
             {/* Minutes - matching exact blue from reference */}
-            <div className="w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] md:w-[52px] md:h-[52px] lg:w-[50px] lg:h-[50px] rounded-md bg-blue-500 flex flex-col items-center justify-center">
-              <span className="text-base sm:text-lg md:text-2xl  font-bold text-white">{timeLeft.minutes}</span>
-              <span className="text-[7px] sm:text-[8px] md:text-[12px] lg:text-[12px] text-white font-bold uppercase">MINS</span>
+            <div className="w-[40px] h-[40px] xs:w-[42px] xs:h-[42px] sm:w-[46px] sm:h-[46px] md:w-[52px] md:h-[52px] lg:w-[50px] lg:h-[50px] rounded-md bg-blue-500 flex flex-col items-center justify-center">
+              <span className="text-sm xs:text-base sm:text-lg md:text-2xl font-bold text-white">{timeLeft.minutes}</span>
+              <span className="text-[6px] xs:text-[7px] sm:text-[8px] md:text-[12px] lg:text-[12px] text-white font-bold uppercase">MINS</span>
             </div>
             
             {/* Seconds - matching exact purple from reference */}
-            <div className="w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] md:w-[52px] md:h-[52px] lg:w-[50px] lg:h-[50px] rounded-md bg-purple-600 flex flex-col items-center justify-center">
-              <span className="text-base sm:text-lg md:text-2xl  font-bold text-white">{timeLeft.seconds}</span>
-              <span className="text-[7px] sm:text-[8px] md:text-[12px] lg:text-[12px] text-white font-bold uppercase">SECS</span>
+            <div className="w-[40px] h-[40px] xs:w-[42px] xs:h-[42px] sm:w-[46px] sm:h-[46px] md:w-[52px] md:h-[52px] lg:w-[50px] lg:h-[50px] rounded-md bg-purple-600 flex flex-col items-center justify-center">
+              <span className="text-sm xs:text-base sm:text-lg md:text-2xl font-bold text-white">{timeLeft.seconds}</span>
+              <span className="text-[6px] xs:text-[7px] sm:text-[8px] md:text-[12px] lg:text-[12px] text-white font-bold uppercase">SECS</span>
             </div>
           </div>
         </div>
