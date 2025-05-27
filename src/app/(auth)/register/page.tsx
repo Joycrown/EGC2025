@@ -353,6 +353,18 @@ export default function Register() {
               <option value="PARTICIPANT">Participant</option>
               <option value="VOLUNTEER">Volunteer</option>
             </select>
+            <div className="mt-2 flex items-start space-x-2">
+              <div className="shrink-0 mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-xs text-gray-500 italic">
+                {formData.role === "VOLUNTEER" ? 
+                  "Volunteers serve in various capacities during the conference such as choir, ushering, instrumentalists, technical, prayer team, media, logistics and more. You'll be assigned based on your skills and preferences." : 
+                  "Participants attend all sessions and engage in conference activities without specific service responsibilities."}
+              </p>
+            </div>
           </div>
 
           <div className="flex space-x-4">
