@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     // Send welcome email with team information and WhatsApp link
     try {
       // Get team name based on birth month
-      const teamName = getTeamNameByBirthMonth(user.birthMonth);
+      const teamName = user.birthMonth ? getTeamNameByBirthMonth(user.birthMonth) : 'Bethel';
       
       // Send welcome email using Brevo API (more reliable than SMTP)
       await sendWelcomeEmailViaApi(

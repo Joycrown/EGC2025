@@ -105,7 +105,7 @@ export function getWhatsAppLinkByTeam(teamName: string): string {
 export async function createUser(userData: RegisterUserData): Promise<User> {
   const hashedPassword = await hashPassword(userData.password);
   const userId = await generateEgcUserId();
-  const teamName = getTeamNameByBirthMonth(userData.birthMonth);
+  const teamName = userData.birthMonth ? getTeamNameByBirthMonth(userData.birthMonth) : 'Bethel';
   const whatsappLink = getWhatsAppLinkByTeam(teamName);
 
   const user = await prisma.user.create({
@@ -289,7 +289,7 @@ export async function updatePassword(userId: string, newPassword: string): Promi
 
 // Assign user to team based on birth month
 export async function assignUserToTeam(userId: string, birthMonth: number): Promise<User> {
-  const teamName = getTeamNameByBirthMonth(birthMonth);
+  const teamName = birthMonth ? getTeamNameByBirthMonth(birthMonth) : 'Bethel';
   const whatsappLink = getWhatsAppLinkByTeam(teamName);
 
   const team = await prisma.team.findUnique({

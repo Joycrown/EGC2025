@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       }
       
       // Get team name if not already set
-      const teamName = user.teamName || getTeamNameByBirthMonth(user.birthMonth);
+      const teamName = user.teamName || (user.birthMonth ? getTeamNameByBirthMonth(user.birthMonth) : 'Bethel');
       
       // Get WhatsApp group link for the team
       const whatsappLink = getWhatsAppLinkByTeam(teamName);

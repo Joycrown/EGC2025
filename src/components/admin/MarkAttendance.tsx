@@ -29,7 +29,7 @@ const MarkAttendance = () => {
   const availableDays = conferenceDays.filter(day => day.date >= today);
 
   const [conferenceDay, setConferenceDay] = useState<'day_11_july' | 'day_12_july' | 'day_13_july' | ''>(
-    availableDays.length > 0 ? availableDays[0].value : ''
+    availableDays.length > 0 ? availableDays[0].value as 'day_11_july' | 'day_12_july' | 'day_13_july' : ''
   );
 
   const handleSearch = async (e: FormEvent) => {
