@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN "address" TEXT;
+
+-- AlterEnum
+ALTER TYPE "Role" ADD VALUE 'MEMBER';
+ALTER TYPE "Role" ADD VALUE 'INVITEE';

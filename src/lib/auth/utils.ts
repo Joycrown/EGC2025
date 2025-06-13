@@ -1,12 +1,15 @@
-import { sign, verify } from 'jsonwebtoken';
+import { SignJWT, jwtVerify, JWTPayload } from 'jose';
+import { NextRequest } from 'next/server';
+import { Role, UserType } from '@prisma/client';
 import { hash, compare } from 'bcryptjs';
 import { randomBytes } from 'crypto';
 
 // Types
-export interface TokenPayload {
+export interface TokenPayload extends JWTPayload {
   id: string;
   email: string;
-  role: string;
+  role: Role;
+  userType: UserType;
 }
 
 // Password hashing
@@ -20,25 +23,53 @@ export const comparePasswords = async (password: string, hashedPassword: string)
 };
 
 // JWT Token generation and verification
-export const generateToken = (payload: TokenPayload, expiresIn: string | number = '7d'): string => {
+export const generateToken = async (payload: TokenPayload, expiresIn: string | number = '7d'): Promise<string> => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('JWT_SECRET is not defined in environment variables');
   }
   
-  // TypeScript will complain about the type of expiresIn, but this is correct according to the jsonwebtoken docs
-  // @ts-expect-error - The 'expiresIn' parameter type is string | number in jsonwebtoken library
-  return sign(payload, secret, { expiresIn });
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime(expiresIn)
+    .sign(new TextEncoder().encode(secret));
 };
 
-export const verifyToken = (token: string): TokenPayload => {
+export const verifyToken = async (token: string): Promise<TokenPayload> => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('JWT_SECRET is not defined in environment variables');
   }
-  // This is a safe cast since we know the structure of our JWT tokens
-  return verify(token, secret) as TokenPayload;
+  const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
+  return payload as TokenPayload;
 };
+
+export async function verifyAuth(request: NextRequest, requiredUserTypes: UserType[] = []) {
+  const token = request.cookies.get('auth-token')?.value;
+  if (!token) {
+    throw new Error('Unauthorized: No token provided');
+  }
+
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+
+  try {
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
+    const user = payload as TokenPayload;
+
+    if (requiredUserTypes.length > 0 && (!user.userType || !requiredUserTypes.includes(user.userType))) {
+        throw new Error('Forbidden: You do not have permission to perform this action.');
+    }
+
+    return { user };
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message.includes('Forbidden')) throw err;
+    throw new Error('Unauthorized: Invalid token');
+  }
+}
 
 // Verification token for email verification
 export const generateVerificationToken = (): string => {
@@ -53,4 +84,22 @@ export const generateResetToken = (): string => {
 // Function to check if token is expired
 export const isTokenExpired = (expiryDate: Date): boolean => {
   return new Date() > expiryDate;
+};
+
+// Get user session from server-side context
+import { cookies } from 'next/headers';
+
+export const getServerSession = async (): Promise<{ user: TokenPayload } | null> => {
+  const token = cookies().get('auth-token')?.value;
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const payload = await verifyToken(token);
+    return { user: payload };
+  } catch (error) {
+    console.error('Error verifying token in getServerSession:', error);
+    return null;
+  }
 };

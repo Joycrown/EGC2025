@@ -13,8 +13,8 @@ const EventSchema = () => {
       "@type": "Event",
       "name": "EGC Conference 2025",
       "description": "Annual gathering of The Gospel Faith Mission International youth for spiritual enrichment, fellowship, and transformation.",
-      "startDate": "2025-07-04T09:00:00",
-      "endDate": "2025-07-07T18:00:00",
+      "startDate": "2025-07-11T09:00:00",
+      "endDate": "2025-07-13T18:00:00",
       "eventStatus": "https://schema.org/EventScheduled",
       "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
       "location": {
@@ -58,10 +58,32 @@ export default function Home() {
   // State to track current image positions
   const [imageRotation, setImageRotation] = useState(0);
 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const response = await fetch('/api/auth/status');
+        if (response.ok) {
+          const data = await response.json();
+          setIsLoggedIn(data.isLoggedIn);
+        }
+      } catch (error) {
+        console.error('Failed to fetch auth status:', error);
+        setIsLoggedIn(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
+
   // Conference start date: July 4, 2025
   useEffect(() => {
     // Set conference date (July 4th, 2025)
-    const conferenceDate = new Date('2025-07-04T00:00:00')
+    const conferenceDate = new Date('2025-07-11T00:00:00')
     
     const calculateTimeLeft = () => {
       const difference = +conferenceDate - +new Date();
@@ -113,7 +135,7 @@ export default function Home() {
         dangerouslySetInnerHTML={EventSchema()}
       />
       {/* Navigation */}
-      <Header />
+      <Header isLoggedIn={isLoggedIn} isLoading={isLoading} />
       
       {/* Hero Section - with separate mobile/tablet and desktop layouts */}
       <section 
@@ -249,7 +271,7 @@ export default function Home() {
               <div className="mt-auto mb-[6vh] xs:mb-[7vh] sm:mb-[8vh] flex flex-col items-center">
                 {/* Conference date - yellow accent, responsive sizing */}
                 <div className="text-yellow-400 font-medium text-center text-sm xs:text-base sm:text-2xl my-2 sm:mb-3 ">
-                  4th-6th July, 2025
+                  11th-13th July, 2025
                 </div>
   
                 {/* Responsive CTA button */}
@@ -299,7 +321,7 @@ export default function Home() {
                 {/* Date display */}
                 <div className="mb-2">
                   <h3 className="md:text-sm lg:text-lg font-medium text-yellow-400">
-                    4th-6th July, 2025
+                    11th-13th July, 2025
                   </h3>
                 </div>
                 

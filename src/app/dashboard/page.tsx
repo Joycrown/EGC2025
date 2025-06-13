@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 
 // Type for countdown values
@@ -14,7 +13,7 @@ interface CountdownValues {
   seconds: number;
 }
 
-export default function Dashboard() {
+export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -26,7 +25,7 @@ export default function Dashboard() {
   });
 
   // Conference date - July 4, 2025 (memoized to prevent re-renders)
-  const conferenceDate = useMemo(() => new Date('2025-07-04T00:00:00'), []);
+  const conferenceDate = useMemo(() => new Date('2025-07-11T00:00:00'), []);
 
   // Effect for user data fetching - only run once
   useEffect(() => {
@@ -84,7 +83,8 @@ export default function Dashboard() {
     return () => {
       isMounted = false;
     };
-  }, [router]); // Only depend on router
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array to run only once
 
   // Separate effect for countdown timer
   useEffect(() => {
@@ -142,218 +142,157 @@ export default function Dashboard() {
   const teamColor = getTeamColor(user?.teamName || '');
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header with navigation */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center">
-            <Image
-              src="/images/GofamintLogo.png"
-              alt="GOFAMINT Logo"
-              width={40}
-              height={40}
-              className="mr-3"
-            />
-            <h1 className="text-xl font-bold text-gray-900">EGC Conference</h1>
-          </div>
-          <div>
-            <button
-              onClick={() => router.push('/login')}
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-gray-50"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {/* Welcome message with personalized greeting */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8 text-center"
-        >
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+    <>
+      {/* Combined Welcome message and Countdown */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-8 p-5 sm:p-6 bg-white rounded-xl shadow-lg flex flex-col sm:flex-row justify-between items-center text-gray-800"
+      >
+        <div className="mb-4 sm:mb-0">
+          <h2 className="text-2xl sm:text-3xl font-bold">
             Welcome, {user?.fullName || 'Participant'}!
           </h2>
-          <p className="text-gray-600">
-            Your journey to the EGC Conference 2025 begins now.
+          <p className="text-gray-600 text-sm sm:text-base">
+            Here&apos;s your overview for the EGC Conference 2025.
           </p>
-        </motion.div>
-
-        {/* Countdown timer */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="bg-white rounded-lg shadow-lg overflow-hidden mb-8"
-        >
-          <div className={`bg-gradient-to-r ${teamColor} p-6 text-white`}>
-            <h3 className="text-xl font-bold mb-2">Conference Countdown</h3>
-            <p className="opacity-90">Mark your calendar for July 4-10, 2025!</p>
-          </div>
-          
-          <div className="p-6">
-            <div className="grid grid-cols-4 gap-4 text-center">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="text-4xl font-bold text-gray-900">{countdown.days}</div>
-                <div className="text-sm text-gray-500 uppercase tracking-wide">Days</div>
-              </div>
-              
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="text-4xl font-bold text-gray-900">{countdown.hours}</div>
-                <div className="text-sm text-gray-500 uppercase tracking-wide">Hours</div>
-              </div>
-              
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="text-4xl font-bold text-gray-900">{countdown.minutes}</div>
-                <div className="text-sm text-gray-500 uppercase tracking-wide">Minutes</div>
-              </div>
-              
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="text-4xl font-bold text-gray-900">{countdown.seconds}</div>
-                <div className="text-sm text-gray-500 uppercase tracking-wide">Seconds</div>
-              </div>
+        </div>
+        <div className="sm:ml-6 text-center sm:text-left">
+          <p className="text-sm font-semibold text-gray-700 mb-2">Conference Countdown:</p>
+          <div className="grid grid-cols-4 gap-2">
+            <div className="bg-gray-100 rounded-lg p-2 w-16">
+              <div className="text-2xl font-bold">{countdown.days}</div>
+              <div className="text-xs text-gray-500 uppercase">Days</div>
+            </div>
+            <div className="bg-gray-100 rounded-lg p-2 w-16">
+              <div className="text-2xl font-bold">{countdown.hours}</div>
+              <div className="text-xs text-gray-500 uppercase">Hours</div>
+            </div>
+            <div className="bg-gray-100 rounded-lg p-2 w-16">
+              <div className="text-2xl font-bold">{countdown.minutes}</div>
+              <div className="text-xs text-gray-500 uppercase">Mins</div>
+            </div>
+            <div className="bg-gray-100 rounded-lg p-2 w-16">
+              <div className="text-2xl font-bold">{countdown.seconds}</div>
+              <div className="text-xs text-gray-500 uppercase">Secs</div>
             </div>
           </div>
-        </motion.div>
+        </div>
+      </motion.div>
 
-        {/* Team information card */}
+      <div className="space-y-6">
+        {/* Team Information Card - Full Width Horizontal */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-white rounded-lg shadow-lg overflow-hidden mb-8"
+          className="bg-white rounded-xl shadow-lg overflow-hidden p-5 flex flex-col md:flex-row items-center justify-between"
         >
-          <div className={`bg-gradient-to-r ${teamColor} p-6 text-white`}>
-            <h3 className="text-xl font-bold mb-2">Your Team</h3>
-            <p className="opacity-90">Get ready for exciting team activities!</p>
-          </div>
-          
-          <div className="p-6">
-            <div className="flex items-center mb-4">
-              <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${teamColor} flex items-center justify-center text-white font-bold text-xl mr-4`}>
-                {user?.teamName?.charAt(5) || 'T'}
-              </div>
-              <div>
-                <h4 className="text-lg font-bold text-gray-900">{user?.teamName || 'Your Team'}</h4>
-                <p className="text-gray-600">Role: {user?.role || 'Participant'}</p>
-              </div>
-            </div>
-            
-            <p className="text-gray-700 mb-4">
-              Your team is preparing for the conference challenges. Team captains will contact you 
-              soon with more information about team activities and pre-conference meetings.
+          <div className="mb-4 md:mb-0 md:mr-6 text-center md:text-left">
+            <h3 className={`text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${teamColor}`}>
+              Your Team: {user?.teamName || 'N/A'}
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Connect with your fellow {user?.teamName || 'team members'} and stay updated!
             </p>
-            
-            <div className="flex items-center justify-between bg-green-50 p-4 rounded-lg mb-4">
-              <div className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" className="h-5 w-5 text-green-600 mr-3">
-                  <path fill="currentColor" d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/>
-                </svg>
-                <div>
-                  <p className="text-green-800 font-medium">Team WhatsApp Group</p>
-                  <p className="text-green-600 text-sm">Join your team&apos;s WhatsApp group for updates</p>
-                </div>
-              </div>
-              <a 
-                href={user?.whatsappLink || '#'} 
-                target="_blank" 
+          </div>
+          <div className="flex-shrink-0 mt-4 md:mt-0">
+            {user?.whatsappLink ? (
+              <a
+                href={user.whatsappLink}
+                target="_blank"
                 rel="noopener noreferrer"
-                className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg text-sm font-medium flex items-center"
+                className={`inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r ${teamColor} hover:opacity-90 transition-opacity`}
               >
-                Join Group
-                <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.267.651 4.383 1.803 6.166l-1.225 4.485 4.574-1.196z"/></svg>
+                Join Team Chat
               </a>
-            </div>
-            
-            <div className="bg-amber-50 border-l-4 border-amber-500 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-amber-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-amber-700">
-                    Stay tuned! The EGC games will be starting soon. Get ready to represent your team!
-                  </p>
-                </div>
-              </div>
-            </div>
+            ) : (
+              <p className="text-sm text-gray-500">WhatsApp link not available.</p>
+            )}
           </div>
         </motion.div>
 
-        {/* Coming soon features */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-white rounded-lg shadow-lg overflow-hidden"
-        >
-          <div className="bg-gradient-to-r from-gray-700 to-gray-900 p-6 text-white">
-            <h3 className="text-xl font-bold mb-2">Coming Soon</h3>
-            <p className="opacity-90">Your complete dashboard is under construction</p>
-          </div>
-          
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="border border-gray-200 rounded-lg p-4 text-center">
-                <div className="w-12 h-12 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h4 className="font-bold text-gray-900 mb-1">Schedule</h4>
-                <p className="text-sm text-gray-600">View conference agenda and sessions</p>
-              </div>
-              
-              <div className="border border-gray-200 rounded-lg p-4 text-center">
-                <div className="w-12 h-12 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h4 className="font-bold text-gray-900 mb-1">Live Sessions</h4>
-                <p className="text-sm text-gray-600">Join virtual sessions and workshops</p>
-              </div>
-              
-              <a 
-                href={user?.whatsappLink || '#'} 
-                target="_blank"
-                rel="noopener noreferrer"
-                className="border border-gray-200 rounded-lg p-4 text-center block hover:bg-green-50 hover:border-green-200 transition-colors"
-              >
-                <div className="w-12 h-12 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" className="h-6 w-6 text-green-600">
-                    <path fill="currentColor" d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/>
-                  </svg>
-                </div>
-                <h4 className="font-bold text-gray-900 mb-1">Team Chat</h4>
-                <p className="text-sm text-gray-600">Connect with your team on WhatsApp</p>
-              </a>
+        {/* Grid for the other two cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Team Standings Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="bg-slate-800 rounded-xl shadow-2xl overflow-hidden text-slate-100"
+          >
+            <div className="p-5 border-b border-slate-700 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.846 5.671a1 1 0 00.95.69h5.969c.969 0 1.371 1.24.588 1.81l-4.826 3.502a1 1 0 00-.364 1.118l1.846 5.671c.3.921-.755 1.688-1.54 1.118l-4.826-3.502a1 1 0 00-1.175 0l-4.826 3.502c-.784.57-1.838-.197-1.539-1.118l1.846-5.671a1 1 0 00-.364-1.118L2.28 11.098c-.783-.57-.38-1.81.588-1.81h5.969a1 1 0 00.95-.69L11.049 2.927z" />
+              </svg>
+              <h3 className="text-lg font-semibold">Team Standings</h3>
             </div>
-            
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-blue-700">
-                    We&apos;re working hard to build your complete conference dashboard. Check back often as we add new features 
-                    and functionalities to enhance your EGC Conference experience!
-                  </p>
-                </div>
-              </div>
+            <div className="p-5 space-y-3">
+              {
+                [
+                  { rank: 1, name: 'Team Bethel', points: 1500, colorClass: 'bg-yellow-500' }, // Example color
+                  { rank: 2, name: 'Team Judah', points: 1250, colorClass: 'bg-red-500' },
+                  { rank: 3, name: 'Team Salem', points: 1100, colorClass: 'bg-blue-500' },
+                  { rank: 4, name: 'Team Shiloh', points: 950, colorClass: 'bg-purple-500' },
+                ].map((team, index) => (
+                  <div key={index} className={`flex items-center p-3 rounded-lg ${index === 0 ? 'bg-slate-700/50' : ''}`}>
+                    <div className={`w-3 h-8 rounded-full mr-3 ${team.colorClass}`}></div>
+                    <span className={`w-8 h-8 flex items-center justify-center rounded-full text-xs font-bold mr-3 ${index === 0 ? 'bg-yellow-500 text-slate-800' : 'bg-slate-700 text-slate-200'}`}>{team.rank}</span>
+                    <span className="flex-grow font-medium text-slate-200">{team.name}</span>
+                    <span className="font-bold text-lg text-slate-100">{team.points} <span className="text-xs text-slate-400">pts</span></span>
+                  </div>
+                ))
+              }
+              <a href="#" className={`block text-center mt-3 text-sm font-medium text-sky-400 hover:text-sky-300 transition-colors`}>View Detailed Stats &rarr;</a>
             </div>
-          </div>
-        </motion.div>
-      </main>
-    </div>
+          </motion.div>
+
+          {/* Upcoming Games Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="bg-slate-800 rounded-xl shadow-2xl overflow-hidden text-slate-100"
+          >
+            <div className="p-5 border-b border-slate-700 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <h3 className="text-lg font-semibold">Upcoming Games</h3>
+            </div>
+            <div className="p-5 space-y-1">
+              {
+                [
+                  { name: 'Tic-Tac-Toe', teams: 'Team Bethel vs Team Judah', time: 'Today, 2:00 PM' },
+                  { name: 'Sudoku Relay', teams: 'Team Salem vs Team Shiloh', time: 'Today, 3:30 PM' },
+                  { name: 'Bible Trivia Challenge', teams: 'All Teams Event', time: 'Tomorrow, 10:00 AM' },
+                ].map((game, index) => (
+                  <div key={index} className="flex items-center p-3 border-b border-slate-700 last:border-b-0 hover:bg-slate-700/30 rounded-md transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-4 text-sky-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <div className="flex-grow">
+                      <p className="font-medium text-slate-200">{game.name}</p>
+                      <p className="text-xs text-slate-400">{game.teams}</p>
+                    </div>
+                    <div className="text-right ml-3 flex-shrink-0">
+                      <p className="text-xs font-semibold text-slate-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {game.time}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              }
+              <a href="#" className={`block text-center mt-4 text-sm font-medium text-sky-400 hover:text-sky-300 transition-colors`}>See All Games &rarr;</a>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </>
   );
 }

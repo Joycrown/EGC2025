@@ -39,7 +39,8 @@ export default function Login() {
       }
 
       // Successful login
-      router.push('/dashboard'); // Redirect to dashboard or home
+      router.refresh();
+      router.push('/dashboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {

@@ -43,28 +43,31 @@ export async function POST(request: NextRequest) {
     }
     
     // Generate JWT token
-    const token = generateToken({
+    const token = await generateToken({
       id: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
+      userType: user.userType
     });
     
     // Set JWT token in HTTP-only cookie
     const cookieStore = cookies();
     cookieStore.set('auth-token', token, {
-      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: '/'
     });
     
     // Return success response with user data (exclude password)
     const { password: _, ...userWithoutPassword } = user;
-    return NextResponse.json({
-      message: 'Login successful',
-      user: userWithoutPassword
-    });
+    return NextResponse.json(
+      {
+        message: 'Login successful',
+        user: userWithoutPassword,
+      },
+      { status: 200 }
+    );
     
   } catch (error) {
     console.error('Login error:', error);

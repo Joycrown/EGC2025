@@ -1,4 +1,6 @@
 import '../styles/globals.css';
+import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from 'react-toastify';
 import { Inter, Outfit } from 'next/font/google';
 import type { Metadata } from 'next';
 
@@ -86,6 +88,18 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
       <body className="min-h-screen bg-gray-50 font-sans">
         {children}
+        <ToastContainer
+          position="bottom-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
       </body>
     </html>
   );

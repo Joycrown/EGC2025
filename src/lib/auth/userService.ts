@@ -2,7 +2,7 @@ import prisma from '../db/prismaClient';
 import { hashPassword } from './utils';
 
 // Import the Prisma types
-import { Role } from '@prisma/client';
+import { UserType } from '@prisma/client';
 
 // Define types based on our Prisma schema
 type User = {
@@ -21,6 +21,7 @@ type User = {
   role: Role; // Use the Prisma Role enum
   teamId: string | null;
   teamName: string | null;
+  whatsappLink: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -102,8 +103,8 @@ export async function createUser(userData: RegisterUserData): Promise<User> {
   const hashedPassword = await hashPassword(userData.password);
   const userId = await generateEgcUserId();
   const teamName = getTeamNameByBirthMonth(userData.birthMonth);
-  
-  // Create the user without teamName field first
+  const whatsappLink = getWhatsAppLinkByTeam(teamName);
+
   const user = await prisma.user.create({
     data: {
       id: userId,
@@ -115,71 +116,128 @@ export async function createUser(userData: RegisterUserData): Promise<User> {
       birthMonth: userData.birthMonth,
       gender: userData.gender,
       verificationToken: null, // Will be set separately
-      role: userData.role || Role.PARTICIPANT // Use role from request or default to PARTICIPANT
+      role: userData.role || Role.PARTICIPANT,
     },
   });
-  
-  // For now, we'll store the teamName in memory and use it when needed
-  // We can add a method to store it separately or use it in the email/response
-  const userWithTeam = { ...user, teamName };
-  return userWithTeam as User;
+
+  // Return the complete user object with dynamic fields
+  return {
+    ...user,
+    teamName,
+    whatsappLink,
+  };
 }
 
 // Find user by email
 export async function findUserByEmail(email: string): Promise<User | null> {
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email },
   });
+
+  if (!user) {
+    return null;
+  }
+
+  // Dynamically add team name and WhatsApp link
+  const teamName = getTeamNameByBirthMonth(user.birthMonth);
+  const whatsappLink = getWhatsAppLinkByTeam(teamName);
+
+  return {
+    ...user,
+    teamName,
+    whatsappLink,
+  };
 }
 
 // Find user by ID
 export async function findUserById(id: string): Promise<User | null> {
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id },
   });
+
+  if (!user) {
+    return null;
+  }
+
+  // Dynamically add team name and WhatsApp link
+  const teamName = getTeamNameByBirthMonth(user.birthMonth);
+  const whatsappLink = getWhatsAppLinkByTeam(teamName);
+
+  return {
+    ...user,
+    teamName,
+    whatsappLink,
+  };
 }
 
 // Set verification token
 export async function setVerificationToken(userId: string, token: string): Promise<User> {
-  return prisma.user.update({
+  const user = await prisma.user.update({
     where: { id: userId },
     data: { verificationToken: token },
   });
+
+  const teamName = getTeamNameByBirthMonth(user.birthMonth);
+  const whatsappLink = getWhatsAppLinkByTeam(teamName);
+
+  return {
+    ...user,
+    teamName,
+    whatsappLink,
+  };
 }
 
 // Verify user email
 export async function verifyUser(token: string): Promise<User | null> {
-  const user = await prisma.user.findFirst({
+  const userToVerify = await prisma.user.findFirst({
     where: { verificationToken: token },
   });
 
-  if (!user) return null;
+  if (!userToVerify) return null;
 
-  return prisma.user.update({
-    where: { id: user.id },
+  const updatedUser = await prisma.user.update({
+    where: { id: userToVerify.id },
     data: {
       isVerified: true,
       verificationToken: null,
     },
   });
+
+  const teamName = getTeamNameByBirthMonth(updatedUser.birthMonth);
+  const whatsappLink = getWhatsAppLinkByTeam(teamName);
+
+  return {
+    ...updatedUser,
+    teamName,
+    whatsappLink,
+  };
 }
 
 // Set password reset token
 export async function setPasswordResetToken(userId: string, token: string, expiryTime: Date): Promise<User> {
-  return prisma.user.update({
+  const user = await prisma.user.update({
     where: { id: userId },
     data: {
       resetToken: token,
       resetTokenExpiry: expiryTime,
     },
   });
+
+  const teamName = getTeamNameByBirthMonth(user.birthMonth);
+  const whatsappLink = getWhatsAppLinkByTeam(teamName);
+
+  return {
+    ...user,
+    teamName,
+    whatsappLink,
+  };
 }
 
 // Find user by reset token
 export async function findUserByResetToken(token: string): Promise<User | null> {
   const now = new Date();
   
-  return prisma.user.findFirst({
+  const user = await prisma.user.findFirst({
     where: {
       resetToken: token,
       resetTokenExpiry: {
@@ -187,13 +245,26 @@ export async function findUserByResetToken(token: string): Promise<User | null> 
       },
     },
   });
+
+  if (!user) {
+    return null;
+  }
+
+  const teamName = getTeamNameByBirthMonth(user.birthMonth);
+  const whatsappLink = getWhatsAppLinkByTeam(teamName);
+
+  return {
+    ...user,
+    teamName,
+    whatsappLink,
+  };
 }
 
 // Update user password
 export async function updatePassword(userId: string, newPassword: string): Promise<User> {
   const hashedPassword = await hashPassword(newPassword);
   
-  return prisma.user.update({
+  const user = await prisma.user.update({
     where: { id: userId },
     data: {
       password: hashedPassword,
@@ -201,39 +272,38 @@ export async function updatePassword(userId: string, newPassword: string): Promi
       resetTokenExpiry: null,
     },
   });
+
+  const teamName = getTeamNameByBirthMonth(user.birthMonth);
+  const whatsappLink = getWhatsAppLinkByTeam(teamName);
+
+  return {
+    ...user,
+    teamName,
+    whatsappLink,
+  };
 }
 
 // Assign user to team based on birth month
-export async function assignUserToTeam(userId: string): Promise<User> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { birthMonth: true },
-  });
+export async function assignUserToTeam(userId: string, birthMonth: number): Promise<User> {
+  const teamName = getTeamNameByBirthMonth(birthMonth);
+  const whatsappLink = getWhatsAppLinkByTeam(teamName);
 
-  if (!user) {
-    throw new Error('User not found');
-  }
-
-  // Get team assignment based on birth month
-  // Birth months 1-3: Team 1, 4-6: Team 2, 7-9: Team 3, 10-12: Team 4
-  const teamNumber = Math.ceil(user.birthMonth / 3);
-  
-  // Find the team
-  const team = await prisma.team.findFirst({
-    where: { 
-      // This assumes teams are named "Team 1", "Team 2", etc.
-      // Adjust as needed based on your actual team naming convention
-      name: `Team ${teamNumber}` 
-    },
+  const team = await prisma.team.findUnique({
+    where: { name: teamName },
   });
 
   if (!team) {
-    throw new Error(`Team ${teamNumber} not found`);
+    throw new Error(`Team not found: ${teamName}`);
   }
 
-  // Assign user to the team
-  return prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: { teamId: team.id },
   });
+
+  return {
+    ...updatedUser,
+    teamName,
+    whatsappLink,
+  };
 }

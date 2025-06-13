@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     
     // Verify JWT token
     try {
-      const decoded = verifyToken(token);
+      const decoded = await verifyToken(token);
       
       // Find user by ID from token
       const user = await findUserById(decoded.id);

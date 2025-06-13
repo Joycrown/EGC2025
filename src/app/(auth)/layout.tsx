@@ -113,7 +113,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold mb-1">July 4-10, 2025</h3>
+                  <h3 className="text-xl font-bold mb-1">11th-13th July, 2025</h3>
                   <p className="text-white/90">Mark your calendar for this life-changing event!</p>
                 </div>
               </motion.div>
