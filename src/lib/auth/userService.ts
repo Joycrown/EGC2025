@@ -1,8 +1,9 @@
 import prisma from '../db/prismaClient';
 import { hashPassword } from './utils';
+import { Role } from '@prisma/client';
 
 // Import the Prisma types
-import { UserType } from '@prisma/client';
+
 
 // Define types based on our Prisma schema
 type User = {
@@ -11,8 +12,8 @@ type User = {
   password: string;
   fullName: string;
   phoneNumber: string | null;
-  birthDate: number;
-  birthMonth: number;
+  birthDate: number | null;
+  birthMonth: number | null;
   gender: string;
   isVerified: boolean;
   verificationToken: string | null;
@@ -139,7 +140,7 @@ export async function findUserByEmail(email: string): Promise<User | null> {
   }
 
   // Dynamically add team name and WhatsApp link
-  const teamName = getTeamNameByBirthMonth(user.birthMonth);
+  const teamName = user.birthMonth ? getTeamNameByBirthMonth(user.birthMonth) : 'Bethel';
   const whatsappLink = getWhatsAppLinkByTeam(teamName);
 
   return {
@@ -160,7 +161,7 @@ export async function findUserById(id: string): Promise<User | null> {
   }
 
   // Dynamically add team name and WhatsApp link
-  const teamName = getTeamNameByBirthMonth(user.birthMonth);
+  const teamName = user.birthMonth ? getTeamNameByBirthMonth(user.birthMonth) : 'Bethel';
   const whatsappLink = getWhatsAppLinkByTeam(teamName);
 
   return {
@@ -177,7 +178,7 @@ export async function setVerificationToken(userId: string, token: string): Promi
     data: { verificationToken: token },
   });
 
-  const teamName = getTeamNameByBirthMonth(user.birthMonth);
+  const teamName = user.birthMonth ? getTeamNameByBirthMonth(user.birthMonth) : 'Bethel';
   const whatsappLink = getWhatsAppLinkByTeam(teamName);
 
   return {
@@ -203,7 +204,7 @@ export async function verifyUser(token: string): Promise<User | null> {
     },
   });
 
-  const teamName = getTeamNameByBirthMonth(updatedUser.birthMonth);
+  const teamName = updatedUser.birthMonth ? getTeamNameByBirthMonth(updatedUser.birthMonth) : 'Bethel';
   const whatsappLink = getWhatsAppLinkByTeam(teamName);
 
   return {
@@ -223,7 +224,7 @@ export async function setPasswordResetToken(userId: string, token: string, expir
     },
   });
 
-  const teamName = getTeamNameByBirthMonth(user.birthMonth);
+  const teamName = user.birthMonth ? getTeamNameByBirthMonth(user.birthMonth) : 'Bethel';
   const whatsappLink = getWhatsAppLinkByTeam(teamName);
 
   return {
@@ -250,7 +251,7 @@ export async function findUserByResetToken(token: string): Promise<User | null> 
     return null;
   }
 
-  const teamName = getTeamNameByBirthMonth(user.birthMonth);
+  const teamName = user.birthMonth ? getTeamNameByBirthMonth(user.birthMonth) : 'Bethel';
   const whatsappLink = getWhatsAppLinkByTeam(teamName);
 
   return {
@@ -273,7 +274,7 @@ export async function updatePassword(userId: string, newPassword: string): Promi
     },
   });
 
-  const teamName = getTeamNameByBirthMonth(user.birthMonth);
+  const teamName = user.birthMonth ? getTeamNameByBirthMonth(user.birthMonth) : 'Bethel';
   const whatsappLink = getWhatsAppLinkByTeam(teamName);
 
   return {

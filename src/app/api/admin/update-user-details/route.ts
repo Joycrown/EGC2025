@@ -8,7 +8,7 @@ export async function PUT(request: NextRequest) {
     const { user: adminUser } = await verifyAuth(request, [Role.ADMIN, Role.SUPER_ADMIN]);
 
     const body = await request.json();
-    console.log('Received body for user update:', body);
+    
     const { userId, role, phoneNumber, address } = body;
 
     if (!userId || !role || phoneNumber === undefined || address === undefined) {
