@@ -1,6 +1,6 @@
 import prisma from '../db/prismaClient';
 import { hashPassword } from './utils';
-import { Role } from '@prisma/client';
+import { Role, UserType } from '@prisma/client';
 
 // Import the Prisma types
 
@@ -25,6 +25,7 @@ type User = {
   whatsappLink: string | null;
   createdAt: Date;
   updatedAt: Date;
+  userType: UserType;
 };
 
 // Export the User type so other files can use it
@@ -40,6 +41,7 @@ export interface RegisterUserData {
   birthMonth: number;
   gender: string;
   role?: Role; // Use the Prisma Role enum
+  userType?: UserType;
 }
 
 // Generate a custom EGC user ID with format EGC25-XXXX (random 4 digits)
@@ -118,6 +120,7 @@ export async function createUser(userData: RegisterUserData): Promise<User> {
       gender: userData.gender,
       verificationToken: null, // Will be set separately
       role: userData.role || Role.PARTICIPANT,
+            userType: userData.userType || UserType.USER,
     },
   });
 
