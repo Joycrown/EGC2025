@@ -22,21 +22,22 @@ export async function POST(request: NextRequest) {
 
     const { userIds, conferenceDay } = validation.data;
 
-        // Update the attendance records for the selected users
-    const updateResult = await prisma.attendance.updateMany({
-      where: {
-        userId: { in: userIds },
-      },
-      data: {
-        [conferenceDay]: true,
-      },
-    });
-
-    if (updateResult.count === 0) {
-      return NextResponse.json({ message: 'No attendance records found for the selected users. They may need to be registered first.' }, { status: 404 });
+    const results = [];
+    for (const userId of userIds) {
+      const attendanceRecord = await prisma.attendance.upsert({
+        where: { userId: userId },
+        update: {
+          [conferenceDay]: true,
+        },
+        create: {
+          userId: userId,
+          [conferenceDay]: true,
+        },
+      });
+      results.push(attendanceRecord);
     }
 
-    return NextResponse.json({ message: `Successfully marked ${updateResult.count} user(s) as present for ${conferenceDay}.` }, { status: 200 });
+    return NextResponse.json({ message: `Successfully marked ${results.length} user(s) as present for ${conferenceDay}.` }, { status: 200 });
 
   } catch (error: unknown) {
     console.error('Mark Attendance Error:', error);

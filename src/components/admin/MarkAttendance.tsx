@@ -1,17 +1,20 @@
 'use client';
 
-import React, { useState, FormEvent } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useDebounce } from 'use-debounce';
 
 interface UserSearchResult {
   id: string;
   fullName: string;
   email: string;
   phoneNumber: string | null;
+  isAttended?: boolean; // New: indicates if user is attended for the selected day
 }
 
 const MarkAttendance = () => {
   const [searchEmail, setSearchEmail] = useState('');
+  const [debouncedSearchEmail] = useDebounce(searchEmail, 500);
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
@@ -32,31 +35,38 @@ const MarkAttendance = () => {
     availableDays.length > 0 ? availableDays[0].value as 'day_11_july' | 'day_12_july' | 'day_13_july' : ''
   );
 
-  const handleSearch = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!searchEmail) return;
+  useEffect(() => {
+    const performSearch = async () => {
+      if (!debouncedSearchEmail) {
+        setSearchResults([]);
+        setMessage('');
+        return;
+      }
 
-    setIsLoading(true);
-    setMessage('');
-    try {
-      const response = await fetch(`/api/admin/users?email=${encodeURIComponent(searchEmail)}`);
-      const users = await response.json();
-      if (!response.ok) {
-        throw new Error(users.error || 'Failed to search for users.');
-      }
-      setSearchResults(users);
-      if (users.length === 0) {
-        setMessage('No users found with that email.');
+      setIsLoading(true);
+      setMessage('');
+      try {
+        const response = await fetch(`/api/admin/users?email=${encodeURIComponent(debouncedSearchEmail)}&conferenceDay=${conferenceDay}`);
+        const users = await response.json();
+        if (!response.ok) {
+          throw new Error(users.error || 'Failed to search for users.');
+        }
+        setSearchResults(users);
+        if (users.length === 0) {
+          setMessage('No users found with that email.');
+          setIsError(true);
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        setMessage(errorMessage);
         setIsError(true);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-      setMessage(errorMessage);
-      setIsError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    performSearch();
+  }, [debouncedSearchEmail]);
 
   const handleSelectUser = (userId: string) => {
     const newSelection = new Set(selectedUsers);
@@ -110,7 +120,7 @@ const MarkAttendance = () => {
   return (
     <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-4xl">
       <h2 className="text-2xl font-bold mb-6 text-gray-800">Mark Attendance</h2>
-      <form onSubmit={handleSearch} className="flex items-center gap-4 mb-6">
+      <form onSubmit={(e) => e.preventDefault()} className="flex items-center gap-4 mb-6">
         <input
           type="email"
           value={searchEmail}
@@ -118,7 +128,7 @@ const MarkAttendance = () => {
           placeholder="Search by user email..."
           className="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
         />
-        <button type="submit" disabled={isLoading} className="px-6 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700 disabled:bg-gray-400 transition-colors">
+        <button type="button" disabled={isLoading} className="px-6 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700 disabled:bg-gray-400 transition-colors">
           {isLoading ? 'Searching...' : 'Search'}
         </button>
       </form>
@@ -134,6 +144,7 @@ const MarkAttendance = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attended Today</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -142,14 +153,22 @@ const MarkAttendance = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <input
                           type="checkbox"
-                          checked={selectedUsers.has(user.id)}
+                          checked={selectedUsers.has(user.id) || user.isAttended}
                           onChange={() => handleSelectUser(user.id)}
-                          className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                          disabled={user.isAttended}
+                          className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.fullName}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.phoneNumber || 'N/A'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {user.isAttended ? (
+                          <span className="text-green-600 font-semibold">Yes</span>
+                        ) : (
+                          <span className="text-gray-500">No</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

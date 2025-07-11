@@ -131,7 +131,7 @@ model Attendance {
   day_12_july Boolean  @default(false)
   day_13_july Boolean  @default(false)
   updatedAt   DateTime @updatedAt
-  userEmail   String
+  userEmail   String?
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 

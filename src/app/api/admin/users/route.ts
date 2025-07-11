@@ -9,10 +9,13 @@ export async function GET(request: NextRequest) {
     await verifyAuth(request, [Role.ADMIN, Role.SUPER_ADMIN]);
     const { searchParams } = new URL(request.url);
     const email = searchParams.get('email');
+    const conferenceDay = searchParams.get('conferenceDay'); // New: Get conferenceDay
 
     if (email) {
-      const user = await prisma.user.findUnique({
-        where: { email },
+      const users = await prisma.user.findMany({
+        where: {
+          email: { contains: email, mode: 'insensitive' },
+        },
         select: {
           id: true,
           fullName: true,
@@ -20,10 +23,19 @@ export async function GET(request: NextRequest) {
           role: true,
           userType: true,
           phoneNumber: true,
-          address: true
+          address: true,
+          // New: Include attendance if conferenceDay is provided
+          ...(conferenceDay && { attendance: true }),
         },
       });
-      return NextResponse.json(user ? [user] : []);
+
+      // New: Map users to include attendance status for the specific day
+      const usersWithAttendance = users.map(user => ({
+        ...user,
+        isAttended: conferenceDay ? (user.attendance as any)?.[conferenceDay] || false : false,
+      }));
+
+      return NextResponse.json(usersWithAttendance);
     }
     const page = parseInt(searchParams.get('page') || '1', 10);
     const pageSize = parseInt(searchParams.get('pageSize') || '10', 10);
@@ -56,6 +68,8 @@ export async function GET(request: NextRequest) {
           gender: true,
           isVerified: true,
           address: true,
+          // New: Include attendance if conferenceDay is provided
+          ...(conferenceDay && { attendance: true }),
         },
         orderBy: {
           createdAt: 'desc',
@@ -68,8 +82,14 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
+    // New: Map users to include attendance status for the specific day
+    const usersWithAttendance = users.map(user => ({
+      ...user,
+      isAttended: conferenceDay ? (user.attendance as any)?.[conferenceDay] || false : false,
+    }));
+
     return NextResponse.json({
-      users,
+      users: usersWithAttendance,
       totalUsers,
       totalPages: Math.ceil(totalUsers / pageSize),
     });
