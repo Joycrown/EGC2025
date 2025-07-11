@@ -7,6 +7,7 @@ interface Attendee {
   user: {
     fullName: string;
     email: string;
+    role: string; // Add role to the user object
   };
 }
 
@@ -84,6 +85,7 @@ const AttendanceViewer = () => {
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th> {/* New Role Header */}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -92,11 +94,12 @@ const AttendanceViewer = () => {
                     <tr key={attendee.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{attendee.user.fullName}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{attendee.user.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{attendee.user.role}</td> {/* New Role Data */}
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={2} className="text-center py-10 text-gray-500">
+                    <td colSpan={3} className="text-center py-10 text-gray-500"> {/* Changed colSpan from 2 to 3 */}
                       No attendees found for this day.
                     </td>
                   </tr>
