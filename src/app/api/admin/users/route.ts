@@ -11,10 +11,8 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get('email');
 
     if (email) {
-      const users = await prisma.user.findMany({
-        where: {
-          email: { contains: email, mode: 'insensitive' },
-        },
+      const user = await prisma.user.findUnique({
+        where: { email },
         select: {
           id: true,
           fullName: true,
@@ -22,17 +20,10 @@ export async function GET(request: NextRequest) {
           role: true,
           userType: true,
           phoneNumber: true,
-          address: true,
-          attendance: {
-            select: {
-              day_11_july: true,
-              day_12_july: true,
-              day_13_july: true,
-            }
-          }
+          address: true
         },
       });
-      return NextResponse.json(users);
+      return NextResponse.json(user ? [user] : []);
     }
     const page = parseInt(searchParams.get('page') || '1', 10);
     const pageSize = parseInt(searchParams.get('pageSize') || '10', 10);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface UserSearchResult {
@@ -8,11 +8,6 @@ interface UserSearchResult {
   fullName: string;
   email: string;
   phoneNumber: string | null;
-  attendance?: {
-    day_11_july: boolean;
-    day_12_july: boolean;
-    day_13_july: boolean;
-  } | null;
 }
 
 const MarkAttendance = () => {
@@ -22,7 +17,6 @@ const MarkAttendance = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
-  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
     const conferenceDays = [
     { value: 'day_11_july', label: 'July 11th', date: new Date('2025-07-11T00:00:00') },
     { value: 'day_12_july', label: 'July 12th', date: new Date('2025-07-12T00:00:00') },
@@ -38,18 +32,14 @@ const MarkAttendance = () => {
     availableDays.length > 0 ? availableDays[0].value as 'day_11_july' | 'day_12_july' | 'day_13_july' : ''
   );
 
-  const handleSearch = async (email: string) => {
-    if (!email) {
-      setSearchResults([]);
-      setMessage('');
-      setIsError(false);
-      return;
-    }
+  const handleSearch = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!searchEmail) return;
 
     setIsLoading(true);
     setMessage('');
     try {
-      const response = await fetch(`/api/admin/users?email=${encodeURIComponent(email)}`);
+      const response = await fetch(`/api/admin/users?email=${encodeURIComponent(searchEmail)}`);
       const users = await response.json();
       if (!response.ok) {
         throw new Error(users.error || 'Failed to search for users.');
@@ -58,9 +48,6 @@ const MarkAttendance = () => {
       if (users.length === 0) {
         setMessage('No users found with that email.');
         setIsError(true);
-      } else {
-        setMessage(''); // Clear message if users are found
-        setIsError(false);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -69,19 +56,6 @@ const MarkAttendance = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const email = e.target.value;
-    setSearchEmail(email);
-
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      handleSearch(email);
-    }, 500); // Debounce for 500ms
   };
 
   const handleSelectUser = (userId: string) => {
@@ -136,16 +110,18 @@ const MarkAttendance = () => {
   return (
     <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-4xl">
       <h2 className="text-2xl font-bold mb-6 text-gray-800">Mark Attendance</h2>
-      <div className="flex items-center gap-4 mb-6">
+      <form onSubmit={handleSearch} className="flex items-center gap-4 mb-6">
         <input
           type="email"
           value={searchEmail}
-          onChange={handleSearchInputChange}
+          onChange={(e) => setSearchEmail(e.target.value)}
           placeholder="Search by user email..."
           className="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
         />
-        {isLoading && <p className="text-gray-500">Searching...</p>}
-      </div>
+        <button type="submit" disabled={isLoading} className="px-6 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700 disabled:bg-gray-400 transition-colors">
+          {isLoading ? 'Searching...' : 'Search'}
+        </button>
+      </form>
 
       <AnimatePresence>
         {searchResults.length > 0 && (
@@ -158,40 +134,24 @@ const MarkAttendance = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {searchResults.map((user) => {
-                    const hasAttended = user.attendance && conferenceDay ? user.attendance[conferenceDay as keyof typeof user.attendance] : false;
-                    return (
-                      <tr key={user.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <input
-                            type="checkbox"
-                            checked={selectedUsers.has(user.id) || hasAttended}
-                            onChange={() => handleSelectUser(user.id)}
-                            disabled={hasAttended}
-                            className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                          />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.fullName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.phoneNumber || 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {hasAttended ? (
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                              Attended
-                            </span>
-                          ) : (
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                              Pending
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {searchResults.map((user) => (
+                    <tr key={user.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={selectedUsers.has(user.id)}
+                          onChange={() => handleSelectUser(user.id)}
+                          className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.fullName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.phoneNumber || 'N/A'}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

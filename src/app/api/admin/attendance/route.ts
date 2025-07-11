@@ -24,7 +24,6 @@ export async function GET(request: NextRequest) {
           select: {
             fullName: true,
             email: true,
-            role: true,
           },
         },
       },
