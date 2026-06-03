@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { user } = await verifyAuth(request, ['ADMIN', 'SUPER_ADMIN']);
+    await verifyAuth(request, ['ADMIN', 'SUPER_ADMIN']);
 
     const body = await request.json();
     const { gameType, teamAId, teamBId, scheduledAt } = body;

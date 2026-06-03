@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     
     // Send password reset email via Brevo API
     const emailSent = await sendPasswordResetEmailViaApi(
-      user.email!!,
+      user.email!,
       resetToken
     );
 

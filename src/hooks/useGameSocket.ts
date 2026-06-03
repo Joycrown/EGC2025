@@ -29,6 +29,9 @@ export interface ScrambleClientState {
 export interface ChainClientState {
   chain: string[];
   requiredLetter: string;
+  category: string;
+  hint: string;
+  wrongAttempts: string[];
   turnNumber: number;
   totalTurns: number;
   lastCategory?: string;

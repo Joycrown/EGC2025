@@ -61,6 +61,7 @@ export default function AdminQRPage() {
           onClick={() => setFullscreen(false)}
         >
           <p className="text-gray-500 text-sm mb-4 font-medium">{qrData.dayLabel}</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={qrData.qrDataUrl} alt="Check-in QR" className="w-80 h-80 sm:w-[440px] sm:h-[440px]" style={{ imageRendering: 'pixelated' }} />
           <p className="text-gray-400 text-xs mt-6">EGC Conference 2026 · Tap anywhere to close</p>
         </div>
@@ -112,6 +113,7 @@ export default function AdminQRPage() {
             {/* QR image */}
             <div className="flex justify-center mb-5">
               <button onClick={() => setFullscreen(true)} className="group relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={qrData.qrDataUrl}
                   alt="Check-in QR code"

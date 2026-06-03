@@ -29,7 +29,7 @@ export default function ChainBoard({
   chainInvalidReason,
   currentTurnTeamId,
   teamAId,
-  teamBId,
+  teamBId: _teamBId,
   teamAName,
   teamBName,
   teamAColor,
@@ -81,7 +81,7 @@ export default function ChainBoard({
             {chain.requiredLetter}
           </span>
         </div>
-        <p className="text-gray-300 text-base italic mt-1">"{chain.hint}"</p>
+        <p className="text-gray-300 text-base italic mt-1">&ldquo;{chain.hint}&rdquo;</p>
       </div>
 
       {/* Wrong attempts log */}
@@ -133,7 +133,7 @@ export default function ChainBoard({
 
       {showTimeout && (
         <div className="w-full max-w-sm mx-auto px-6 py-4 rounded-xl bg-gray-800 border border-gray-600 text-center">
-          <p className="text-gray-400 text-sm mb-1">Time's up! The word was:</p>
+          <p className="text-gray-400 text-sm mb-1">Time&apos;s up! The word was:</p>
           <p className="text-white font-black text-2xl">{chainResult?.word}</p>
         </div>
       )}
