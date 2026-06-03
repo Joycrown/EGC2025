@@ -1,0 +1,31 @@
+export const GAME_LABELS: Record<string, string> = {
+  HANGMAN: 'Hangman — Biblical Terms',
+  WORD_SCRAMBLE: 'Word Scramble',
+  WORD_CHAIN: 'Word Chain',
+  TIC_TAC_TOE: 'Tic-Tac-Toe',
+  SUDOKU_RELAY: 'Sudoku Relay',
+  CROSSWORD: 'Crossword Puzzle Race',
+  BIBLE_VERSE_COMPLETION: 'Bible Verse Completion',
+  WORD_BLITZ: 'Word Blitz',
+  NAME_THAT_TUNE: 'Name That Tune',
+  BIBLE_TRIVIA: 'Bible Trivia Blitz',
+  SCRIPTURE_SCRAMBLE: 'Scripture Scramble',
+  BIBLE_CATEGORIES: 'Bible Categories',
+  CONNECT_THE_DOTS: 'Connect the Dots',
+};
+
+export const GAME_ICONS: Record<string, string> = {
+  HANGMAN: '🔤',
+  WORD_SCRAMBLE: '🔀',
+  WORD_CHAIN: '⛓️',
+  TIC_TAC_TOE: '⭕',
+  SUDOKU_RELAY: '🔢',
+  CROSSWORD: '📰',
+  BIBLE_VERSE_COMPLETION: '📖',
+  WORD_BLITZ: '⚡',
+  NAME_THAT_TUNE: '🎵',
+  BIBLE_TRIVIA: '❓',
+  SCRIPTURE_SCRAMBLE: '📜',
+  BIBLE_CATEGORIES: '🗂️',
+  CONNECT_THE_DOTS: '🔵',
+};

@@ -6,17 +6,14 @@ import { verificationEmailTemplate, welcomeEmailTemplate, passwordResetEmailTemp
  * @returns The API key
  */
 function getApiKey() {
-  const apiKey = process.env.EMAIL_APP_PASSWORD;
+  const apiKey = process.env.BREVO_API_KEY || process.env.EMAIL_APP_PASSWORD;
   if (!apiKey) {
-    throw new Error('Email API key is not defined in environment variables');
+    throw new Error('BREVO_API_KEY is not defined in environment variables');
   }
-  
-  // Make sure we're using the API key, not the SMTP key
-  if (!apiKey.startsWith('xkeysib-') && process.env.NODE_ENV !== 'production') {
+  if (!apiKey.startsWith('xkeysib-')) {
     // eslint-disable-next-line no-console
-    console.warn('Warning: Brevo API key should start with "xkeysib-". Current key may not be valid for API usage.');
+    console.error('Brevo API key must start with "xkeysib-". Check your BREVO_API_KEY env var — you may have set an SMTP password instead of the REST API key.');
   }
-  
   return apiKey;
 }
 
@@ -69,11 +66,9 @@ export async function sendEmailViaBrevoApi(options: EmailOptions): Promise<boole
     
     return true;
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
-      console.error('Error sending email:', 
-        error instanceof Error ? error.message : error);
-    }
+    // eslint-disable-next-line no-console
+    console.error('Error sending email via Brevo API:',
+      error instanceof Error ? error.message : error);
     return false;
   }
 }
@@ -101,7 +96,7 @@ export async function sendVerificationEmailViaApi(
   
   return sendEmailViaBrevoApi({
     to,
-    subject: 'Verify your email for EGC Conference 2025',
+    subject: 'Verify your email for EGC Conference 2026',
     html: htmlContent
   });
 }
@@ -126,7 +121,7 @@ export async function sendWelcomeEmailViaApi(
   
   return sendEmailViaBrevoApi({
     to: email,
-    subject: `Welcome to EGC Conference 2025, ${userData.fullName}!`,
+    subject: `Welcome to EGC Conference 2026, ${userData.fullName}!`,
     html: htmlContent
   });
 }
@@ -152,7 +147,7 @@ export async function sendPasswordResetEmailViaApi(
   
   return sendEmailViaBrevoApi({
     to: email,
-    subject: 'Reset Your EGC Conference 2025 Password',
+    subject: 'Reset Your EGC Conference 2026 Password',
     html: htmlContent
   });
 }

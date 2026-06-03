@@ -24,8 +24,8 @@ export default function DashboardPage() {
     seconds: 0
   });
 
-  // Conference date - July 4, 2025 (memoized to prevent re-renders)
-  const conferenceDate = useMemo(() => new Date('2025-07-11T00:00:00'), []);
+  // Conference date — EGC 2026, July 10
+  const conferenceDate = useMemo(() => new Date('2026-07-10T00:00:00'), []);
 
   // Effect for user data fetching - only run once
   useEffect(() => {
@@ -148,34 +148,41 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="mb-8 p-5 sm:p-6 bg-white rounded-xl shadow-lg flex flex-col sm:flex-row justify-between items-center text-gray-800"
+        className="mb-8 rounded-2xl shadow-xl overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' }}
       >
-        <div className="mb-4 sm:mb-0">
-          <h2 className="text-2xl sm:text-3xl font-bold">
-            Welcome, {user?.fullName || 'Participant'}!
-          </h2>
-          <p className="text-gray-600 text-sm sm:text-base">
-            Here&apos;s your overview for the EGC Conference 2025.
-          </p>
-        </div>
-        <div className="sm:ml-6 text-center sm:text-left">
-          <p className="text-sm font-semibold text-gray-700 mb-2">Conference Countdown:</p>
-          <div className="grid grid-cols-4 gap-2">
-            <div className="bg-gray-100 rounded-lg p-2 w-16">
-              <div className="text-2xl font-bold">{countdown.days}</div>
-              <div className="text-xs text-gray-500 uppercase">Days</div>
-            </div>
-            <div className="bg-gray-100 rounded-lg p-2 w-16">
-              <div className="text-2xl font-bold">{countdown.hours}</div>
-              <div className="text-xs text-gray-500 uppercase">Hours</div>
-            </div>
-            <div className="bg-gray-100 rounded-lg p-2 w-16">
-              <div className="text-2xl font-bold">{countdown.minutes}</div>
-              <div className="text-xs text-gray-500 uppercase">Mins</div>
-            </div>
-            <div className="bg-gray-100 rounded-lg p-2 w-16">
-              <div className="text-2xl font-bold">{countdown.seconds}</div>
-              <div className="text-xs text-gray-500 uppercase">Secs</div>
+        <div className="px-6 py-6 sm:px-8 sm:py-7 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div>
+            <p className="text-red-400 text-xs font-bold uppercase tracking-widest mb-1">EGC Conference 2026</p>
+            <h2 className="text-2xl sm:text-3xl font-black text-white">
+              Welcome, {user?.fullName?.split(' ')[0] || 'Participant'}!
+            </h2>
+            <p className="text-blue-200/70 text-sm mt-1">July 10–12 · Akure, Nigeria</p>
+          </div>
+
+          <div className="text-center sm:text-right">
+            <p className="text-blue-300/60 text-xs font-semibold uppercase tracking-wider mb-3">
+              {countdown.days === 0 && countdown.hours === 0 ? 'Conference is live!' : 'Starts in'}
+            </p>
+            <div className="flex items-end gap-2">
+              {[
+                { v: countdown.days,    l: 'Days' },
+                { v: countdown.hours,   l: 'Hrs' },
+                { v: countdown.minutes, l: 'Min' },
+                { v: countdown.seconds, l: 'Sec' },
+              ].map(({ v, l }, i) => (
+                <React.Fragment key={l}>
+                  <div className="flex flex-col items-center">
+                    <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2 min-w-[52px]">
+                      <span className="text-2xl sm:text-3xl font-black text-white tabular-nums">
+                        {String(v).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-blue-300/50 font-semibold mt-1 uppercase">{l}</span>
+                  </div>
+                  {i < 3 && <span className="text-white/30 text-xl font-bold mb-5">:</span>}
+                </React.Fragment>
+              ))}
             </div>
           </div>
         </div>

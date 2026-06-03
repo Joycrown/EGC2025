@@ -3,15 +3,33 @@
 import React, { useState, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+type MemberType = 'member' | 'invitee' | 'minister' | 'volunteer' | 'participant' | 'child';
+
 interface FormData {
   firstName: string;
   lastName: string;
   phone: string;
   email: string;
   gender: string;
-  memberType: 'member' | 'invitee' | 'minister';
+  memberType: MemberType;
   address: string;
+  conferenceDay: string;
 }
+
+const MEMBER_TYPES: { value: MemberType; label: string }[] = [
+  { value: 'member',      label: 'Member (Adult)' },
+  { value: 'invitee',     label: 'Guest' },
+  { value: 'minister',    label: 'Invited Minister' },
+  { value: 'volunteer',   label: 'Volunteer' },
+  { value: 'participant', label: 'Participant' },
+  { value: 'child',       label: 'Member (Children)' },
+];
+
+const CONFERENCE_DAYS = [
+  { value: 'day1', label: 'Day 1 — Thu, 10 July 2026' },
+  { value: 'day2', label: 'Day 2 — Fri, 11 July 2026' },
+  { value: 'day3', label: 'Day 3 — Sat, 12 July 2026' },
+];
 
 const RegisterMemberForm = () => {
   const [formData, setFormData] = useState<FormData>({
@@ -22,14 +40,17 @@ const RegisterMemberForm = () => {
     gender: '',
     memberType: 'member',
     address: '',
+    conferenceDay: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
 
+  const isChild = formData.memberType === 'child';
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -38,33 +59,33 @@ const RegisterMemberForm = () => {
     setMessage('');
     setIsError(false);
 
+    // Client-side validation
+    if (!isChild && !formData.phone.trim() && !formData.email.trim()) {
+      setMessage('Phone number or email is required.');
+      setIsError(true);
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/admin/register-member', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          conferenceDay: formData.conferenceDay || undefined,
+        }),
       });
-
-      if (!formData.address) {
-        setMessage('Address is required.');
-        setIsError(true);
-        setSubmitting(false);
-        return;
-      }
 
       const result = await response.json();
 
       if (response.ok) {
-        setMessage('Member registered successfully!');
+        const dayNote = result.markedDay ? ` — marked present for ${result.markedDay}` : '';
+        setMessage(`✓ ${result.user?.fullName ?? 'Member'} registered successfully${dayNote}!`);
         setIsError(false);
         setFormData({
-          firstName: '',
-          lastName: '',
-          phone: '',
-          email: '',
-          gender: '',
-          memberType: 'member',
-          address: '',
+          firstName: '', lastName: '', phone: '', email: '',
+          gender: '', memberType: 'member', address: '', conferenceDay: '',
         });
       } else {
         setMessage(result.error || 'An error occurred during registration.');
@@ -79,76 +100,124 @@ const RegisterMemberForm = () => {
     }
   };
 
+  const inputClass = 'mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500 text-sm';
+  const labelClass = 'block text-sm font-medium text-gray-700 mb-1';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.4 }}
       className="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl mx-auto"
     >
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Register a Member</h2>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Input fields for first name and last name */}
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+
+        {/* Name */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">First Name</label>
-            <input type="text" name="firstName" id="firstName" value={formData.firstName} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500" />
+            <label htmlFor="firstName" className={labelClass}>First Name <span className="text-red-500">*</span></label>
+            <input type="text" name="firstName" id="firstName" required value={formData.firstName} onChange={handleChange} className={inputClass} />
           </div>
           <div>
-            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">Last Name</label>
-            <input type="text" name="lastName" id="lastName" value={formData.lastName} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500" />
+            <label htmlFor="lastName" className={labelClass}>Last Name <span className="text-red-500">*</span></label>
+            <input type="text" name="lastName" id="lastName" required value={formData.lastName} onChange={handleChange} className={inputClass} />
           </div>
         </div>
-        {/* Input fields for email and phone */}
+
+        {/* Membership type */}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
-          <input type="email" name="email" id="email" value={formData.email} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500"/>
+          <label htmlFor="memberType" className={labelClass}>Membership Status <span className="text-red-500">*</span></label>
+          <select name="memberType" id="memberType" value={formData.memberType} onChange={handleChange}
+            className={inputClass}>
+            {MEMBER_TYPES.map(t => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </select>
         </div>
+
+        {/* Child notice */}
+        {isChild && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
+            📌 Phone and email are <strong>not required</strong> for children.
+          </div>
+        )}
+
+        {/* Phone */}
         <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone Number</label>
-          <input type="tel" name="phone" id="phone" value={formData.phone} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500"/>
+          <label htmlFor="phone" className={labelClass}>
+            Phone Number {!isChild && <span className="text-red-500">*</span>}
+            {isChild && <span className="text-gray-400 font-normal"> (optional for children)</span>}
+          </label>
+          <input type="tel" name="phone" id="phone" value={formData.phone} onChange={handleChange}
+            required={!isChild && !formData.email.trim()}
+            placeholder={isChild ? 'Optional' : '+234 xxx xxx xxxx'}
+            className={inputClass} />
         </div>
-        {/* Dropdown for gender */}
+
+        {/* Email */}
         <div>
-          <label htmlFor="gender" className="block text-sm font-medium text-gray-700">Gender</label>
-          <select name="gender" id="gender" value={formData.gender} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+          <label htmlFor="email" className={labelClass}>
+            Email Address {!isChild && <span className="text-gray-400 font-normal"> (optional if phone provided)</span>}
+            {isChild && <span className="text-gray-400 font-normal"> (optional for children)</span>}
+          </label>
+          <input type="email" name="email" id="email" value={formData.email} onChange={handleChange}
+            placeholder={isChild ? 'Optional' : 'someone@example.com'}
+            className={inputClass} />
+        </div>
+
+        {/* Gender */}
+        <div>
+          <label htmlFor="gender" className={labelClass}>Gender <span className="text-red-500">*</span></label>
+          <select name="gender" id="gender" required value={formData.gender} onChange={handleChange} className={inputClass}>
             <option value="" disabled>Select gender</option>
             <option value="Male">Male</option>
             <option value="Female">Female</option>
-            <option value="Prefer not to say">Prefer not to say</option>
           </select>
         </div>
-        {/* Dropdown for membership status */}
+
+        {/* Address */}
         <div>
-          <label htmlFor="memberType" className="block text-sm font-medium text-gray-700">Membership Status</label>
-          <select name="memberType" id="memberType" value={formData.memberType} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
-            <option value="member">Church Member</option>
-            <option value="invitee">Invitee</option>
-            <option value="minister">Minister</option>
+          <label htmlFor="address" className={labelClass}>Address <span className="text-gray-400 font-normal">(optional)</span></label>
+          <input type="text" name="address" id="address" value={formData.address} onChange={handleChange}
+            placeholder="Church or home address"
+            className={inputClass} />
+        </div>
+
+        {/* Conference day */}
+        <div>
+          <label htmlFor="conferenceDay" className={labelClass}>
+            Mark present for day <span className="text-gray-400 font-normal">(auto-detects today if left blank)</span>
+          </label>
+          <select name="conferenceDay" id="conferenceDay" value={formData.conferenceDay} onChange={handleChange} className={inputClass}>
+            <option value="">Auto-detect from today&apos;s date</option>
+            {CONFERENCE_DAYS.map(d => (
+              <option key={d.value} value={d.value}>{d.label}</option>
+            ))}
           </select>
         </div>
-        {/* Conditional address field */}
-        <div>
-          <label htmlFor="address" className="block text-sm font-medium text-gray-700">Address</label>
-          <input type="text" name="address" id="address" value={formData.address} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500"/>
-        </div>
-        {/* Submit button and messages */}
-        <div>
-          <button type="submit" disabled={submitting} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-gray-400 transition-colors">
-            {submitting ? 'Registering...' : 'Register and Mark as Present'}
-          </button>
-        </div>
+
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          {submitting ? 'Registering…' : 'Register and Mark as Present'}
+        </button>
+
         <AnimatePresence>
-            {message && (
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className={`text-center mt-4 text-sm ${isError ? 'text-red-600' : 'text-green-600'}`}
-                >
-                    {message}
-                </motion.p>
-            )}
+          {message && (
+            <motion.p
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className={`text-center text-sm font-medium px-4 py-3 rounded-lg ${isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}
+            >
+              {message}
+            </motion.p>
+          )}
         </AnimatePresence>
       </form>
     </motion.div>

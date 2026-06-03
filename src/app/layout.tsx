@@ -22,14 +22,14 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: 'EGC Conference 2025 | The Gospel Faith Mission International',
-  description: 'Join EGC Conference 2025, the annual gathering of The Gospel Faith Mission International youth. Register now for spiritual enrichment, fellowship, and transformation.',
+  title: 'EGC Conference 2026 | The Gospel Faith Mission International',
+  description: 'Join EGC Conference 2026, the annual gathering of The Gospel Faith Mission International youth. Register now for spiritual enrichment, fellowship, and transformation.',
   keywords: 'EGC Conference, GOFAMINT, The Gospel Faith Mission International, Christian Conference, Youth Conference, Faith Conference, Religious Event',
   authors: [{ name: 'The Gospel Faith Mission International' }],
   category: 'Religion',
   openGraph: {
-    title: 'EGC Conference 2025 | The Gospel Faith Mission International',
-    description: 'Join EGC Conference 2025, the annual gathering of The Gospel Faith Mission International youth. Register now for spiritual enrichment, fellowship, and transformation.',
+    title: 'EGC Conference 2026 | The Gospel Faith Mission International',
+    description: 'Join EGC Conference 2026, the annual gathering of The Gospel Faith Mission International youth. Register now for spiritual enrichment, fellowship, and transformation.',
     url: process.env.NEXT_PUBLIC_APP_URL,
     siteName: 'EGC Conference',
     images: [
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
         url: `${process.env.NEXT_PUBLIC_APP_URL}/images/og-image.jpg`,
         width: 1200,
         height: 630,
-        alt: 'EGC Conference 2025',
+        alt: 'EGC Conference 2026',
       },
     ],
     locale: 'en_US',
@@ -45,8 +45,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'EGC Conference 2025 | The Gospel Faith Mission International',
-    description: 'Join EGC Conference 2025, the annual gathering of The Gospel Faith Mission International youth. Register now for spiritual enrichment, fellowship, and transformation.',
+    title: 'EGC Conference 2026 | The Gospel Faith Mission International',
+    description: 'Join EGC Conference 2026, the annual gathering of The Gospel Faith Mission International youth. Register now for spiritual enrichment, fellowship, and transformation.',
     images: [`${process.env.NEXT_PUBLIC_APP_URL}/images/twitter-image.jpg`],
   },
   robots: {

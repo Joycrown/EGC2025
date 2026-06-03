@@ -36,11 +36,18 @@ export async function POST(request: NextRequest) {
     await setPasswordResetToken(user.id, resetToken, expiryTime);
     
     // Send password reset email via Brevo API
-    await sendPasswordResetEmailViaApi(
-      user.email,
+    const emailSent = await sendPasswordResetEmailViaApi(
+      user.email!!,
       resetToken
     );
-    
+
+    if (!emailSent) {
+      return NextResponse.json(
+        { error: 'Failed to send reset email. Please try again later.' },
+        { status: 500 }
+      );
+    }
+
     // Return success response
     return NextResponse.json({
       message: 'If an account with this email exists, a password reset link has been sent.'

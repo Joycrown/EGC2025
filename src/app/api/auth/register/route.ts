@@ -1,27 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser, findUserByEmail, setVerificationToken } from '@/lib/auth/userService';
 import { generateVerificationToken } from '@/lib/auth/utils';
-// Import SMTP email methods but comment them out as we're now using the API method
-// import { sendEmail, generateVerificationEmail } from '@/lib/email/emailService';
 import { sendVerificationEmailViaApi } from '@/lib/email/brevoApiService';
+import { prisma } from '@/lib/db/prismaClient';
+import { getActiveEdition } from '@/lib/editions/activeEdition';
 
 export async function POST(request: NextRequest) {
   try {
-    // Get user data from request body
     const userData = await request.json();
-    
-    // Validate required fields
+
     const requiredFields = ['email', 'password', 'fullName', 'birthDate', 'birthMonth', 'gender'];
     for (const field of requiredFields) {
       if (!userData[field]) {
-        return NextResponse.json(
-          { error: `${field} is required` },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: `${field} is required` }, { status: 400 });
       }
     }
-    
-    // Check if user with this email already exists
+
     const existingUser = await findUserByEmail(userData.email);
     if (existingUser) {
       return NextResponse.json(
@@ -29,60 +23,34 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       );
     }
-    
-    // Create new user
+
     const user = await createUser(userData);
-    
-    // Generate verification token
+
     const verificationToken = generateVerificationToken();
-    
-    // Save verification token to user
     await setVerificationToken(user.id, verificationToken);
-    
-    // For debugging in development environment
-    if (process.env.NODE_ENV !== 'production') {
-      // Safely log verification information during development
-      // For development and debugging purposes only
-      const logVerificationDetails = () => {
-        // In production environment, skip logging
-        if (process.env.NODE_ENV === 'production') {
-          return;
-        }
-        
-        // All console logs removed for production code
-      };
-      
-      // Only execute in development
-      logVerificationDetails();
+
+    await sendVerificationEmailViaApi(user.email!, verificationToken, userData.fullName);
+
+    // Register for the active conference edition
+    const activeEdition = await getActiveEdition();
+    if (activeEdition) {
+      await prisma.conferenceRegistration.upsert({
+        where: { userId_editionId: { userId: user.id, editionId: activeEdition.id } },
+        update: {},
+        create: { userId: user.id, editionId: activeEdition.id },
+      });
     }
-    
-    // Send verification email via Brevo API (more reliable than SMTP)
-    await sendVerificationEmailViaApi(
-      user.email,
-      verificationToken,
-      userData.fullName
-    );
-    
-    // Fallback to SMTP method if needed
-    // await sendEmail(generateVerificationEmail(
-    //   user.email,
-    //   verificationToken
-    // ));
-    
-    // Return success response (exclude password from response)
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = user;
     return NextResponse.json({
       message: 'User registered successfully. Please check your email to verify your account.',
       user: userWithoutPassword,
-      redirectUrl: '/registration-success?email=' + encodeURIComponent(user.email)
+      redirectUrl: '/registration-success?email=' + encodeURIComponent(user.email!),
     }, { status: 201 });
-    
+
   } catch (error) {
     console.error('Registration error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

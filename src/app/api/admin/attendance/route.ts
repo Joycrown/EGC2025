@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prismaClient';
-import { Role, Prisma } from '@prisma/client'; // Import Prisma
+import { Role, Prisma } from '@prisma/client';
 import { verifyAuth } from '@/lib/auth/utils';
 
 export async function GET(request: NextRequest) {
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const searchTerm = searchParams.get('searchTerm') || '';
     const roleFilter = searchParams.get('roleFilter');
 
-    if (!day || !['day_11_july', 'day_12_july', 'day_13_july'].includes(day)) {
+    if (!day || !['day1', 'day2', 'day3'].includes(day)) {
       return NextResponse.json({ error: 'Invalid or missing day parameter' }, { status: 400 });
     }
 
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const whereClause: Prisma.AttendanceWhereInput = {
       [day]: true,
       ...(searchTerm && {
-        user: {
+        User: {
           OR: [
             { fullName: { contains: searchTerm, mode: 'insensitive' } },
             { email: { contains: searchTerm, mode: 'insensitive' } },
@@ -31,9 +31,7 @@ export async function GET(request: NextRequest) {
         },
       }),
       ...(roleFilter && roleFilter !== 'ALL' && {
-        user: {
-          role: roleFilter as Role,
-        },
+        User: { role: roleFilter as Role },
       }),
     };
 
@@ -42,26 +40,20 @@ export async function GET(request: NextRequest) {
         where: whereClause,
         select: {
           id: true,
-          user: {
+          User: {
             select: {
               fullName: true,
               email: true,
               role: true,
-              address: true, // Include user address
+              address: true,
             },
           },
         },
-        orderBy: {
-          user: {
-            fullName: 'asc',
-          },
-        },
+        orderBy: { User: { fullName: 'asc' } },
         skip,
         take: pageSize,
       }),
-      prisma.attendance.count({
-        where: whereClause,
-      }),
+      prisma.attendance.count({ where: whereClause }),
     ]);
 
     return NextResponse.json({
@@ -73,12 +65,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Fetch Attendance Error:', error);
     if (error instanceof Error) {
-      if (error.message.includes('Unauthorized')) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-      if (error.message.includes('Forbidden')) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
+      if (error.message.includes('Unauthorized')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      if (error.message.includes('Forbidden')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

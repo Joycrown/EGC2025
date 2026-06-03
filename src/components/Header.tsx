@@ -113,7 +113,7 @@ export default function Header({ isLoggedIn, isLoading }: HeaderProps) {
           <div className="flex items-center space-x-6">
             <Link href="/" className="text-gray-800 hover:text-red-500 font-medium">Home</Link>
             <Link href="/schedule" className="text-gray-800 hover:text-red-500 font-medium">Schedule</Link>
-            <Link href="/egc-games" className="text-gray-800 hover:text-red-500 font-medium">EGC Games</Link>
+            <Link href="/#" className="text-gray-800 hover:text-red-500 font-medium">EGC Games</Link>
             <Link href="/contact" className="text-gray-800 hover:text-red-500 font-medium">Contact</Link>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function Header({ isLoggedIn, isLoading }: HeaderProps) {
         <div className="flex flex-col py-4 px-6 space-y-4">
           <Link href="/" className="text-gray-800 hover:text-red-500 font-medium text-lg" onClick={() => setMobileMenuOpen(false)}>Home</Link>
           <Link href="/schedule" className="text-gray-800 hover:text-red-500 font-medium text-lg" onClick={() => setMobileMenuOpen(false)}>Schedule</Link>
-          <Link href="/egc-games" className="text-gray-800 hover:text-red-500 font-medium text-lg" onClick={() => setMobileMenuOpen(false)}>EGC Games</Link>
+          <Link href="/#" className="text-gray-800 hover:text-red-500 font-medium text-lg" onClick={() => setMobileMenuOpen(false)}>EGC Games</Link>
           <Link href="/contact" className="text-gray-800 hover:text-red-500 font-medium text-lg" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
           <div className="border-t pt-4">
             <MobileAuthButtons />

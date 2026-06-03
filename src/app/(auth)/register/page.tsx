@@ -124,7 +124,7 @@ export default function Register() {
       {/* Page Content */}
       <div className="mb-6 text-center">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Create Your Account</h1>
-        <p className="text-gray-600">Register for EGC Conference 2025</p>
+        <p className="text-gray-600">Register for EGC Conference 2026</p>
       </div>
 
       {/* Step indicator */}
@@ -338,35 +338,6 @@ export default function Register() {
             </select>
           </div>
           
-          <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-              Role at Conference *
-            </label>
-            <select
-              id="role"
-              name="role"
-              required
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full px-4 py-2 md:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-            >
-              <option value="PARTICIPANT">Participant</option>
-              <option value="VOLUNTEER">Volunteer</option>
-            </select>
-            <div className="mt-2 flex items-start space-x-2">
-              <div className="shrink-0 mt-0.5">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <p className="text-xs text-gray-500 italic">
-                {formData.role === "VOLUNTEER" ? 
-                  "Volunteers serve in various capacities during the conference such as choir, ushering, instrumentalists, technical, prayer team, media, logistics and more. You'll be assigned based on your skills and preferences." : 
-                  "Participants attend all sessions and engage in conference activities without specific service responsibilities."}
-              </p>
-            </div>
-          </div>
-
           <div className="flex space-x-4">
             <button
               type="button"

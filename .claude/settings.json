@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(ts|js|json\\)$\")",
+      "Bash(xargs grep -l \"socket\\\\|Socket\\\\|ws://\")",
+      "Bash(git -C /c/Joycrown/EGC2025 branch -a)",
+      "Bash(git -C /c/Joycrown/EGC2025 log --oneline --all)",
+      "Bash(npx prisma *)",
+      "Bash(npx tsc *)",
+      "Bash(xargs grep -l -i \"attendance\")"
+    ]
+  }
+}

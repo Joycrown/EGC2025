@@ -24,15 +24,15 @@ export const verificationEmailTemplate = (verificationLink: string, year: number
               <img src="${emailConfig.logoUrl}" alt="GOFAMINT Logo" width="80" style="display: block; margin: 0 auto;">
             </td>
           </tr>
-          
+
           <!-- Banner -->
           <tr>
             <td align="center" bgcolor="#e53e3e" style="padding: 20px; color: #ffffff;">
-              <h1 style="margin: 0; font-size: 22px; font-weight: bold;">EGC CONFERENCE 2025</h1>
-              <p style="margin: 5px 0 0; font-size: 14px;">Emerging Generals' Conference</p>
+              <h1 style="margin: 0; font-size: 22px; font-weight: bold;">EGC CONFERENCE 2026</h1>
+              <p style="margin: 5px 0 0; font-size: 14px;">Emerging Generals&apos; Conference</p>
             </td>
           </tr>
-          
+
           <!-- Main Content -->
           <tr>
             <td style="padding: 30px 40px;">
@@ -40,11 +40,11 @@ export const verificationEmailTemplate = (verificationLink: string, year: number
                 <tr>
                   <td style="padding-bottom: 20px;">
                     <h2 style="margin: 0 0 20px; color: #111827; font-size: 18px;">Email Verification</h2>
-                    <p style="margin: 0 0 15px; color: #4b5563; font-size: 14px; line-height: 1.5;">Thank you for registering for the Emerging Generals' Conference 2025!</p>
+                    <p style="margin: 0 0 15px; color: #4b5563; font-size: 14px; line-height: 1.5;">Thank you for registering for the Emerging Generals&apos; Conference 2026!</p>
                     <p style="margin: 0 0 25px; color: #4b5563; font-size: 14px; line-height: 1.5;">To complete your registration, please verify your email address by clicking the button below:</p>
                   </td>
                 </tr>
-                
+
                 <!-- Button -->
                 <tr>
                   <td align="center" style="padding: 10px 0 25px;">
@@ -57,12 +57,11 @@ export const verificationEmailTemplate = (verificationLink: string, year: number
                     </table>
                   </td>
                 </tr>
-                
-                
+
               </table>
             </td>
           </tr>
-          
+
           <!-- Decorative Element -->
           <tr>
             <td>
@@ -75,7 +74,7 @@ export const verificationEmailTemplate = (verificationLink: string, year: number
               </table>
             </td>
           </tr>
-          
+
           <!-- Footer -->
           <tr>
             <td style="padding: 0 30px 30px; text-align: center;">
@@ -102,7 +101,7 @@ export const welcomeEmailTemplate = (userData: {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to EGC Conference 2025</title>
+  <title>Welcome to EGC Conference 2026</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f7fa;">
   <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" style="background-color: #f5f7fa;">
@@ -116,15 +115,15 @@ export const welcomeEmailTemplate = (userData: {
               <img src="${emailConfig.logoUrl}" alt="GOFAMINT Logo" width="80" style="display: block; margin: 0 auto;">
             </td>
           </tr>
-          
+
           <!-- Banner -->
           <tr>
             <td align="center" bgcolor="#e53e3e" style="padding: 20px; color: #ffffff;">
-              <h1 style="margin: 0; font-size: 22px; font-weight: bold;">EGC CONFERENCE 2025</h1>
+              <h1 style="margin: 0; font-size: 22px; font-weight: bold;">EGC CONFERENCE 2026</h1>
               <p style="margin: 5px 0 0; font-size: 14px;">Welcome to Team ${userData.teamName}!</p>
             </td>
           </tr>
-          
+
           <!-- Main Content -->
           <tr>
             <td style="padding: 30px 40px;">
@@ -132,11 +131,11 @@ export const welcomeEmailTemplate = (userData: {
                 <tr>
                   <td style="padding-bottom: 20px;">
                     <h2 style="margin: 0 0 20px; color: #111827; font-size: 18px;">Registration Complete</h2>
-                    <p style="margin: 0 0 20px; color: #4b5563; font-size: 14px; line-height: 1.5;">Thank you for verifying your email. Your registration for the EGC Conference 2025 is now complete!</p>
+                    <p style="margin: 0 0 20px; color: #4b5563; font-size: 14px; line-height: 1.5;">Thank you for verifying your email. Your registration for EGC Conference 2026 is now complete!</p>
                     <p style="margin: 0 0 25px; color: #6d28d9; font-size: 16px; font-weight: bold;">Here are your registration details:</p>
                   </td>
                 </tr>
-                
+
                 <!-- Participant Card -->
                 <tr>
                   <td style="padding: 0 0 30px;">
@@ -147,7 +146,7 @@ export const welcomeEmailTemplate = (userData: {
                           <p style="margin: 0; font-size: 14px; font-weight: bold;">PARTICIPANT DETAILS</p>
                         </td>
                       </tr>
-                      
+
                       <!-- Card Content -->
                       <tr>
                         <td style="padding: 15px;">
@@ -161,7 +160,7 @@ export const welcomeEmailTemplate = (userData: {
                                 <p style="margin: 0; color: #111827; font-weight: bold; font-size: 13px;">${userData.fullName}</p>
                               </td>
                             </tr>
-                            
+
                             <!-- Participant ID -->
                             <tr>
                               <td width="40%" style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb;">
@@ -171,7 +170,7 @@ export const welcomeEmailTemplate = (userData: {
                                 <p style="margin: 0; color: #111827; font-size: 13px;">${userData.userId}</p>
                               </td>
                             </tr>
-                            
+
                             <!-- Role -->
                             <tr>
                               <td width="40%" style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb;">
@@ -181,7 +180,7 @@ export const welcomeEmailTemplate = (userData: {
                                 <p style="margin: 0; color: #111827; font-weight: bold; font-size: 13px;">${userData.role}</p>
                               </td>
                             </tr>
-                            
+
                             <!-- Team -->
                             <tr>
                               <td width="40%" style="padding: 10px 12px; background-color: #f9fafb;">
@@ -197,12 +196,11 @@ export const welcomeEmailTemplate = (userData: {
                     </table>
                   </td>
                 </tr>
-                
+
                 <!-- WhatsApp Join -->
                 <tr>
                   <td style="padding-bottom: 30px;">
-                    <p style="margin: 0 0 15px; color: #4b5563; font-size: 14px; text-align: center;">Join your team's WhatsApp group to connect with fellow team members!</p>
-                    <!-- WhatsApp Button -->
+                    <p style="margin: 0 0 15px; color: #4b5563; font-size: 14px; text-align: center;">Join your team&apos;s WhatsApp group to connect with fellow team members!</p>
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
                       <tr>
                         <td align="center" bgcolor="#eab308" style="border-radius: 4px;">
@@ -214,12 +212,12 @@ export const welcomeEmailTemplate = (userData: {
                     </table>
                   </td>
                 </tr>
-                
+
                 <!-- Important Information -->
                 <tr>
                   <td style="padding: 0 0 20px;">
                     <h3 style="margin: 0 0 15px; color: #111827; font-size: 16px; font-weight: bold;">Important Information</h3>
-                    
+
                     <!-- Date & Venue -->
                     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" style="margin-bottom: 15px;">
                       <tr>
@@ -227,12 +225,12 @@ export const welcomeEmailTemplate = (userData: {
                           <img src="https://i.ibb.co/FXwg99q/calendar-icon.png" alt="Date" width="20" height="20" style="display: block;">
                         </td>
                         <td style="padding-left: 10px;">
-                          <p style="margin: 0; color: #111827; font-weight: bold; font-size: 14px;">July 4-10, 2025</p>
-                          <p style="margin: 0; color: #6b7280; font-size: 13px;">GOFAMINT Akure</p>
+                          <p style="margin: 0; color: #111827; font-weight: bold; font-size: 14px;">10th&ndash;12th July, 2026</p>
+                          <p style="margin: 0; color: #6b7280; font-size: 13px;">GOFAMINT Pace Setters Assembly, Akure</p>
                         </td>
                       </tr>
                     </table>
-                    
+
                     <!-- Theme -->
                     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" style="margin-bottom: 15px;">
                       <tr>
@@ -240,12 +238,12 @@ export const welcomeEmailTemplate = (userData: {
                           <img src="https://i.ibb.co/bzzkC7N/theme-icon.png" alt="Theme" width="20" height="20" style="display: block;">
                         </td>
                         <td style="padding-left: 10px;">
-                          <p style="margin: 0; color: #111827; font-weight: bold; font-size: 14px;">2025 Covenant Exchange</p>
-                          <p style="margin: 0; color: #6b7280; font-size: 13px;">Conference Theme</p>
+                          <p style="margin: 0; color: #111827; font-weight: bold; font-size: 14px;">Glorious Appearing</p>
+                          <p style="margin: 0; color: #6b7280; font-size: 13px;">EGC 2026 Conference Theme &mdash; Titus 2:13</p>
                         </td>
                       </tr>
                     </table>
-                    
+
                     <!-- Team Assignment -->
                     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
                       <tr>
@@ -260,18 +258,18 @@ export const welcomeEmailTemplate = (userData: {
                     </table>
                   </td>
                 </tr>
-                
+
                 <!-- Final Message -->
                 <tr>
                   <td style="padding-bottom: 20px;">
                     <p style="margin: 0 0 10px; color: #4b5563; font-size: 14px; line-height: 1.5;">If you have any questions, feel free to reply to this email or contact the EGC planning committee.</p>
-                    <p style="margin: 0; color: #111827; font-size: 15px; font-weight: bold;">We look forward to seeing you at EGC 2025! 🎉</p>
+                    <p style="margin: 0; color: #111827; font-size: 15px; font-weight: bold;">We look forward to seeing you at EGC 2026! &#127881;</p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
-          
+
           <!-- Yellow Separator -->
           <tr>
             <td>
@@ -284,7 +282,7 @@ export const welcomeEmailTemplate = (userData: {
               </table>
             </td>
           </tr>
-          
+
           <!-- Footer -->
           <tr>
             <td style="padding: 0 30px 30px; text-align: center;">
@@ -320,15 +318,15 @@ export const passwordResetEmailTemplate = (resetLink: string, year: number) => `
               <img src="${emailConfig.logoUrl}" alt="GOFAMINT Logo" width="80" style="display: block; margin: 0 auto;">
             </td>
           </tr>
-          
+
           <!-- Banner -->
           <tr>
             <td align="center" bgcolor="#e53e3e" style="padding: 20px; color: #ffffff;">
-              <h1 style="margin: 0; font-size: 22px; font-weight: bold;">EGC CONFERENCE 2025</h1>
+              <h1 style="margin: 0; font-size: 22px; font-weight: bold;">EGC CONFERENCE 2026</h1>
               <p style="margin: 5px 0 0; font-size: 14px;">Password Reset Request</p>
             </td>
           </tr>
-          
+
           <!-- Main Content -->
           <tr>
             <td style="padding: 30px 40px;">
@@ -336,11 +334,11 @@ export const passwordResetEmailTemplate = (resetLink: string, year: number) => `
                 <tr>
                   <td style="padding-bottom: 20px;">
                     <h2 style="margin: 0 0 20px; color: #111827; font-size: 18px;">Reset Your Password</h2>
-                    <p style="margin: 0 0 15px; color: #4b5563; font-size: 14px; line-height: 1.5;">We received a request to reset your password for your EGC Conference 2025 account.</p>
-                    <p style="margin: 0 0 25px; color: #4b5563; font-size: 14px; line-height: 1.5;">If you didn't make this request, you can safely ignore this email. Otherwise, click the button below to create a new password:</p>
+                    <p style="margin: 0 0 15px; color: #4b5563; font-size: 14px; line-height: 1.5;">We received a request to reset your password for your EGC Conference 2026 account.</p>
+                    <p style="margin: 0 0 25px; color: #4b5563; font-size: 14px; line-height: 1.5;">If you didn&apos;t make this request, you can safely ignore this email. Otherwise, click the button below to create a new password:</p>
                   </td>
                 </tr>
-                
+
                 <!-- Button -->
                 <tr>
                   <td align="center" style="padding: 10px 0 25px;">
@@ -353,21 +351,18 @@ export const passwordResetEmailTemplate = (resetLink: string, year: number) => `
                     </table>
                   </td>
                 </tr>
-                
-               
-                
-                
+
                 <!-- Security Note -->
                 <tr>
                   <td style="padding: 15px; background-color: #f7f7f7; border-left: 4px solid #eab308;">
-                    <p style="margin: 0 0 5px; color: #111827; font-size: 14px; font-weight: bold;">⚠️ This link expires in 1 hour</p>
+                    <p style="margin: 0 0 5px; color: #111827; font-size: 14px; font-weight: bold;">&#9888;&#65039; This link expires in 1 hour</p>
                     <p style="margin: 0; color: #4b5563; font-size: 13px;">For security reasons, the password reset link will only be valid for 1 hour from the time this email was sent.</p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
-          
+
           <!-- Yellow Separator -->
           <tr>
             <td>
@@ -380,7 +375,7 @@ export const passwordResetEmailTemplate = (resetLink: string, year: number) => `
               </table>
             </td>
           </tr>
-          
+
           <!-- Footer -->
           <tr>
             <td style="padding: 0 30px 30px; text-align: center;">

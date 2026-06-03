@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
       
       // Send welcome email using Brevo API (more reliable than SMTP)
       await sendWelcomeEmailViaApi(
-        user.email,
+        user.email!!,
         {
           fullName: user.fullName,
           role: user.role,
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
       
       // Fallback to SMTP method if needed
       // await sendEmail(generateWelcomeEmail(
-      //   user.email,
+      //   user.email!!,
       //   {
       //     fullName: user.fullName,
       //     role: user.role,

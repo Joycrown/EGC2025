@@ -83,7 +83,7 @@ function VerifyEmailContent() {
         
         {status === 'success' && (
           <p className="mt-4 text-sm">
-            You will receive a welcome email shortly with your team assignment and important information for the EGC Conference 2025.
+            You will receive a welcome email shortly with your team assignment and important information for the EGC Conference 2026.
           </p>
         )}
       </div>

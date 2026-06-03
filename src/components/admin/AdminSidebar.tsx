@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, UserCheck, UserCog, ArrowLeft, X } from 'lucide-react';
+import { Home, Users, UserCheck, UserCog, ArrowLeft, X, Gamepad2, QrCode } from 'lucide-react';
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -17,7 +17,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
     { href: '/admin', label: 'Dashboard', icon: Home },
     { href: '/admin/users', label: 'User Management', icon: Users },
     { href: '/admin/attendance', label: 'Attendance', icon: UserCheck },
+    { href: '/admin/qr', label: 'Check-in QR', icon: QrCode },
     { href: '/admin/manage-admins', label: 'Manage Admins', icon: UserCog },
+    { href: '/admin/games', label: 'Game Sessions', icon: Gamepad2 },
   ];
 
   return (
@@ -49,7 +51,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
                   href={item.href}
                   onClick={onClose} // Close sidebar on navigation
                   className={`flex items-center p-3 rounded-lg transition-colors ${
-                    pathname === item.href
+                    pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href))
                       ? 'bg-red-600 text-white shadow-md'
                       : 'hover:bg-gray-200'
                   }`}>

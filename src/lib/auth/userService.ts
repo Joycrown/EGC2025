@@ -8,7 +8,7 @@ import { Role, UserType } from '@prisma/client';
 // Define types based on our Prisma schema
 type User = {
   id: string;
-  email: string;
+  email: string | null;
   password: string;
   fullName: string;
   phoneNumber: string | null;
@@ -16,10 +16,11 @@ type User = {
   birthMonth: number | null;
   gender: string;
   isVerified: boolean;
+  isChild: boolean;
   verificationToken: string | null;
   resetToken: string | null;
   resetTokenExpiry: Date | null;
-  role: Role; // Use the Prisma Role enum
+  role: Role;
   teamId: string | null;
   teamName: string | null;
   whatsappLink: string | null;
@@ -44,20 +45,15 @@ export interface RegisterUserData {
   userType?: UserType;
 }
 
-// Generate a custom EGC user ID with format EGC25-XXXX (random 4 digits)
+// Generate a custom EGC user ID with format EGC26-XXXX (random 4 digits)
 export async function generateEgcUserId(): Promise<string> {
-  // Generate a random 4-digit number, padded with leading zeros
   const randomNum = Math.floor(1000 + Math.random() * 9000);
-  
-  // Create ID with format EGC25-XXXX
-  const userId = `EGC25-${randomNum.toString().padStart(4, '0')}`;
-  
-  // Check if this ID already exists (very unlikely but possible)
+  const userId = `EGC26-${randomNum.toString().padStart(4, '0')}`;
+
   const existingUser = await prisma.user.findUnique({
     where: { id: userId },
   });
-  
-  // If ID already exists, recursively try again
+
   if (existingUser) {
     return generateEgcUserId();
   }

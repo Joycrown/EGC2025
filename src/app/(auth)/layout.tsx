@@ -98,8 +98,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             transition={{ duration: 0.8 }}
             className="max-w-lg text-center"
           >
-            <h2 className="text-4xl font-bold mb-6 text-white drop-shadow-lg">Emerging Generals&apos; Conference 2025</h2>
-            <p className="text-xl mb-8 text-white drop-shadow-md">Join us for a transformative experience at EGC Conference 2025. Connect with like-minded individuals and grow spiritually.</p>
+            <h2 className="text-4xl font-bold mb-6 text-white drop-shadow-lg">Emerging Generals&apos; Conference 2026</h2>
+            <p className="text-xl mb-8 text-white drop-shadow-md">Join us for a transformative experience at EGC Conference 2026. Connect with like-minded individuals and grow spiritually.</p>
             
             <div className="flex flex-col space-y-4 w-full max-w-md mx-auto">
               {/* Date card with calendar icon */}
@@ -113,7 +113,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold mb-1">11th-13th July, 2025</h3>
+                  <h3 className="text-xl font-bold mb-1">10th-12th July, 2026</h3>
                   <p className="text-white/90">Mark your calendar for this life-changing event!</p>
                 </div>
               </motion.div>
