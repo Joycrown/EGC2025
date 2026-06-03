@@ -1,5 +1,4 @@
 # EGC Conference App
-
 A comprehensive conference management platform for EGC events with features for member registration, team assignment, ID card generation, and virtual games coordination.
 
 ## Project Overview
@@ -83,4 +82,4 @@ See `.env.example` for all required environment variables.
 
 ## License
 
-This project is proprietary and confidential.
+This project is proprietary and confidential....
