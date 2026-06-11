@@ -26,6 +26,19 @@ import {
   startChainGame,
   unregisterChainParticipantSocket,
 } from '../engine/chainManager';
+import {
+  activeCategorySessions,
+  getCategoriesState,
+  handleCategoriesGuess,
+  startCategoriesGame,
+} from '../engine/categoriesManager';
+import {
+  activeTrivaSessions,
+  getTriviaState,
+  handleTriviaBuzz,
+  handleTriviaAnswer,
+  startTriviaGame,
+} from '../engine/triviaManager';
 import { isAdmin } from '../middleware/auth';
 
 interface RosterEntry {
@@ -52,14 +65,16 @@ function getActiveSession(sessionId: string) {
   return activeSessions.get(sessionId)
     ?? activeScrambleSessions.get(sessionId)
     ?? activeChainSessions.get(sessionId)
+    ?? activeCategorySessions.get(sessionId)
+    ?? activeTrivaSessions.get(sessionId)
     ?? null;
 }
 
 async function getSpectatorCount(io: Server, sessionId: string): Promise<number> {
   const sockets = await io.in(sessionId).fetchSockets();
   const active = getActiveSession(sessionId);
-  const participantIds = active
-    ? new Set(active.participantSockets.keys())
+  const participantIds = active && 'participantSockets' in active
+    ? new Set((active as { participantSockets: Map<string, string> }).participantSockets.keys())
     : new Set<string>();
   return sockets.filter(s => !participantIds.has((s.data.user as AuthUser).id)).length;
 }
@@ -96,6 +111,8 @@ export function registerGameRoomHandlers(io: Server, socket: Socket): void {
       const hangmanSession = activeSessions.get(sessionId);
       const scrambleSession = activeScrambleSessions.get(sessionId);
       const chainSession = activeChainSessions.get(sessionId);
+      const categoriesSession = activeCategorySessions.get(sessionId);
+      const trivSession = activeTrivaSessions.get(sessionId);
 
       if (isParticipant) {
         if (hangmanSession) registerParticipantSocket(hangmanSession, user.id, socket.id);
@@ -106,7 +123,11 @@ export function registerGameRoomHandlers(io: Server, socket: Socket): void {
       socket.emit('room:joined', { role, teamId, teamName });
 
       // Send current game state
-      const state = getCurrentState(sessionId) ?? getCurrentScrambleState(sessionId) ?? getCurrentChainState(sessionId);
+      const catState = getCategoriesState(sessionId);
+      const trivState = getTriviaState(sessionId);
+      const state = getCurrentState(sessionId) ?? getCurrentScrambleState(sessionId) ?? getCurrentChainState(sessionId)
+        ?? (catState ? { categories: catState } : null)
+        ?? (trivState ? { trivia: trivState } : null);
       if (state) {
         socket.emit('game:state', state);
 
@@ -114,9 +135,13 @@ export function registerGameRoomHandlers(io: Server, socket: Socket): void {
           if (hangmanSession) {
             socket.emit('mic:control', { enabled: hangmanSession.currentTurnTeamId === teamId });
           } else if (scrambleSession) {
-            socket.emit('mic:control', { enabled: true });
+            socket.emit('mic:control', { enabled: scrambleSession.currentTurnTeamId === teamId });
           } else if (chainSession) {
             socket.emit('mic:control', { enabled: chainSession.currentTurnTeamId === teamId });
+          } else if (categoriesSession) {
+            socket.emit('mic:control', { enabled: categoriesSession.currentTurnTeamId === teamId });
+          } else if (trivSession) {
+            socket.emit('mic:control', { enabled: true }); // both teams always active in trivia
           }
         }
       }
@@ -150,6 +175,41 @@ export function registerGameRoomHandlers(io: Server, socket: Socket): void {
   socket.on('chain:guess', async ({ sessionId, word }: { sessionId: string; word: string }) => {
     if (!word || typeof word !== 'string' || word.length > 40) return;
     await handleChainGuess(io, socket, sessionId, user.id, word);
+  });
+
+  socket.on('trivia:buzz', async ({ sessionId }: { sessionId: string }) => {
+    const ts = activeTrivaSessions.get(sessionId);
+    if (!ts) return;
+    const entry = await prisma.gameRoster.findFirst({
+      where: { gameSessionId: sessionId, userId: user.id },
+      select: { teamId: true },
+    });
+    if (!entry) return;
+    handleTriviaBuzz(io, sessionId, entry.teamId);
+  });
+
+  socket.on('trivia:answer', async ({ sessionId, answer }: { sessionId: string; answer: string }) => {
+    if (!answer || !['A','B','C','D'].includes(answer.toUpperCase())) return;
+    const ts = activeTrivaSessions.get(sessionId);
+    if (!ts) return;
+    const entry = await prisma.gameRoster.findFirst({
+      where: { gameSessionId: sessionId, userId: user.id },
+      select: { teamId: true },
+    });
+    if (!entry) return;
+    handleTriviaAnswer(io, sessionId, entry.teamId, answer);
+  });
+
+  socket.on('categories:guess', async ({ sessionId, answer }: { sessionId: string; answer: string }) => {
+    if (!answer || typeof answer !== 'string' || answer.length > 60) return;
+    const catSession = activeCategorySessions.get(sessionId);
+    if (!catSession) return;
+    const entry = await prisma.gameRoster.findFirst({
+      where: { gameSessionId: sessionId, userId: user.id },
+      select: { teamId: true },
+    });
+    if (!entry) return;
+    handleCategoriesGuess(io, sessionId, entry.teamId, user.id, answer);
   });
 
   socket.on('chat:send', async ({ sessionId, message }: { sessionId: string; message: string }) => {
@@ -186,6 +246,10 @@ export function registerGameRoomHandlers(io: Server, socket: Socket): void {
         await startScrambleGame(io, sessionId);
       } else if (gameType === 'WORD_CHAIN') {
         await startChainGame(io, sessionId);
+      } else if (gameType === 'BIBLE_CATEGORIES') {
+        await startCategoriesGame(io, sessionId);
+      } else if (gameType === 'BIBLE_TRIVIA') {
+        await startTriviaGame(io, sessionId);
       } else {
         await startGame(io, sessionId);
       }
@@ -213,8 +277,9 @@ export function registerGameRoomHandlers(io: Server, socket: Socket): void {
             io.to(sid).emit('mic:control', { enabled: tid === hangmanSession.currentTurnTeamId });
           }
         } else if (scrambleSession) {
-          for (const [, sid] of Array.from(scrambleSession.participantSockets.entries())) {
-            io.to(sid).emit('mic:control', { enabled: true });
+          for (const [uid, sid] of Array.from(scrambleSession.participantSockets.entries())) {
+            const tid = scrambleSession.participantTeams.get(uid);
+            io.to(sid).emit('mic:control', { enabled: tid === scrambleSession.currentTurnTeamId });
           }
         } else if (chainSession) {
           for (const [uid, sid] of Array.from(chainSession.participantSockets.entries())) {

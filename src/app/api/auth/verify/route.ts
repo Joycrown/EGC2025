@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
     
     // Return success response
     return NextResponse.json({
-      message: 'Email verified successfully. Welcome to EGC Conference 2025!',
+      message: 'Email verified successfully. Welcome to EGC Conference 2026!',
       verified: true,
       team: user.teamName,
       userId: user.id

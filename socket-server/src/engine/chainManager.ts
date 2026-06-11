@@ -1,6 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { ActiveChainSession, ChainClientState, GameStatePayload } from '../types';
-import { pickWordForLetter, pickSafeLetter, nextRequiredLetter } from '../games/wordChain';
+import { pickSafeLetter, nextRequiredLetter } from '../games/wordChain';
+import { validateWord } from '../games/wordValidator';
 import { logTurn, persistScore, finalizeSession } from './scoreEngine';
 import { prisma } from '../db/prisma';
 
@@ -8,14 +9,14 @@ export const activeChainSessions = new Map<string, ActiveChainSession>();
 
 const TURN_SECONDS = 40;
 const TOTAL_TURNS = 20;
-const WORD_POINTS = 5;
+const POINTS_BIBLE = 3;   // word found in the curated Bible bank
+const POINTS_ENGLISH = 1; // valid English word not in Bible bank
+const MIN_WORD_LENGTH = 4;
 
 function toChainClientState(session: ActiveChainSession): ChainClientState {
   return {
     chain: session.chain,
     requiredLetter: session.requiredLetter,
-    category: session.category,
-    hint: session.hint,
     wrongAttempts: session.wrongAttempts,
     turnNumber: session.turnNumber,
     totalTurns: session.totalTurns,
@@ -40,10 +41,7 @@ function buildStatePayload(session: ActiveChainSession): GameStatePayload {
 }
 
 function clearTimer(session: ActiveChainSession): void {
-  if (session.timer) {
-    clearInterval(session.timer);
-    session.timer = null;
-  }
+  if (session.timer) { clearInterval(session.timer); session.timer = null; }
 }
 
 function emitMicControl(io: Server, session: ActiveChainSession): void {
@@ -53,71 +51,46 @@ function emitMicControl(io: Server, session: ActiveChainSession): void {
   });
 }
 
+function switchTurn(session: ActiveChainSession): void {
+  session.currentTurnTeamId =
+    session.currentTurnTeamId === session.teamAId ? session.teamBId : session.teamAId;
+}
+
 function startTurnTimer(io: Server, session: ActiveChainSession): void {
   clearTimer(session);
-
   session.timer = setInterval(() => {
     session.timeLeft -= 1;
     io.to(session.sessionId).emit('game:tick', { timeLeft: session.timeLeft });
-
-    if (session.timeLeft <= 0) {
-      handleTurnTimeout(io, session);
-    }
+    if (session.timeLeft <= 0) handleTurnTimeout(io, session);
   }, 1000);
 }
 
 async function handleTurnTimeout(io: Server, session: ActiveChainSession): Promise<void> {
   clearTimer(session);
-  session.consecutiveFailures += 1;
 
   const teamName = session.currentTurnTeamId === session.teamAId
     ? session.teamAName : session.teamBName;
 
-  // Reveal the word everyone was trying to guess
+  // Required letter carries over — same starting constraint for the other team
   io.to(session.sessionId).emit('chain:timeout', {
-    correctWord: session.currentWord,
     teamId: session.currentTurnTeamId,
     teamName,
+    requiredLetter: session.requiredLetter,
   });
 
   await logTurn(session.sessionId, session.currentTurnTeamId, null, { type: 'timeout' }, false, 0);
   await persistScore(session.sessionId, session.teamAScore, session.teamBScore);
 
-  // If 2 consecutive failures on same letter, advance to a new one
-  if (session.consecutiveFailures >= 2) {
-    session.requiredLetter = pickSafeLetter(session.usedWords, session.requiredLetter);
-    session.consecutiveFailures = 0;
-  }
-
   if (session.turnNumber >= TOTAL_TURNS) {
     await endGame(io, session);
   } else {
+    switchTurn(session);
     setTimeout(() => startNextTurn(io, session), 3000);
   }
 }
 
 function startNextTurn(io: Server, session: ActiveChainSession): void {
   session.turnNumber += 1;
-  session.currentTurnTeamId =
-    session.currentTurnTeamId === session.teamAId ? session.teamBId : session.teamAId;
-
-  // Pick a word from the bank starting with the required letter
-  const entry = pickWordForLetter(session.requiredLetter, session.usedWords);
-  if (entry) {
-    session.currentWord = entry.word;
-    session.category = entry.category;
-    session.hint = entry.hint ?? '';
-    session.usedWords.push(entry.word);
-  } else {
-    // No words left for this letter — pick a safe new letter
-    session.requiredLetter = pickSafeLetter(session.usedWords);
-    const fallback = pickWordForLetter(session.requiredLetter, session.usedWords)!;
-    session.currentWord = fallback.word;
-    session.category = fallback.category;
-    session.hint = fallback.hint ?? '';
-    session.usedWords.push(fallback.word);
-  }
-
   session.wrongAttempts = [];
   session.timeLeft = TURN_SECONDS;
 
@@ -175,8 +148,7 @@ export async function startChainGame(io: Server, sessionId: string): Promise<voi
   const participantTeams = new Map<string, string>();
   dbSession.roster.forEach(r => { participantTeams.set(r.userId, r.teamId); });
 
-  const startingLetter = pickSafeLetter([]);
-  const firstEntry = pickWordForLetter(startingLetter, [])!;
+  const startingLetter = pickSafeLetter();
 
   const session: ActiveChainSession = {
     sessionId,
@@ -190,15 +162,11 @@ export async function startChainGame(io: Server, sessionId: string): Promise<voi
     teamAScore: 0,
     teamBScore: 0,
     requiredLetter: startingLetter,
-    currentWord: firstEntry.word,
-    category: firstEntry.category,
-    hint: firstEntry.hint ?? '',
-    wrongAttempts: [],
     chain: [],
-    usedWords: [firstEntry.word],
+    usedWords: [],
+    wrongAttempts: [],
     turnNumber: 1,
     totalTurns: TOTAL_TURNS,
-    consecutiveFailures: 0,
     participantSockets: new Map(),
     participantTeams,
     status: 'in_progress',
@@ -244,67 +212,76 @@ export async function handleChainGuess(
 
   const upper = word.trim().toUpperCase();
 
-  // Client-side already validates the starting letter, but double-check server-side
+  // ── Validation layer ──────────────────────────────────────────────────────
+
+  if (upper.length < MIN_WORD_LENGTH) {
+    socket.emit('chain:invalid', { reason: 'too_short', word: upper });
+    return;
+  }
+
   if (!upper.startsWith(session.requiredLetter)) {
     socket.emit('chain:invalid', { reason: 'wrong_letter', word: upper });
     return;
   }
 
-  // Already tried this word this turn
+  if (session.usedWords.includes(upper)) {
+    socket.emit('chain:invalid', { reason: 'already_used', word: upper });
+    return;
+  }
+
   if (session.wrongAttempts.includes(upper)) {
     socket.emit('chain:invalid', { reason: 'already_tried', word: upper });
     return;
   }
 
-  if (upper === session.currentWord) {
-    // Correct!
-    clearTimer(session);
-    session.consecutiveFailures = 0;
-    session.chain.push(session.currentWord);
+  // Dictionary check (Bible bank first, then Free Dictionary API)
+  const { valid, isBibleWord } = await validateWord(upper);
 
-    if (userTeamId === session.teamAId) session.teamAScore += WORD_POINTS;
-    else session.teamBScore += WORD_POINTS;
-
-    const teamName = userTeamId === session.teamAId ? session.teamAName : session.teamBName;
-    const solvedWord = session.currentWord;
-
-    // Compute next required letter before moving on
-    session.requiredLetter = nextRequiredLetter(solvedWord, session.usedWords);
-
-    await logTurn(session.sessionId, userTeamId, userId, { type: 'word', value: solvedWord }, true, WORD_POINTS);
-    await persistScore(sessionId, session.teamAScore, session.teamBScore);
-
-    io.to(sessionId).emit('chain:correct', {
-      word: solvedWord,
-      category: session.category,
-      teamId: userTeamId,
-      teamName,
-      pointsAwarded: WORD_POINTS,
-      nextLetter: session.requiredLetter,
-      chain: session.chain,
-    });
-    io.to(sessionId).emit('game:score', {
-      teamAScore: session.teamAScore,
-      teamBScore: session.teamBScore,
-    });
-
-    if (session.turnNumber >= TOTAL_TURNS) {
-      await endGame(io, session);
-    } else {
-      setTimeout(() => startNextTurn(io, session), 3000);
-    }
-  } else {
-    // Wrong — add to attempts list and broadcast so everyone can see what was tried
+  if (!valid) {
     session.wrongAttempts.push(upper);
     await logTurn(session.sessionId, userTeamId, userId, { type: 'word', value: upper }, false, 0);
 
     const teamName = userTeamId === session.teamAId ? session.teamAName : session.teamBName;
+    io.to(sessionId).emit('chain:attempt', { word: upper, teamId: userTeamId, teamName, isBibleWord: false });
+    return;
+  }
 
-    io.to(sessionId).emit('chain:attempt', {
-      word: upper,
-      teamId: userTeamId,
-      teamName,
-    });
+  // ── Correct word ──────────────────────────────────────────────────────────
+
+  clearTimer(session);
+
+  const points = isBibleWord ? POINTS_BIBLE : POINTS_ENGLISH;
+  if (userTeamId === session.teamAId) session.teamAScore += points;
+  else session.teamBScore += points;
+
+  session.chain.push(upper);
+  session.usedWords.push(upper);
+  session.requiredLetter = nextRequiredLetter(upper);
+
+  const teamName = userTeamId === session.teamAId ? session.teamAName : session.teamBName;
+
+  await logTurn(session.sessionId, userTeamId, userId, { type: 'word', value: upper }, true, points);
+  await persistScore(sessionId, session.teamAScore, session.teamBScore);
+
+  io.to(sessionId).emit('chain:correct', {
+    word: upper,
+    isBibleWord,
+    teamId: userTeamId,
+    teamName,
+    pointsAwarded: points,
+    nextLetter: session.requiredLetter,
+    chain: session.chain,
+  });
+  io.to(sessionId).emit('game:score', {
+    teamAScore: session.teamAScore,
+    teamBScore: session.teamBScore,
+  });
+
+  if (session.turnNumber >= TOTAL_TURNS) {
+    await endGame(io, session);
+  } else {
+    switchTurn(session);
+    setTimeout(() => startNextTurn(io, session), 3000);
   }
 }
 

@@ -46,7 +46,10 @@ function DashboardLayoutClient({ user, children }: DashboardLayoutClientProps) {
   const sidebarContent = (
     <nav className="space-y-1">
       <NavLink href="/dashboard" isActive={pathname === '/dashboard'} icon={icons.home}>Dashboard</NavLink>
-      <NavLink href="/#" isActive={false} icon={icons.games}>EGC Games</NavLink>
+      <NavLink href="/games" isActive={pathname.startsWith('/games')} icon={icons.games}>EGC Games</NavLink>
+      <NavLink href="/leaderboard" isActive={pathname === '/leaderboard'} icon={
+        <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+      }>Leaderboard</NavLink>
       <NavLink href="#" isActive={pathname === '/schedule'} icon={icons.schedule}>Conference Schedule</NavLink>
       {(user?.userType === 'ADMIN' || user?.userType === 'SUPER_ADMIN') && (
         <>

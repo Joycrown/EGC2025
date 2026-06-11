@@ -11,8 +11,8 @@ interface DynamicSeoProps {
 }
 
 export default function DynamicSeo({
-  title = 'EGC Conference 2025 | The Gospel Faith Mission International',
-  description = 'Join EGC Conference 2025, the annual gathering of The Gospel Faith Mission International youth. Register now for spiritual enrichment, fellowship, and transformation.',
+  title = 'EGC Conference 2026 | The Gospel Faith Mission International',
+  description = 'Join EGC Conference 2026, the annual gathering of The Gospel Faith Mission International youth. Register now for spiritual enrichment, fellowship, and transformation.',
   image = '/images/og-image.jpg',
   type = 'website',
 }: DynamicSeoProps) {

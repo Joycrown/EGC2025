@@ -10,28 +10,52 @@ type Screen = 'loading' | 'invalid' | 'landing' | 'returning' | 'new' | 'success
 interface DayInfo { day: string; dayLabel: string; date: string; }
 interface UserCard { id: string; fullName: string; role: string; isChild: boolean; phoneHint: string | null; emailHint: string | null; alreadyCheckedIn: boolean; }
 
-// ── Welcome animation (CSS confetti) ─────────────────────────────
+// ── Confetti piece (module-level — stable reference) ──────────────
 const CONFETTI_COLORS = ['#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#8b5cf6', '#f97316'];
+
 function ConfettiPiece({ index }: { index: number }) {
   const color = CONFETTI_COLORS[index % CONFETTI_COLORS.length];
-  const left = `${5 + (index * 17) % 90}%`;
-  const delay = `${(index * 0.15) % 1.5}s`;
-  const duration = `${1.8 + (index * 0.13) % 1}s`;
-  const size = `${8 + (index * 3) % 8}px`;
   return (
     <div
       className="absolute top-0 rounded-sm animate-bounce"
-      style={{ left, width: size, height: size, backgroundColor: color, animationDelay: delay, animationDuration: duration, opacity: 0.85 }}
+      style={{
+        left: `${5 + (index * 17) % 90}%`,
+        width: `${8 + (index * 3) % 8}px`,
+        height: `${8 + (index * 3) % 8}px`,
+        backgroundColor: color,
+        animationDelay: `${(index * 0.15) % 1.5}s`,
+        animationDuration: `${1.8 + (index * 0.13) % 1}s`,
+        opacity: 0.85,
+      }}
     />
   );
 }
 
-// ── Role display ──────────────────────────────────────────────────
+// ── Role labels ───────────────────────────────────────────────────
 const ROLE_LABELS: Record<string, string> = {
   MEMBER: 'Member', INVITEE: 'Guest', MINISTER: 'Minister',
   CHILD: 'Child', PARTICIPANT: 'Participant', VOLUNTEER: 'Volunteer',
   ADMIN: 'Admin', COORDINATOR: 'Coordinator',
 };
+
+// ── Page wrapper — defined at module level so it never remounts ───
+// This is the critical fix for mobile keyboard dismissal:
+// defining Wrap inside the component caused React to see a new
+// component type on every keystroke → unmount/remount → focus lost.
+function PageWrap({ dayInfo, children }: { dayInfo: DayInfo | null; children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center px-5 py-10">
+      <div className="w-full max-w-md">
+        <div className="flex flex-col items-center mb-8">
+          <Image src="/images/GofamintLogo.png" alt="GOFAMINT" width={52} height={52} className="rounded-full mb-3 border-2 border-yellow-400/30" />
+          <p className="text-xs font-bold tracking-[0.35em] uppercase text-yellow-400/70">EGC Conference 2026</p>
+          {dayInfo && <p className="text-[11px] text-white/40 mt-0.5 tracking-wide">{dayInfo.dayLabel}</p>}
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────
 export default function CheckinPageInner() {
@@ -57,6 +81,8 @@ export default function CheckinPageInner() {
   // Success
   const [successName, setSuccessName] = useState('');
   const [successRole, setSuccessRole] = useState('');
+
+  const isChild = form.attendeeType === 'CHILD';
 
   // ── Verify token on mount ────────────────────────────────────────
   useEffect(() => {
@@ -109,64 +135,44 @@ export default function CheckinPageInner() {
     const d = await res.json();
     setFormLoading(false);
     if (!res.ok) {
-      if (d.duplicate) { setFormError(d.error + ' Use the "Already registered" option.'); }
-      else { setFormError(d.error ?? 'Registration failed'); }
+      if (d.duplicate) setFormError(d.error + ' Use the "Already registered" option.');
+      else setFormError(d.error ?? 'Registration failed');
       return;
     }
     setSuccessName(d.fullName); setSuccessRole(d.role); setScreen('success');
   }, [form, token]);
 
-  const isChild = form.attendeeType === 'CHILD';
-
-  // ── Shared wrapper ────────────────────────────────────────────────
-  const Wrap = ({ children }: { children: React.ReactNode }) => (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center px-5 py-10">
-      <div className="w-full max-w-md">
-        {/* Header badge */}
-        <div className="flex flex-col items-center mb-8">
-          <Image src="/images/GofamintLogo.png" alt="GOFAMINT" width={52} height={52} className="rounded-full mb-3 border-2 border-yellow-400/30" />
-          <p className="text-xs font-bold tracking-[0.35em] uppercase text-yellow-400/70">EGC Conference 2026</p>
-          {dayInfo && <p className="text-[11px] text-white/40 mt-0.5 tracking-wide">{dayInfo.dayLabel}</p>}
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-
   // ── LOADING ───────────────────────────────────────────────────────
   if (screen === 'loading') return (
-    <Wrap>
+    <PageWrap dayInfo={dayInfo}>
       <div className="flex flex-col items-center gap-4 py-12">
         <div className="w-10 h-10 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
         <p className="text-white/50 text-sm">Verifying check-in code…</p>
       </div>
-    </Wrap>
+    </PageWrap>
   );
 
   // ── INVALID ───────────────────────────────────────────────────────
   if (screen === 'invalid') return (
-    <Wrap>
+    <PageWrap dayInfo={dayInfo}>
       <div className="text-center py-10 px-6 bg-red-950/30 border border-red-800/40 rounded-2xl">
         <div className="text-5xl mb-4">⚠️</div>
         <h2 className="text-lg font-bold text-red-300 mb-2">Invalid QR Code</h2>
         <p className="text-red-400/80 text-sm leading-relaxed">{invalidMsg}</p>
       </div>
-    </Wrap>
+    </PageWrap>
   );
 
-  // ── LANDING — choose path ─────────────────────────────────────────
+  // ── LANDING ───────────────────────────────────────────────────────
   if (screen === 'landing') return (
-    <Wrap>
+    <PageWrap dayInfo={dayInfo}>
       <div className="text-center mb-8">
         <h1 className="text-2xl font-black text-white mb-1">Welcome!</h1>
         <p className="text-white/50 text-sm">How would you like to check in?</p>
       </div>
-
       <div className="flex flex-col gap-4">
-        <button
-          onClick={() => setScreen('returning')}
-          className="w-full p-5 rounded-2xl border-2 border-yellow-500/40 bg-yellow-500/8 hover:bg-yellow-500/15 hover:border-yellow-400/60 transition-all text-left group"
-        >
+        <button onClick={() => setScreen('returning')}
+          className="w-full p-5 rounded-2xl border-2 border-yellow-500/40 bg-yellow-500/8 hover:bg-yellow-500/15 hover:border-yellow-400/60 transition-all text-left group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">✅</div>
             <div>
@@ -175,11 +181,8 @@ export default function CheckinPageInner() {
             </div>
           </div>
         </button>
-
-        <button
-          onClick={() => setScreen('new')}
-          className="w-full p-5 rounded-2xl border-2 border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all text-left group"
-        >
+        <button onClick={() => setScreen('new')}
+          className="w-full p-5 rounded-2xl border-2 border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all text-left group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🆕</div>
             <div>
@@ -189,12 +192,12 @@ export default function CheckinPageInner() {
           </div>
         </button>
       </div>
-    </Wrap>
+    </PageWrap>
   );
 
-  // ── RETURNING — search + card ─────────────────────────────────────
+  // ── RETURNING ─────────────────────────────────────────────────────
   if (screen === 'returning') return (
-    <Wrap>
+    <PageWrap dayInfo={dayInfo}>
       <button onClick={() => { setScreen('landing'); setResults([]); setSearchTerm(''); setSearchError(''); }}
         className="flex items-center gap-1.5 text-white/40 hover:text-white/70 text-sm mb-6 transition-colors">
         ← Back
@@ -211,7 +214,6 @@ export default function CheckinPageInner() {
           onKeyDown={e => e.key === 'Enter' && handleSearch()}
           placeholder="Phone, email or name…"
           className="flex-1 bg-gray-800 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 transition-all"
-          autoFocus
         />
         <button onClick={handleSearch} disabled={searchLoading || !searchTerm.trim()}
           className="px-5 py-3 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-40 text-black font-bold rounded-xl text-sm transition-all">
@@ -230,8 +232,7 @@ export default function CheckinPageInner() {
         <div className="space-y-3">
           <p className="text-white/40 text-xs uppercase tracking-wider">Is that you?</p>
           {results.map(u => (
-            <div key={u.id}
-              className="bg-gray-800 border border-gray-700 rounded-2xl p-4 transition-all hover:border-yellow-400/50 hover:bg-gray-750">
+            <div key={u.id} className="bg-gray-800 border border-gray-700 rounded-2xl p-4 transition-all hover:border-yellow-400/50">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-500 to-amber-600 flex items-center justify-center text-black font-black text-lg shrink-0">
                   {u.fullName.charAt(0).toUpperCase()}
@@ -248,11 +249,8 @@ export default function CheckinPageInner() {
                     ✓ Checked in
                   </span>
                 ) : (
-                  <button
-                    onClick={() => handleConfirm(u.id, u.fullName, u.role)}
-                    disabled={confirming}
-                    className="shrink-0 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-40 text-black font-bold px-4 py-2 rounded-xl text-sm transition-all"
-                  >
+                  <button onClick={() => handleConfirm(u.id, u.fullName, u.role)} disabled={confirming}
+                    className="shrink-0 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-40 text-black font-bold px-4 py-2 rounded-xl text-sm transition-all">
                     {confirming ? '…' : 'Yes, check me in'}
                   </button>
                 )}
@@ -262,12 +260,12 @@ export default function CheckinPageInner() {
           <p className="text-white/25 text-xs text-center pt-1">Not you? Try a different phone number or email.</p>
         </div>
       )}
-    </Wrap>
+    </PageWrap>
   );
 
-  // ── NEW ATTENDEE — quick form ─────────────────────────────────────
+  // ── NEW ATTENDEE ──────────────────────────────────────────────────
   if (screen === 'new') return (
-    <Wrap>
+    <PageWrap dayInfo={dayInfo}>
       <button onClick={() => { setScreen('landing'); setFormError(''); }}
         className="flex items-center gap-1.5 text-white/40 hover:text-white/70 text-sm mb-6 transition-colors">
         ← Back
@@ -278,7 +276,7 @@ export default function CheckinPageInner() {
 
       <form onSubmit={handleRegister} className="space-y-4">
 
-        {/* Name row */}
+        {/* Name */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-white/50 mb-1.5 font-medium">First name <span className="text-red-400">*</span></label>
@@ -371,23 +369,19 @@ export default function CheckinPageInner() {
           {formLoading ? 'Registering…' : 'Register & Check In →'}
         </button>
       </form>
-    </Wrap>
+    </PageWrap>
   );
 
   // ── SUCCESS ───────────────────────────────────────────────────────
   if (screen === 'success') return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-5 py-10 relative overflow-hidden">
-      {/* Confetti rain */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {Array.from({ length: 20 }).map((_, i) => <ConfettiPiece key={i} index={i} />)}
       </div>
-
-      {/* Golden ring glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(245,158,11,0.12) 0%, transparent 70%)' }} />
 
       <div className="relative flex flex-col items-center text-center max-w-sm">
-        {/* Animated check */}
         <div className="w-24 h-24 rounded-full flex items-center justify-center mb-6 animate-bounce"
           style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 0 40px rgba(245,158,11,0.5)' }}>
           <span className="text-4xl">✝️</span>
@@ -399,7 +393,7 @@ export default function CheckinPageInner() {
         </p>
         <p className="text-white/50 text-sm mb-6">{ROLE_LABELS[successRole] ?? successRole}</p>
 
-        <div className="w-full bg-white/6 border border-white/10 rounded-2xl px-6 py-5 mb-6">
+        <div className="w-full bg-gray-800 border border-gray-700 rounded-2xl px-6 py-5 mb-6">
           <p className="text-white/40 text-xs uppercase tracking-widest mb-2">Checked in for</p>
           <p className="text-white font-bold text-base">{dayInfo?.dayLabel}</p>
         </div>
@@ -410,7 +404,6 @@ export default function CheckinPageInner() {
           We&apos;re glad you&apos;re here.
         </p>
 
-        {/* Subtle animated stars */}
         <div className="flex gap-3 mt-6">
           {['⭐', '✨', '🌟', '✨', '⭐'].map((s, i) => (
             <span key={i} className="animate-pulse text-lg" style={{ animationDelay: `${i * 0.2}s` }}>{s}</span>

@@ -1,5 +1,10 @@
 import nodemailer from 'nodemailer';
-import { verificationEmailTemplate, welcomeEmailTemplate } from './emailTemplates';
+import {
+  verificationEmailTemplate,
+  welcomeEmailTemplate,
+  scheduleChangeEmailTemplate,
+  gameInviteEmailTemplate,
+} from './emailTemplates';
 
 export interface EmailOptions {
   to: string;
@@ -95,7 +100,7 @@ export function generateVerificationEmail(to: string, token: string): EmailOptio
   const verificationLink = `${baseUrl}/verify-email?token=${token}`;
   return {
     to,
-    subject: 'Verify your email for EGC Conference 2025',
+    subject: 'Verify your email for EGC Conference 2026',
     html: verificationEmailTemplate(verificationLink, new Date().getFullYear()),
   };
 }
@@ -125,6 +130,44 @@ export function generatePasswordResetEmail(to: string, token: string): EmailOpti
   };
 }
 
+export function generateScheduleChangeEmail(
+  to: string,
+  data: {
+    gameTypeLabel: string;
+    teamAName: string;
+    teamBName: string;
+    newDate: string;
+    newTime: string;
+    gameUrl: string;
+  }
+): EmailOptions {
+  return {
+    to,
+    subject: `Schedule Update: ${data.teamAName} vs ${data.teamBName} — EGC 2026 Games`,
+    html: scheduleChangeEmailTemplate({ ...data, year: new Date().getFullYear() }),
+  };
+}
+
+export function generateGameInviteEmail(
+  to: string,
+  data: {
+    participantName: string;
+    gameTypeLabel: string;
+    yourTeamName: string;
+    opponentTeamName: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    roundNumber: number;
+    gameRoomUrl: string;
+  }
+): EmailOptions {
+  return {
+    to,
+    subject: `You're Playing! ${data.gameTypeLabel} — EGC 2026 Games`,
+    html: gameInviteEmailTemplate({ ...data, year: new Date().getFullYear() }),
+  };
+}
+
 // Get WhatsApp link based on team name
 function getWhatsAppLinkByTeam(teamName: string): string {
   const whatsappLinks: Record<string, string> = {
@@ -148,7 +191,7 @@ export function generateWelcomeEmail(email: string, userData: {
   
   return {
     to: email,
-    subject: `Welcome to EGC Conference 2025, ${userData.fullName}!`,
+    subject: `Welcome to EGC Conference 2026, ${userData.fullName}!`,
     html: welcomeEmailTemplate(userData, whatsappLink, new Date().getFullYear()),
   };
 }

@@ -7,10 +7,35 @@ import { verifySocketToken } from './middleware/auth';
 import { registerGameRoomHandlers } from './handlers/gameRoom';
 
 const PORT = process.env.PORT || 3001;
-const NEXT_APP_URL = process.env.NEXT_APP_URL || 'http://localhost:3000';
+
+// Allow localhost dev + VS Code tunnel URLs + Vercel production
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  process.env.NEXT_APP_URL,
+  process.env.NEXT_PUBLIC_APP_URL,
+  process.env.NEXT_PUBLIC_PRODUCTION_URL,
+].filter(Boolean) as string[];
+
+function isAllowedOrigin(origin: string | undefined): boolean {
+  if (!origin) return true; // allow non-browser requests (e.g. mobile apps)
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  // Allow any VS Code Dev Tunnel URL pattern
+  if (origin.includes('.devtunnels.ms') || origin.includes('.github.dev')) return true;
+  // Allow any Vercel preview URL
+  if (origin.includes('.vercel.app')) return true;
+  return false;
+}
+
+const corsOptions = {
+  origin: (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => {
+    cb(null, isAllowedOrigin(origin));
+  },
+  credentials: true,
+};
 
 const app = express();
-app.use(cors({ origin: NEXT_APP_URL, credentials: true }));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
@@ -21,10 +46,13 @@ const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: NEXT_APP_URL,
+    origin: (origin, cb) => cb(null, isAllowedOrigin(origin)),
     methods: ['GET', 'POST'],
     credentials: true,
   },
+  // Support polling transport for tunnels/proxies that block WebSocket upgrades
+  allowEIO3: true,
+  transports: ['polling', 'websocket'],
 });
 
 // JWT auth middleware for all socket connections

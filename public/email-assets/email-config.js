@@ -9,9 +9,9 @@ const emailConfig = {
   logoUrl: 'https://res.cloudinary.com/joycrown/image/upload/v1747749167/GofamintLogo_lbe0yk.png', // Reliable hosted image URL for email clients
   
   // Conference details
-  conferenceName: 'EGC Conference 2025',
-  conferenceFullName: 'Emerging Generals\' Conference 2025',
-  conferenceDate: 'July 4-10, 2025',
+  conferenceName: 'EGC Conference 2026',
+  conferenceFullName: 'Emerging Generals\' Conference 2026',
+  conferenceDate: 'July 10-12, 2026',
   
   // Organization details
   orgName: 'The Gospel Faith Mission International',

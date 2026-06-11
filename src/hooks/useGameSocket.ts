@@ -29,12 +29,9 @@ export interface ScrambleClientState {
 export interface ChainClientState {
   chain: string[];
   requiredLetter: string;
-  category: string;
-  hint: string;
   wrongAttempts: string[];
   turnNumber: number;
   totalTurns: number;
-  lastCategory?: string;
 }
 
 export interface ChainResult {
@@ -44,8 +41,70 @@ export interface ChainResult {
   teamName: string;
   pointsAwarded?: number;
   nextLetter?: string;
-  category?: string;
+  isBibleWord?: boolean;
   reason?: 'timeout' | 'wrong';
+}
+
+export interface CategoriesFoundAnswer {
+  text: string;
+  points: number;
+}
+
+export interface CategoriesClientState {
+  roundNumber: number;
+  totalRounds: number;
+  category: {
+    id: string;
+    title: string;
+    subtitle: string;
+    totalAnswers: number;
+  };
+  foundAnswers: CategoriesFoundAnswer[];
+  strikes: number;
+  maxStrikes: number;
+  teamAScore: number;
+  teamBScore: number;
+  currentTurnTeamId: string;
+  timeLeft: number;
+}
+
+export interface CategoriesResult {
+  correct: boolean;
+  teamId: string;
+  teamName: string;
+  answer?: string;
+  points?: number;
+  remaining?: number;
+  strikes?: number;
+  reason?: 'timeout' | 'wrong';
+}
+
+export interface TriviaClientState {
+  questionNumber: number;
+  totalQuestions: number;
+  question: {
+    id: string;
+    question: string;
+    options: [string, string, string, string];
+    category: string;
+    points: number;
+  };
+  phase: 'buzzing' | 'answering' | 'passing' | 'reveal';
+  buzzedTeamId: string | null;
+  passingToTeamId: string | null;
+  pointsOnOffer: number;
+  teamAScore: number;
+  teamBScore: number;
+  currentTurnTeamId: string;
+  timeLeft: number;
+}
+
+export interface TriviaReveal {
+  correctAnswer: string;
+  correctOption: string;
+  correctTeamId: string | null;
+  teamAScore: number;
+  teamBScore: number;
 }
 
 export interface GameState {
@@ -63,6 +122,8 @@ export interface GameState {
   hangman?: HangmanClientState;
   scramble?: ScrambleClientState;
   chain?: ChainClientState;
+  categories?: CategoriesClientState;
+  trivia?: TriviaClientState;
 }
 
 export interface RosterParticipant {
@@ -104,10 +165,15 @@ export interface GameRoomState {
   failedWord: string | null;
   // Scramble
   scrambleResult: ScrambleResult | null;
-  scrambleCooldownSeconds: number;
   // Chain
   chainResult: ChainResult | null;
   chainInvalidReason: string | null;
+  // Categories
+  categoriesResult: CategoriesResult | null;
+  categoriesRoundEnd: { remaining: CategoriesFoundAnswer[]; foundAnswers: CategoriesFoundAnswer[]; teamAScore: number; teamBScore: number } | null;
+  // Trivia
+  triviaReveal: TriviaReveal | null;
+  triviaWrong: { teamId: string; answer: string } | null;
   // Shared
   gameEnded: { winnerId: string | null; winnerName: string | null; teamAScore: number; teamBScore: number } | null;
   error: string | null;
@@ -127,9 +193,12 @@ const defaultState: GameRoomState = {
   solvedWord: null,
   failedWord: null,
   scrambleResult: null,
-  scrambleCooldownSeconds: 0,
   chainResult: null,
   chainInvalidReason: null,
+  categoriesResult: null,
+  categoriesRoundEnd: null,
+  triviaReveal: null,
+  triviaWrong: null,
   gameEnded: null,
   error: null,
 };
@@ -137,27 +206,10 @@ const defaultState: GameRoomState = {
 export function useGameSocket(sessionId: string, token: string) {
   const [state, setState] = useState<GameRoomState>(defaultState);
   const socketRef = useRef<Socket | null>(null);
-  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const update = useCallback((patch: Partial<GameRoomState>) => {
     setState(prev => ({ ...prev, ...patch }));
   }, []);
-
-  const startCooldown = useCallback((seconds: number) => {
-    if (cooldownRef.current) clearInterval(cooldownRef.current);
-    update({ scrambleCooldownSeconds: seconds });
-    cooldownRef.current = setInterval(() => {
-      setState(prev => {
-        const next = prev.scrambleCooldownSeconds - 1;
-        if (next <= 0) {
-          clearInterval(cooldownRef.current!);
-          cooldownRef.current = null;
-          return { ...prev, scrambleCooldownSeconds: 0 };
-        }
-        return { ...prev, scrambleCooldownSeconds: next };
-      });
-    }, 1000);
-  }, [update]);
 
   useEffect(() => {
     if (!token || !sessionId) return;
@@ -200,7 +252,6 @@ export function useGameSocket(sessionId: string, token: string) {
         solvedWord: null,
         failedWord: null,
         scrambleResult: null,
-        scrambleCooldownSeconds: 0,
         gameEnded: null,
       });
     });
@@ -243,6 +294,14 @@ export function useGameSocket(sessionId: string, token: string) {
     });
 
     // ── Scramble events ──
+    socket.on('scramble:turn', ({ teamId, timeLeft }: { teamId: string; timeLeft: number }) => {
+      update({ turnTeamId: teamId, timeLeft });
+      setState(prev => ({
+        ...prev,
+        gameState: prev.gameState ? { ...prev.gameState, currentTurnTeamId: teamId } : null,
+      }));
+    });
+
     socket.on('scramble:correct', (payload: { word: string; teamId: string; teamName: string; pointsAwarded: number }) => {
       const result: ScrambleResult = { correct: true, ...payload };
       update({ scrambleResult: result });
@@ -250,35 +309,34 @@ export function useGameSocket(sessionId: string, token: string) {
     });
 
     socket.on('scramble:wrong', ({ teamId, teamName }: { teamId: string; teamName: string }) => {
-      // Show briefly for all viewers
       const result: ScrambleResult = { correct: false, word: '', teamId, teamName };
       update({ scrambleResult: result });
       setTimeout(() => update({ scrambleResult: null }), 2000);
     });
 
-    socket.on('scramble:timeout', ({ word }: { word: string }) => {
+    socket.on('scramble:timeout', ({ word, teamId, teamName }: { word: string; teamId: string; teamName: string }) => {
       update({ failedWord: word });
+      // Brief toast then clear
       setTimeout(() => update({ failedWord: null }), 3000);
-    });
-
-    socket.on('scramble:cooldown', ({ seconds }: { seconds: number }) => {
-      startCooldown(seconds);
+      // Show as wrong result too so ScrambleBoard can display the team
+      const result: ScrambleResult = { correct: false, word, teamId, teamName };
+      update({ scrambleResult: result });
+      setTimeout(() => update({ scrambleResult: null }), 3000);
     });
 
     // ── Chain events ──
-    socket.on('chain:correct', (payload: { word: string; category: string; teamId: string; teamName: string; pointsAwarded: number; nextLetter: string; chain: string[] }) => {
+    socket.on('chain:correct', (payload: { word: string; isBibleWord: boolean; teamId: string; teamName: string; pointsAwarded: number; nextLetter: string; chain: string[] }) => {
       setState(prev => ({
         ...prev,
         gameState: prev.gameState?.chain
           ? { ...prev.gameState, chain: { ...prev.gameState.chain, chain: payload.chain, requiredLetter: payload.nextLetter, wrongAttempts: [] } }
           : prev.gameState,
-        chainResult: { correct: true, word: payload.word, teamId: payload.teamId, teamName: payload.teamName, pointsAwarded: payload.pointsAwarded, nextLetter: payload.nextLetter, category: payload.category },
+        chainResult: { correct: true, word: payload.word, isBibleWord: payload.isBibleWord, teamId: payload.teamId, teamName: payload.teamName, pointsAwarded: payload.pointsAwarded, nextLetter: payload.nextLetter },
       }));
       setTimeout(() => update({ chainResult: null }), 3000);
     });
 
     socket.on('chain:attempt', ({ word, teamId, teamName }: { word: string; teamId: string; teamName: string }) => {
-      // Append the wrong attempt to the visible list in game state
       setState(prev => ({
         ...prev,
         gameState: prev.gameState?.chain
@@ -289,17 +347,27 @@ export function useGameSocket(sessionId: string, token: string) {
       setTimeout(() => update({ chainResult: null }), 1500);
     });
 
-    socket.on('chain:timeout', ({ correctWord, teamId, teamName }: { correctWord: string; teamId: string; teamName: string }) => {
-      update({ chainResult: { correct: false, word: correctWord, teamId, teamName, reason: 'timeout' }, failedWord: correctWord });
-      setTimeout(() => update({ chainResult: null, failedWord: null }), 3000);
+    socket.on('chain:timeout', ({ teamId, teamName, requiredLetter }: { teamId: string; teamName: string; requiredLetter: string }) => {
+      update({ chainResult: { correct: false, word: '', teamId, teamName, reason: 'timeout' } });
+      // Keep the required letter — it carries over per game rules
+      setState(prev => ({
+        ...prev,
+        gameState: prev.gameState?.chain
+          ? { ...prev.gameState, chain: { ...prev.gameState.chain, wrongAttempts: [], requiredLetter } }
+          : prev.gameState,
+      }));
+      setTimeout(() => update({ chainResult: null }), 3000);
     });
 
     socket.on('chain:invalid', ({ reason, word }: { reason: string; word: string }) => {
       const messages: Record<string, string> = {
-        wrong_letter: `Word must start with the required letter`,
+        wrong_letter:  `Word must start with "${word[0] ?? '?'}"`,
         already_tried: `"${word}" was already tried this turn`,
+        already_used:  `"${word}" already appears in the chain`,
+        too_short:     `Words must be at least 4 letters`,
+        not_a_word:    `"${word}" is not a valid word`,
       };
-      update({ chainInvalidReason: messages[reason] ?? 'Invalid input' });
+      update({ chainInvalidReason: messages[reason] ?? 'Invalid word' });
       setTimeout(() => update({ chainInvalidReason: null }), 2500);
     });
 
@@ -309,6 +377,119 @@ export function useGameSocket(sessionId: string, token: string) {
         ...prev,
         gameState: prev.gameState ? { ...prev.gameState, currentTurnTeamId: teamId } : null,
       }));
+    });
+
+    // ── Bible Categories events ──
+    socket.on('categories:state', (catState: CategoriesClientState) => {
+      setState(prev => ({
+        ...prev,
+        gameState: prev.gameState ? { ...prev.gameState, categories: catState, currentTurnTeamId: catState.currentTurnTeamId } : null,
+        turnTeamId: catState.currentTurnTeamId,
+        timeLeft: catState.timeLeft,
+      }));
+    });
+
+    socket.on('categories:new-round', (catState: CategoriesClientState) => {
+      setState(prev => ({
+        ...prev,
+        gameState: prev.gameState ? { ...prev.gameState, categories: catState, currentTurnTeamId: catState.currentTurnTeamId } : null,
+        turnTeamId: catState.currentTurnTeamId,
+        timeLeft: catState.timeLeft,
+        categoriesRoundEnd: null,
+        categoriesResult: null,
+      }));
+    });
+
+    socket.on('categories:correct', (payload: { teamId: string; teamName?: string; answer: string; points: number; foundAnswers: CategoriesFoundAnswer[]; teamAScore: number; teamBScore: number; remaining: number }) => {
+      setState(prev => ({
+        ...prev,
+        gameState: prev.gameState?.categories ? {
+          ...prev.gameState,
+          teamAScore: payload.teamAScore,
+          teamBScore: payload.teamBScore,
+          categories: { ...prev.gameState.categories, foundAnswers: payload.foundAnswers, teamAScore: payload.teamAScore, teamBScore: payload.teamBScore },
+        } : prev.gameState,
+        categoriesResult: { correct: true, teamId: payload.teamId, teamName: payload.teamName ?? '', answer: payload.answer, points: payload.points, remaining: payload.remaining },
+      }));
+      setTimeout(() => update({ categoriesResult: null }), 2500);
+    });
+
+    socket.on('categories:wrong', (payload: { teamId: string; answer: string; strikes: number; maxStrikes: number }) => {
+      setState(prev => ({
+        ...prev,
+        gameState: prev.gameState?.categories ? { ...prev.gameState, categories: { ...prev.gameState.categories, strikes: payload.strikes } } : prev.gameState,
+        categoriesResult: { correct: false, teamId: payload.teamId, teamName: '', answer: payload.answer, strikes: payload.strikes, reason: 'wrong' },
+      }));
+      setTimeout(() => update({ categoriesResult: null }), 2000);
+    });
+
+    socket.on('categories:strike', (payload: { teamId: string; reason: string; strikes: number; maxStrikes: number }) => {
+      setState(prev => ({
+        ...prev,
+        gameState: prev.gameState?.categories ? { ...prev.gameState, categories: { ...prev.gameState.categories, strikes: payload.strikes } } : prev.gameState,
+        categoriesResult: { correct: false, teamId: payload.teamId, teamName: '', strikes: payload.strikes, reason: 'timeout' },
+      }));
+      setTimeout(() => update({ categoriesResult: null }), 2000);
+    });
+
+    socket.on('categories:round-end', (payload: { remaining: CategoriesFoundAnswer[]; foundAnswers: CategoriesFoundAnswer[]; teamAScore: number; teamBScore: number }) => {
+      setState(prev => ({
+        ...prev,
+        gameState: prev.gameState ? { ...prev.gameState, teamAScore: payload.teamAScore, teamBScore: payload.teamBScore } : null,
+        categoriesRoundEnd: payload,
+      }));
+    });
+
+    socket.on('categories:invalid', () => {
+      // not your turn feedback — handled by UI
+    });
+
+    // ── Bible Trivia events ──
+    socket.on('trivia:question', (trivState: TriviaClientState) => {
+      setState(prev => ({
+        ...prev,
+        gameState: prev.gameState ? { ...prev.gameState, trivia: trivState, currentTurnTeamId: trivState.currentTurnTeamId } : null,
+        turnTeamId: trivState.currentTurnTeamId,
+        timeLeft: trivState.timeLeft,
+        triviaReveal: null,
+        triviaWrong: null,
+      }));
+    });
+
+    socket.on('trivia:buzz-locked', (payload: TriviaClientState & { teamId: string }) => {
+      setState(prev => ({
+        ...prev,
+        gameState: prev.gameState ? { ...prev.gameState, trivia: payload } : null,
+        timeLeft: payload.timeLeft,
+      }));
+    });
+
+    socket.on('trivia:pass', (payload: { fromTeamId: string; toTeamId: string; pointsOnOffer: number; timeLeft: number }) => {
+      setState(prev => ({
+        ...prev,
+        gameState: prev.gameState?.trivia ? {
+          ...prev.gameState,
+          trivia: { ...prev.gameState.trivia, phase: 'passing' as const, passingToTeamId: payload.toTeamId, pointsOnOffer: payload.pointsOnOffer, timeLeft: payload.timeLeft },
+        } : prev.gameState,
+        timeLeft: payload.timeLeft,
+      }));
+    });
+
+    socket.on('trivia:correct', (payload: { teamId: string; answer: string; points: number; teamAScore: number; teamBScore: number }) => {
+      setState(prev => ({
+        ...prev,
+        gameState: prev.gameState ? { ...prev.gameState, teamAScore: payload.teamAScore, teamBScore: payload.teamBScore } : null,
+      }));
+    });
+
+    socket.on('trivia:wrong', (payload: { teamId: string; answer: string }) => {
+      update({ triviaWrong: payload });
+      setTimeout(() => update({ triviaWrong: null }), 1500);
+    });
+
+    socket.on('trivia:reveal', (payload: TriviaReveal) => {
+      update({ triviaReveal: payload });
+      setTimeout(() => update({ triviaReveal: null }), 3800);
     });
 
     // ── Shared ──
@@ -336,12 +517,12 @@ export function useGameSocket(sessionId: string, token: string) {
         'room:joined', 'room:roster',
         'game:state', 'game:started', 'game:turn', 'game:tick', 'game:score', 'game:ended',
         'hangman:update', 'hangman:solved', 'hangman:failed',
-        'scramble:correct', 'scramble:wrong', 'scramble:timeout', 'scramble:cooldown',
+        'scramble:turn', 'scramble:correct', 'scramble:wrong', 'scramble:timeout',
         'chain:correct', 'chain:attempt', 'chain:timeout', 'chain:invalid', 'chain:turn',
         'mic:control', 'chat:message', 'error',
       ].forEach(ev => socket.off(ev));
     };
-  }, [sessionId, token, update, startCooldown]);
+  }, [sessionId, token, update]);
 
   const guessLetter = useCallback((letter: string) => {
     socketRef.current?.emit('hangman:guess', { sessionId, letter });
@@ -369,5 +550,18 @@ export function useGameSocket(sessionId: string, token: string) {
     socketRef.current?.emit('chain:guess', { sessionId, word });
   }, [sessionId]);
 
-  return { state, guessLetter, submitScrambleAnswer, submitChainWord, sendChat, adminStart, adminEnd };
+  const submitCategoriesAnswer = useCallback((answer: string) => {
+    if (!answer.trim()) return;
+    socketRef.current?.emit('categories:guess', { sessionId, answer });
+  }, [sessionId]);
+
+  const buzzIn = useCallback(() => {
+    socketRef.current?.emit('trivia:buzz', { sessionId });
+  }, [sessionId]);
+
+  const submitTriviaAnswer = useCallback((answer: string) => {
+    socketRef.current?.emit('trivia:answer', { sessionId, answer });
+  }, [sessionId]);
+
+  return { state, guessLetter, submitScrambleAnswer, submitChainWord, submitCategoriesAnswer, buzzIn, submitTriviaAnswer, sendChat, adminStart, adminEnd };
 }

@@ -36,9 +36,9 @@ export default function ChainBoard({
   teamBColor,
 }: Props) {
   const turnTeamName = currentTurnTeamId === teamAId ? teamAName : teamBName;
-  const turnColor = currentTurnTeamId === teamAId ? teamAColor : teamBColor;
+  const turnColor    = currentTurnTeamId === teamAId ? teamAColor : teamBColor;
 
-  const showTimeout = chainResult?.reason === 'timeout';
+  const showTimeout      = chainResult?.reason === 'timeout';
   const showWrongAttempt = chainResult && !chainResult.correct && chainResult.reason !== 'timeout';
 
   return (
@@ -57,7 +57,7 @@ export default function ChainBoard({
         {isMyTurn ? "⚡ Your team's turn!" : `${turnTeamName}'s turn`}
       </div>
 
-      {/* Word chain history */}
+      {/* Chain history + required letter */}
       <ChainDisplay
         chain={chain.chain}
         requiredLetter={chain.requiredLetter}
@@ -67,21 +67,17 @@ export default function ChainBoard({
         currentTurnTeamId={currentTurnTeamId}
       />
 
-      {/* Clue card — shown to everyone */}
-      <div className="w-full bg-gray-900 border border-gray-700 rounded-2xl p-5 flex flex-col gap-2 text-center">
-        <div className="flex items-center justify-center gap-3">
-          <span className="px-3 py-1 rounded-full bg-gray-800 text-gray-400 text-xs font-medium">
-            {chain.category}
-          </span>
-          <span className="text-gray-500 text-xs">starts with</span>
-          <span
-            className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-2xl text-white"
-            style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}
-          >
-            {chain.requiredLetter}
-          </span>
-        </div>
-        <p className="text-gray-300 text-base italic mt-1">&ldquo;{chain.hint}&rdquo;</p>
+      {/* What teams can submit — shown to everyone */}
+      <div className="w-full bg-gray-900 border border-gray-700 rounded-2xl p-4 text-center text-sm text-gray-400">
+        Submit any valid word starting with{' '}
+        <span
+          className="inline-flex items-center justify-center w-8 h-8 rounded-lg font-black text-white text-base mx-1"
+          style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}
+        >
+          {chain.requiredLetter}
+        </span>
+        {' '}— Bible words earn <span className="text-yellow-400 font-bold">+3 pts</span>,
+        {' '}other words <span className="text-gray-300 font-bold">+1 pt</span>
       </div>
 
       {/* Wrong attempts log */}
@@ -107,7 +103,7 @@ export default function ChainBoard({
 
       {isParticipant && !isMyTurn && (
         <p className="text-gray-500 text-sm text-center">
-          Waiting for <span style={{ color: turnColor }}>{turnTeamName}</span> to guess…
+          Waiting for <span style={{ color: turnColor }}>{turnTeamName}</span> to submit a word…
         </p>
       )}
 
@@ -115,26 +111,39 @@ export default function ChainBoard({
         <p className="text-gray-600 text-sm">Spectating — watch the chain grow</p>
       )}
 
-      {/* Result overlays */}
+      {/* ── Result overlays ── */}
+
       {chainResult?.correct && (
         <div className="w-full max-w-sm mx-auto px-6 py-4 rounded-xl bg-green-800/80 text-green-200 font-bold text-center">
-          <div className="text-2xl font-black">{chainResult.word}</div>
-          <div className="text-sm mt-1">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <span className="text-2xl font-black">{chainResult.word}</span>
+            {chainResult.isBibleWord && (
+              <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full font-semibold">✝ Bible</span>
+            )}
+          </div>
+          <div className="text-sm">
             <span style={{ color: chainResult.teamId === teamAId ? teamAColor : teamBColor }}>
               {chainResult.teamName}
             </span>
             {' '}<span className="text-yellow-400">+{chainResult.pointsAwarded} pts</span>
+            {chainResult.nextLetter && (
+              <span className="text-gray-400 ml-2">→ next: <strong className="text-white">{chainResult.nextLetter}</strong></span>
+            )}
           </div>
-          {chainResult.category && (
-            <div className="text-xs text-gray-400 mt-1">{chainResult.category}</div>
-          )}
         </div>
       )}
 
       {showTimeout && (
         <div className="w-full max-w-sm mx-auto px-6 py-4 rounded-xl bg-gray-800 border border-gray-600 text-center">
-          <p className="text-gray-400 text-sm mb-1">Time&apos;s up! The word was:</p>
-          <p className="text-white font-black text-2xl">{chainResult?.word}</p>
+          <p className="text-gray-400 text-sm mb-1">
+            Time&apos;s up —{' '}
+            <span style={{ color: chainResult!.teamId === teamAId ? teamAColor : teamBColor }}>
+              {chainResult!.teamName}
+            </span>
+          </p>
+          <p className="text-white text-sm">
+            Letter <strong className="text-yellow-400">{chain.requiredLetter}</strong> carries over to the other team
+          </p>
         </div>
       )}
 
@@ -143,7 +152,7 @@ export default function ChainBoard({
           <span style={{ color: chainResult!.teamId === teamAId ? teamAColor : teamBColor }}>
             {chainResult!.teamName}
           </span>
-          {' tried '}<strong>{chainResult!.word}</strong> — keep going!
+          {' tried '}<strong>{chainResult!.word}</strong> — not valid, keep going!
         </div>
       )}
     </div>

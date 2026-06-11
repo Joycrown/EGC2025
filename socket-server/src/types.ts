@@ -76,6 +76,7 @@ export interface ActiveScrambleSession {
   teamBId: string;
   teamAName: string;
   teamBName: string;
+  currentTurnTeamId: string;
   timer: ReturnType<typeof setInterval> | null;
   turnDuration: number;
   timeLeft: number;
@@ -92,18 +93,14 @@ export interface ActiveScrambleSession {
   participantTeams: Map<string, string>;
   status: 'waiting' | 'in_progress' | 'completed';
   usedWords: string[];
-  teamACooldownUntil: number;  // epoch ms — team locked out after wrong answer
-  teamBCooldownUntil: number;
 }
 
 // ─── Word Chain types ─────────────────────────────────────────────────────────
 
 export interface ChainClientState {
-  chain: string[];            // all words solved so far, in order
-  requiredLetter: string;     // starting letter of the current target word
-  category: string;           // category clue for the current word
-  hint: string;               // specific hint for the current word
-  wrongAttempts: string[];    // words already tried this turn (shown to all)
+  chain: string[];          // all words accepted so far, in order
+  requiredLetter: string;   // starting letter the active team must use
+  wrongAttempts: string[];  // words tried and rejected this turn (shown to all)
   turnNumber: number;
   totalTurns: number;
 }
@@ -124,11 +121,7 @@ export interface ActiveChainSession {
   usedWords: string[];
   turnNumber: number;
   totalTurns: number;
-  currentWord: string;          // server-only — never sent to clients
-  category: string;
-  hint: string;
-  wrongAttempts: string[];      // attempts this turn, broadcast to all viewers
-  consecutiveFailures: number;  // auto-advance letter after 2 consecutive failures
+  wrongAttempts: string[];
   participantSockets: Map<string, string>;
   participantTeams: Map<string, string>;
   status: 'waiting' | 'in_progress' | 'completed';
@@ -151,6 +144,55 @@ export interface GameStatePayload {
   hangman?: HangmanClientState;
   scramble?: ScrambleClientState;
   chain?: ChainClientState;
+  categories?: CategoriesClientState;
+  trivia?: TriviaClientState;
+}
+
+// ─── Bible Trivia types ───────────────────────────────────────────────────────
+
+export interface TriviaClientState {
+  questionNumber: number;
+  totalQuestions: number;
+  question: {
+    id: string;
+    question: string;
+    options: [string, string, string, string];
+    category: string;
+    points: number;
+  };
+  phase: 'buzzing' | 'answering' | 'passing' | 'reveal';
+  buzzedTeamId: string | null;
+  passingToTeamId: string | null;
+  pointsOnOffer: number;
+  teamAScore: number;
+  teamBScore: number;
+  currentTurnTeamId: string;
+  timeLeft: number;
+}
+
+// ─── Bible Categories types ───────────────────────────────────────────────────
+
+export interface CategoriesFoundAnswer {
+  text: string;
+  points: number;
+}
+
+export interface CategoriesClientState {
+  roundNumber: number;
+  totalRounds: number;
+  category: {
+    id: string;
+    title: string;
+    subtitle: string;
+    totalAnswers: number;
+  };
+  foundAnswers: CategoriesFoundAnswer[];
+  strikes: number;
+  maxStrikes: number;
+  teamAScore: number;
+  teamBScore: number;
+  currentTurnTeamId: string;
+  timeLeft: number;
 }
 
 export interface RosterParticipant {
