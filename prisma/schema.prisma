@@ -7,6 +7,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Tournament ────────────────────────────────────────────────────────────
+
+enum TournamentStatus {
+  UPCOMING
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Tournament {
+  id          String           @id @default(cuid())
+  name        String
+  status      TournamentStatus @default(UPCOMING)
+  startDate   DateTime
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  rounds      TournamentRound[]
+  sessions    GameSession[]
+}
+
+model TournamentRound {
+  id             String       @id @default(cuid())
+  tournamentId   String
+  weekNumber     Int
+  gameType       EgcGameType
+  scheduledDate  DateTime
+  createdAt      DateTime     @default(now())
+  tournament     Tournament   @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  sessions       GameSession[]
+}
+
 // ─── Conference Edition (multi-year support) ───────────────────────────────
 
 model ConferenceEdition {
@@ -147,6 +177,10 @@ model GameSession {
   teamAId           String
   teamBId           String
   editionId         String?
+  tournamentId      String?
+  tournamentRoundId String?
+  roundNumber       Int?               // 1 or 2 within a match
+  poolAssignment    Json?              // pre-assigned word/question pool for no-repeat guarantee
   status            SessionStatus      @default(SCHEDULED)
   scheduledAt       DateTime
   startedAt         DateTime?
@@ -161,6 +195,8 @@ model GameSession {
   chat              ChatMessage[]
   roster            GameRoster[]
   edition           ConferenceEdition? @relation(fields: [editionId], references: [id])
+  tournament        Tournament?        @relation(fields: [tournamentId], references: [id])
+  tournamentRound   TournamentRound?   @relation(fields: [tournamentRoundId], references: [id])
   teamA             Team               @relation("GameSession_teamAIdToTeam", fields: [teamAId], references: [id])
   teamB             Team               @relation("GameSession_teamBIdToTeam", fields: [teamBId], references: [id])
   winner            Team?              @relation("GameSession_winnerIdToTeam", fields: [winnerId], references: [id])

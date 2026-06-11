@@ -40,7 +40,7 @@ export default function NotFound() {
         
         <div className="p-6">
           <p className="text-gray-700 mb-6">
-            The page you&apos;re looking for isn&apos;t available yet. We&apos;re building the EGC Conference 2025
+            The page you&apos;re looking for isn&apos;t available yet. We&apos;re building the EGC Conference 2026
             website and adding new features every day. Please check back soon!
           </p>
           
@@ -53,7 +53,7 @@ export default function NotFound() {
               </div>
               <div className="ml-3">
                 <p className="text-sm text-yellow-700">
-                  <strong>Have you registered yet?</strong> Make sure you&apos;re ready for the Emerging Generals&apos; Conference 2025 
+                  <strong>Have you registered yet?</strong> Make sure you&apos;re ready for the Emerging Generals&apos; Conference 2026 
                   by registering today!
                 </p>
               </div>
@@ -78,7 +78,7 @@ export default function NotFound() {
         className="mt-10 text-center text-gray-500 text-sm"
       >
         <p>&copy; {new Date().getFullYear()} The Gospel Faith Mission International</p>
-        <p>EGC Conference 2025</p>
+        <p>EGC Conference 2026</p>
       </motion.div>
     </div>
   );

@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, UserCheck, UserCog, ArrowLeft, X, Gamepad2, QrCode } from 'lucide-react';
+import { Home, Users, UserCheck, UserCog, ArrowLeft, X, Gamepad2, QrCode, Trophy } from 'lucide-react';
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -20,6 +20,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
     { href: '/admin/qr', label: 'Check-in QR', icon: QrCode },
     { href: '/admin/manage-admins', label: 'Manage Admins', icon: UserCog },
     { href: '/admin/games', label: 'Game Sessions', icon: Gamepad2 },
+    { href: '/admin/tournament', label: 'Tournament', icon: Trophy },
   ];
 
   return (

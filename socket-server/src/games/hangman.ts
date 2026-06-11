@@ -168,6 +168,12 @@ const WORD_BANK: WordEntry[] = [
 
 export { WORD_BANK };
 
+// Short, familiar words used when a session runs in test mode
+export const TEST_WORD_BANK_WORDS = [
+  'ADAM', 'BOAZ', 'DAVID', 'EDEN', 'FLOOD',
+  'GRACE', 'HOSEA', 'ISAAC', 'JOEL', 'RUTH',
+];
+
 export function pickRandomWord(usedWords: string[] = []): WordEntry {
   const available = WORD_BANK.filter(w => !usedWords.includes(w.word));
   const pool = available.length > 0 ? available : WORD_BANK;

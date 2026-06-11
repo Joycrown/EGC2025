@@ -392,3 +392,256 @@ export const passwordResetEmailTemplate = (resetLink: string, year: number) => `
 `;
 
 // Note: Team utility functions are now imported from '../utils/teamUtils'
+
+// ── Game schedule change — sent to all EGC 2026 registrants ──────────────────
+
+export const scheduleChangeEmailTemplate = (data: {
+  gameTypeLabel: string;
+  teamAName: string;
+  teamBName: string;
+  newDate: string;
+  newTime: string;
+  gameUrl: string;
+  year: number;
+}) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Schedule Update</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f7fa;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" style="background-color: #f5f7fa;">
+    <tr>
+      <td align="center" style="padding: 20px 0;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" border="0" style="background-color: #ffffff; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+          <tr>
+            <td align="center" bgcolor="#111827" style="padding: 25px 0;">
+              <p style="margin:0; color:#eab308; font-size:22px; font-weight:bold; letter-spacing:2px;">EGC 2026</p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" bgcolor="#1d4ed8" style="padding: 18px; color: #ffffff;">
+              <h1 style="margin: 0; font-size: 20px; font-weight: bold;">&#128197; Schedule Update</h1>
+              <p style="margin: 5px 0 0; font-size: 13px; opacity: 0.85;">A game session time has been updated</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px 40px;">
+              <p style="margin: 0 0 20px; color: #4b5563; font-size: 14px; line-height: 1.6;">
+                The EGC 2026 Games Committee has updated the schedule for the following session:
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" style="border: 1px solid #e5e7eb; border-radius: 4px; margin-bottom: 24px;">
+                <tr>
+                  <td align="center" bgcolor="#111827" style="padding: 10px;">
+                    <p style="margin: 0; color: #ffffff; font-size: 13px; font-weight: bold;">SESSION DETAILS</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
+                      <tr>
+                        <td width="40%" style="padding: 8px 10px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                          <p style="margin: 0; color: #6b7280; font-size: 13px;">Game</p>
+                        </td>
+                        <td width="60%" style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb;">
+                          <p style="margin: 0; color: #111827; font-weight: bold; font-size: 13px;">${data.gameTypeLabel}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td width="40%" style="padding: 8px 10px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                          <p style="margin: 0; color: #6b7280; font-size: 13px;">Match</p>
+                        </td>
+                        <td width="60%" style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb;">
+                          <p style="margin: 0; color: #111827; font-size: 13px;">${data.teamAName} <strong>vs</strong> ${data.teamBName}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td width="40%" style="padding: 8px 10px; background-color: #f9fafb;">
+                          <p style="margin: 0; color: #6b7280; font-size: 13px;">New Schedule</p>
+                        </td>
+                        <td width="60%" style="padding: 8px 10px;">
+                          <p style="margin: 0; color: #1d4ed8; font-weight: bold; font-size: 14px;">${data.newDate} &nbsp;&#183;&nbsp; ${data.newTime}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 0 0 20px; color: #4b5563; font-size: 14px; line-height: 1.6;">
+                Please note the updated time and make sure you are available to watch or participate in this session.
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+                <tr>
+                  <td align="center" bgcolor="#eab308" style="border-radius: 4px;">
+                    <a href="${data.gameUrl}" target="_blank" style="display: inline-block; padding: 12px 28px; font-size: 14px; color: #111827; font-weight: bold; text-decoration: none;">View Game Schedule &#8594;</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td style="background-color: #f9fafb; padding: 0 40px;">
+                    <div style="height: 2px; background: linear-gradient(90deg, #eab308, #e53e3e, #3b82f6, #8b5cf6); border-radius: 4px;"></div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px 30px; text-align: center;">
+              <p style="margin: 0; color: #6b7280; font-size: 12px;">THE GOSPEL FAITH MISSION INTERNATIONAL</p>
+              <p style="margin: 5px 0 0; color: #9ca3af; font-size: 12px;">&copy; ${data.year} EGC Conference. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+// ── Game invite — sent to session roster members ──────────────────────────────
+
+export const gameInviteEmailTemplate = (data: {
+  participantName: string;
+  gameTypeLabel: string;
+  yourTeamName: string;
+  opponentTeamName: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  roundNumber: number;
+  gameRoomUrl: string;
+  year: number;
+}) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Invitation — EGC 2026</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f7fa;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" style="background-color: #f5f7fa;">
+    <tr>
+      <td align="center" style="padding: 20px 0;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" border="0" style="background-color: #ffffff; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+          <tr>
+            <td align="center" bgcolor="#111827" style="padding: 25px 0;">
+              <p style="margin:0; color:#eab308; font-size:22px; font-weight:bold; letter-spacing:2px;">EGC 2026</p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" bgcolor="#e53e3e" style="padding: 18px; color: #ffffff;">
+              <h1 style="margin: 0; font-size: 20px; font-weight: bold;">&#127918; You&apos;re Playing!</h1>
+              <p style="margin: 5px 0 0; font-size: 13px; opacity: 0.9;">Game invitation for EGC 2026 Competition</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px 40px;">
+              <p style="margin: 0 0 6px; color: #111827; font-size: 16px; font-weight: bold;">Hi ${data.participantName},</p>
+              <p style="margin: 0 0 24px; color: #4b5563; font-size: 14px; line-height: 1.6;">
+                You have been selected to represent <strong style="color:#e53e3e;">Team ${data.yourTeamName}</strong> in the upcoming EGC 2026 competition game. Here are your game details:
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" style="border: 1px solid #e5e7eb; border-radius: 4px; margin-bottom: 24px;">
+                <tr>
+                  <td align="center" bgcolor="#111827" style="padding: 10px;">
+                    <p style="margin: 0; color: #ffffff; font-size: 13px; font-weight: bold;">YOUR GAME DETAILS</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
+                      <tr>
+                        <td width="40%" style="padding: 8px 10px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                          <p style="margin: 0; color: #6b7280; font-size: 13px;">Game</p>
+                        </td>
+                        <td width="60%" style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb;">
+                          <p style="margin: 0; color: #111827; font-weight: bold; font-size: 13px;">${data.gameTypeLabel}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td width="40%" style="padding: 8px 10px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                          <p style="margin: 0; color: #6b7280; font-size: 13px;">Round</p>
+                        </td>
+                        <td width="60%" style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb;">
+                          <p style="margin: 0; color: #111827; font-size: 13px;">Round ${data.roundNumber}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td width="40%" style="padding: 8px 10px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                          <p style="margin: 0; color: #6b7280; font-size: 13px;">Your Team</p>
+                        </td>
+                        <td width="60%" style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb;">
+                          <p style="margin: 0; color: #e53e3e; font-weight: bold; font-size: 13px;">Team ${data.yourTeamName}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td width="40%" style="padding: 8px 10px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                          <p style="margin: 0; color: #6b7280; font-size: 13px;">Opponent</p>
+                        </td>
+                        <td width="60%" style="padding: 8px 10px; border-bottom: 1px solid #e5e7eb;">
+                          <p style="margin: 0; color: #111827; font-size: 13px;">Team ${data.opponentTeamName}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td width="40%" style="padding: 8px 10px; background-color: #f9fafb;">
+                          <p style="margin: 0; color: #6b7280; font-size: 13px;">Date &amp; Time</p>
+                        </td>
+                        <td width="60%" style="padding: 8px 10px;">
+                          <p style="margin: 0; color: #1d4ed8; font-weight: bold; font-size: 14px;">${data.scheduledDate} &nbsp;&#183;&nbsp; ${data.scheduledTime}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0" style="background-color: #fefce8; border: 1px solid #fde68a; border-radius: 4px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 14px 18px;">
+                    <p style="margin: 0 0 4px; color: #92400e; font-size: 13px; font-weight: bold;">&#9888; What to do</p>
+                    <p style="margin: 0; color: #78350f; font-size: 13px; line-height: 1.5;">
+                      Log in to the EGC app at least 5 minutes before your session starts. Once the game is live, click the button below to enter your game room.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+                <tr>
+                  <td align="center" bgcolor="#e53e3e" style="border-radius: 4px;">
+                    <a href="${data.gameRoomUrl}" target="_blank" style="display: inline-block; padding: 12px 28px; font-size: 14px; color: #ffffff; font-weight: bold; text-decoration: none;">Open My Game Room &#8594;</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td style="padding: 0 40px;">
+                    <div style="height: 2px; background: linear-gradient(90deg, #eab308, #e53e3e, #3b82f6, #8b5cf6); border-radius: 4px;"></div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px 30px; text-align: center;">
+              <p style="margin: 0; color: #4b5563; font-size: 13px;">May the Lord give you wisdom and strength!</p>
+              <p style="margin: 10px 0 0; color: #6b7280; font-size: 12px;">THE GOSPEL FAITH MISSION INTERNATIONAL</p>
+              <p style="margin: 5px 0 0; color: #9ca3af; font-size: 12px;">&copy; ${data.year} EGC Conference. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;

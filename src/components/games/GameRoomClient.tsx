@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useGameSocket } from '@/hooks/useGameSocket';
 import { useAgora } from '@/hooks/useAgora';
 import GameRoomHeader from './GameRoomHeader';
@@ -12,6 +12,8 @@ import MicStatusBar from './MicStatusBar';
 import HangmanBoard from './hangman/HangmanBoard';
 import ScrambleBoard from './wordscramble/ScrambleBoard';
 import ChainBoard from './wordchain/ChainBoard';
+import CategoriesBoard from './categories/CategoriesBoard';
+import TriviaBoard from './trivia/TriviaBoard';
 
 interface Props {
   sessionId: string;
@@ -44,7 +46,7 @@ export default function GameRoomClient({
   gameType, status,
 }: Props) {
   const isAdmin = userType === 'ADMIN' || userType === 'SUPER_ADMIN';
-  const { state, guessLetter, submitScrambleAnswer, submitChainWord, sendChat, adminStart, adminEnd } = useGameSocket(sessionId, token);
+  const { state, guessLetter, submitScrambleAnswer, submitChainWord, submitCategoriesAnswer, buzzIn, submitTriviaAnswer, sendChat, adminStart, adminEnd } = useGameSocket(sessionId, token);
   const [agoraConfig, setAgoraConfig] = useState<AgoraTokenResponse | null>(null);
 
   // Fetch Agora token on mount
@@ -75,9 +77,112 @@ export default function GameRoomClient({
   const isMyTurn = isParticipant && myTeamId === state.turnTeamId;
   const isScramble = gameType === 'WORD_SCRAMBLE';
   const isChain = gameType === 'WORD_CHAIN';
+  const isCategories = gameType === 'BIBLE_CATEGORIES';
+  const isTrivia = gameType === 'BIBLE_TRIVIA';
+
+  // ── Sound effects (Web Audio API — no external files needed) ────────────
+  const audioCtx = useRef<AudioContext | null>(null);
+
+  const getAudioCtx = useCallback(() => {
+    if (!audioCtx.current) {
+      audioCtx.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    }
+    return audioCtx.current;
+  }, []);
+
+  const playCorrect = useCallback(() => {
+    try {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+      // Ascending two-tone ding
+      [523.25, 659.25, 783.99].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0, now + i * 0.12);
+        gain.gain.linearRampToValueAtTime(0.35, now + i * 0.12 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.25);
+        osc.start(now + i * 0.12);
+        osc.stop(now + i * 0.12 + 0.3);
+      });
+    } catch { /* audio not available */ }
+  }, [getAudioCtx]);
+
+  const playWrong = useCallback(() => {
+    try {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+      // Low descending buzzer
+      [220, 180].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        osc.type = 'sawtooth';
+        gain.gain.setValueAtTime(0.3, now + i * 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.2);
+        osc.start(now + i * 0.15);
+        osc.stop(now + i * 0.15 + 0.25);
+      });
+    } catch { /* audio not available */ }
+  }, [getAudioCtx]);
+
+  // Trigger sounds on relevant state changes
+  const prevSolvedWord = useRef<string | null>(null);
+  const prevFailedWord = useRef<string | null>(null);
+  const prevScrambleResult = useRef(state.scrambleResult);
+  const prevCategoriesResult = useRef(state.categoriesResult);
+  const prevTriviaWrong = useRef(state.triviaWrong);
+
+  useEffect(() => {
+    // Hangman / Chain correct
+    if (state.solvedWord && state.solvedWord !== prevSolvedWord.current) playCorrect();
+    prevSolvedWord.current = state.solvedWord;
+  }, [state.solvedWord, playCorrect]);
+
+  useEffect(() => {
+    if (state.failedWord && state.failedWord !== prevFailedWord.current) playWrong();
+    prevFailedWord.current = state.failedWord;
+  }, [state.failedWord, playWrong]);
+
+  useEffect(() => {
+    if (state.scrambleResult !== prevScrambleResult.current) {
+      if (state.scrambleResult?.correct) playCorrect();
+      else if (state.scrambleResult && !state.scrambleResult.correct) playWrong();
+    }
+    prevScrambleResult.current = state.scrambleResult;
+  }, [state.scrambleResult, playCorrect, playWrong]);
+
+  useEffect(() => {
+    if (state.categoriesResult !== prevCategoriesResult.current) {
+      if (state.categoriesResult?.correct) playCorrect();
+      else if (state.categoriesResult && !state.categoriesResult.correct) playWrong();
+    }
+    prevCategoriesResult.current = state.categoriesResult;
+  }, [state.categoriesResult, playCorrect, playWrong]);
+
+  useEffect(() => {
+    if (state.triviaWrong !== prevTriviaWrong.current && state.triviaWrong) playWrong();
+    prevTriviaWrong.current = state.triviaWrong;
+  }, [state.triviaWrong, playWrong]);
+
+  // ── Winner calculation (engines emit winnerId but winnerName may be null) ─
+  const gameEndedWinner = (() => {
+    if (!state.gameEnded) return null;
+    const { winnerId, winnerName, teamAScore, teamBScore } = state.gameEnded;
+    // Use winnerId first, fall back to score comparison
+    if (winnerId === teamAId) return teamAName;
+    if (winnerId === teamBId) return teamBName;
+    if (winnerName) return winnerName;
+    if (teamAScore > teamBScore) return teamAName;
+    if (teamBScore > teamAScore) return teamBName;
+    return null; // genuine draw
+  })();
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+    <div className="h-screen overflow-hidden bg-gray-950 text-white flex flex-col">
       {/* Header */}
       <GameRoomHeader
         gameType={gameType}
@@ -95,7 +200,7 @@ export default function GameRoomClient({
       {isParticipant && (
         <MicStatusBar
           micEnabled={state.micEnabled}
-          isMyTurn={isScramble ? true : isMyTurn}  // scramble: always active; hangman/chain: turn-based
+          isMyTurn={isMyTurn}
           agoraJoined={agoraJoined}
           agoraFailed={agoraFailed}
         />
@@ -165,16 +270,29 @@ export default function GameRoomClient({
         </div>
       )}
       {state.gameEnded && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-10 text-center max-w-md w-full mx-4">
-            <div className="text-5xl mb-4">🏆</div>
-            <h2 className="text-2xl font-bold mb-2">
-              {state.gameEnded.winnerName ? `${state.gameEnded.winnerName} Wins!` : "It's a Draw!"}
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-10 text-center max-w-sm w-full mx-4 shadow-2xl">
+            <div className="text-6xl mb-3 animate-bounce">
+              {gameEndedWinner ? '🏆' : '🤝'}
+            </div>
+            <h2 className="text-3xl font-black mb-1 text-white">
+              {gameEndedWinner ? `${gameEndedWinner} Wins!` : "It's a Draw!"}
             </h2>
-            <p className="text-gray-400 mb-6">
-              {teamAName}: {state.gameEnded.teamAScore}pts &nbsp;|&nbsp; {teamBName}: {state.gameEnded.teamBScore}pts
-            </p>
-            <a href="/games" className="bg-red-700 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-lg">
+            {gameEndedWinner && (
+              <p className="text-yellow-400 text-sm font-semibold mb-3">🎉 Congratulations!</p>
+            )}
+            <div className="flex justify-center gap-6 my-5 py-4 border-y border-gray-800">
+              <div className="text-center">
+                <p className="text-2xl font-black" style={{ color: teamAColor }}>{state.gameEnded.teamAScore}</p>
+                <p className="text-gray-500 text-xs mt-0.5">{teamAName}</p>
+              </div>
+              <div className="text-gray-700 text-xl self-center">—</div>
+              <div className="text-center">
+                <p className="text-2xl font-black" style={{ color: teamBColor }}>{state.gameEnded.teamBScore}</p>
+                <p className="text-gray-500 text-xs mt-0.5">{teamBName}</p>
+              </div>
+            </div>
+            <a href="/games" className="block bg-red-700 hover:bg-red-600 text-white font-bold px-6 py-3 rounded-xl transition-colors">
               Back to Lobby
             </a>
           </div>
@@ -187,9 +305,9 @@ export default function GameRoomClient({
       )}
 
       {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left panel — participants */}
-        <aside className="hidden lg:flex flex-col w-56 border-r border-gray-800 p-4 gap-4">
+      <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
+        {/* Left panel — participants (desktop only) */}
+        <aside className="hidden lg:flex flex-col w-56 shrink-0 border-r border-gray-800 p-4 gap-4 overflow-y-auto">
           <ScoreBoard
             teamAName={teamAName}
             teamBName={teamBName}
@@ -210,7 +328,7 @@ export default function GameRoomClient({
         </aside>
 
         {/* Center — game board */}
-        <main className="flex-1 flex flex-col items-center justify-center p-4 overflow-y-auto">
+        <main className="flex-1 min-h-0 flex flex-col items-center justify-center p-3 sm:p-4 overflow-y-auto">
           {!gs && status !== 'IN_PROGRESS' && (
             <div className="text-center">
               <p className="text-gray-400 text-lg mb-2">Waiting for the game to start…</p>
@@ -238,8 +356,9 @@ export default function GameRoomClient({
             <ScrambleBoard
               scramble={gs.scramble}
               isParticipant={isParticipant}
+              isMyTurn={isMyTurn}
+              currentTurnTeamId={gs.currentTurnTeamId}
               onSubmit={submitScrambleAnswer}
-              cooldownSeconds={state.scrambleCooldownSeconds}
               scrambleResult={state.scrambleResult}
               teamAName={teamAName}
               teamBName={teamBName}
@@ -258,6 +377,42 @@ export default function GameRoomClient({
               chainResult={state.chainResult}
               chainInvalidReason={state.chainInvalidReason}
               currentTurnTeamId={state.turnTeamId ?? gs.currentTurnTeamId}
+              teamAId={teamAId}
+              teamBId={teamBId}
+              teamAName={teamAName}
+              teamBName={teamBName}
+              teamAColor={teamAColor}
+              teamBColor={teamBColor}
+            />
+          )}
+
+          {gs && isCategories && gs.categories && (
+            <CategoriesBoard
+              categories={gs.categories}
+              isMyTurn={isMyTurn}
+              isParticipant={isParticipant}
+              onSubmit={submitCategoriesAnswer}
+              categoriesResult={state.categoriesResult}
+              categoriesRoundEnd={state.categoriesRoundEnd}
+              currentTurnTeamId={state.turnTeamId ?? gs.currentTurnTeamId}
+              teamAId={teamAId}
+              teamBId={teamBId}
+              teamAName={teamAName}
+              teamBName={teamBName}
+              teamAColor={teamAColor}
+              teamBColor={teamBColor}
+            />
+          )}
+
+          {gs && isTrivia && gs.trivia && (
+            <TriviaBoard
+              trivia={gs.trivia}
+              isParticipant={isParticipant}
+              myTeamId={state.myTeamId}
+              onBuzz={buzzIn}
+              onAnswer={submitTriviaAnswer}
+              triviaReveal={state.triviaReveal}
+              triviaWrong={state.triviaWrong}
               teamAId={teamAId}
               teamBId={teamBId}
               teamAName={teamAName}

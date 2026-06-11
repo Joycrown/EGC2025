@@ -16,12 +16,16 @@ export default async function GamesPage() {
     include: {
       teamA: { select: { id: true, name: true, color: true } },
       teamB: { select: { id: true, name: true, color: true } },
+      winner: { select: { id: true, name: true } },
       roster: { select: { userId: true, teamId: true } },
     },
   });
 
   const liveCount = sessions.filter(s => s.status === 'IN_PROGRESS' || s.status === 'WAITING').length;
-  const isPlayer = sessions.some(s => s.roster.some(r => r.userId === session.user.id));
+  const mySessionCount = sessions.filter(s => s.roster.some(r => r.userId === session.user.id)).length;
+  const myUpcomingCount = sessions.filter(s =>
+    s.status === 'SCHEDULED' && s.roster.some(r => r.userId === session.user.id)
+  ).length;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -47,7 +51,7 @@ export default async function GamesPage() {
                 )}
               </div>
               <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
-                EGC Games <span className="text-red-500">2025</span>
+                EGC Games <span className="text-red-500">2026</span>
               </h1>
               <p className="text-gray-400 mt-2 text-base">
                 Team competition • Biblical knowledge • Live scoring
@@ -55,10 +59,17 @@ export default async function GamesPage() {
             </div>
 
             <div className="flex flex-col gap-2 text-right shrink-0">
-              {isPlayer ? (
-                <div className="text-sm text-green-400 font-semibold">
-                  ✓ You are registered as a player
-                </div>
+              {mySessionCount > 0 ? (
+                <>
+                  <div className="text-sm text-green-400 font-semibold">
+                    ✓ You play in {mySessionCount} {mySessionCount === 1 ? 'session' : 'sessions'}
+                  </div>
+                  {myUpcomingCount > 0 && (
+                    <div className="text-xs text-gray-500">
+                      {myUpcomingCount} upcoming — look for <span className="text-yellow-500">your game</span> badges below
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="text-sm text-gray-500">
                   Spectator mode — watch all games live

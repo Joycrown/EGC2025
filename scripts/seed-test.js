@@ -81,6 +81,17 @@ async function main() {
     console.log(`  ${u.fullName}: ${u.email}`);
   }
 
+  // 5. Create 5 participants for Team Shiloh
+  console.log('\nSeeding Team Shiloh players...');
+  for (let i = 1; i <= 5; i++) {
+    const u = await prisma.user.upsert({
+      where: { email: `shiloh${i}@egc.test` },
+      update: {},
+      create: baseUser(`TEST-SHILOH-00${i}`, `shiloh${i}@egc.test`, `Shiloh Player ${i}`, `0800000030${i}`, 8, 'USER', 'PARTICIPANT', teams['Shiloh'].id),
+    });
+    console.log(`  ${u.fullName}: ${u.email}`);
+  }
+
   console.log('\n✅ Seed complete!');
   console.log('\nTest accounts (password: Test1234!):');
   console.log('  admin@egc.test       — SUPER_ADMIN');
@@ -88,6 +99,8 @@ async function main() {
   console.log('  bethel2@egc.test     — Bethel Player 2 (etc. up to bethel5)');
   console.log('  judah1@egc.test      — Judah Player 1');
   console.log('  judah2@egc.test      — Judah Player 2 (etc. up to judah5)');
+  console.log('  shiloh1@egc.test     — Shiloh Player 1');
+  console.log('  shiloh2@egc.test     — Shiloh Player 2 (etc. up to shiloh5)');
 }
 
 main()

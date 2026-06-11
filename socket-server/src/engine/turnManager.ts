@@ -6,6 +6,8 @@ import {
   isWordSolved,
   pickRandomWord,
   toClientState,
+  WORD_BANK,
+  TEST_WORD_BANK_WORDS,
 } from '../games/hangman';
 import { logTurn, persistScore, finalizeSession } from './scoreEngine';
 import { prisma } from '../db/prisma';
@@ -150,7 +152,13 @@ export async function startGame(io: Server, sessionId: string): Promise<void> {
   if (!dbSession) throw new Error('Session not found');
   if (dbSession.status === 'IN_PROGRESS') throw new Error('Game already in progress');
 
-  const firstEntry = pickRandomWord();
+  const assignment = dbSession.poolAssignment as { words?: string[], testMode?: boolean } | null;
+  const testMode = assignment?.testMode === true;
+  const preUsed = testMode
+    ? WORD_BANK.filter(e => !TEST_WORD_BANK_WORDS.includes(e.word)).map(e => e.word)
+    : (assignment?.words ? WORD_BANK.filter(e => !assignment.words!.includes(e.word)).map(e => e.word) : []);
+
+  const firstEntry = pickRandomWord(preUsed);
   const hangman = initHangmanState(firstEntry, 1, TOTAL_WORDS);
 
   const participantSockets = new Map<string, string>();
@@ -176,7 +184,7 @@ export async function startGame(io: Server, sessionId: string): Promise<void> {
     participantSockets,
     participantTeams,
     status: 'in_progress',
-    usedWords: [firstEntry.word],
+    usedWords: [...preUsed, firstEntry.word],
     wordNumber: 1,
   };
 

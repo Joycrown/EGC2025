@@ -8,8 +8,9 @@ import AnswerInput from './AnswerInput';
 interface Props {
   scramble: ScrambleClientState;
   isParticipant: boolean;
+  isMyTurn: boolean;
+  currentTurnTeamId: string;
   onSubmit: (answer: string) => void;
-  cooldownSeconds: number;
   scrambleResult: ScrambleResult | null;
   teamAName: string;
   teamBName: string;
@@ -23,11 +24,12 @@ type TileAnimation = 'idle' | 'correct' | 'wrong' | 'timeout';
 export default function ScrambleBoard({
   scramble,
   isParticipant,
+  isMyTurn,
+  currentTurnTeamId,
   onSubmit,
-  cooldownSeconds,
   scrambleResult,
-  teamAName: _teamAName,
-  teamBName: _teamBName,
+  teamAName,
+  teamBName,
   teamAColor,
   teamBColor,
   teamAId,
@@ -41,10 +43,12 @@ export default function ScrambleBoard({
     return () => clearTimeout(t);
   }, [scrambleResult]);
 
-  // Reset animation on new word (scrambledWord changes)
   useEffect(() => {
     setAnimation('idle');
   }, [scramble.scrambledWord]);
+
+  const turnTeamName = currentTurnTeamId === teamAId ? teamAName : teamBName;
+  const turnColor    = currentTurnTeamId === teamAId ? teamAColor : teamBColor;
 
   const resultTeamColor = scrambleResult
     ? scrambleResult.teamId === teamAId ? teamAColor : teamBColor
@@ -56,6 +60,14 @@ export default function ScrambleBoard({
       {/* Word counter */}
       <div className="text-gray-400 text-sm font-semibold tracking-wider uppercase">
         Word {scramble.wordNumber} / {scramble.totalWords}
+      </div>
+
+      {/* Turn banner */}
+      <div
+        className="px-5 py-2 rounded-full font-bold text-sm"
+        style={{ backgroundColor: turnColor + '22', color: turnColor, border: `2px solid ${turnColor}44` }}
+      >
+        {isMyTurn ? '⚡ Your team\'s turn — unscramble it!' : `${turnTeamName}'s turn`}
       </div>
 
       {/* Category badge */}
@@ -73,23 +85,25 @@ export default function ScrambleBoard({
       {/* Scrambled letters */}
       <ScrambledWord scrambledWord={scramble.scrambledWord} animation={animation} />
 
-      {/* Race instruction */}
-      <p className="text-gray-500 text-xs text-center">
-        Both teams race — unscramble the biblical word and submit first!
-      </p>
-
-      {/* Input — participants only */}
-      {isParticipant && (
+      {/* Active team input */}
+      {isParticipant && isMyTurn && (
         <AnswerInput
           onSubmit={onSubmit}
-          cooldownSeconds={cooldownSeconds}
+          cooldownSeconds={0}
           disabled={scramble.wordSolved}
         />
       )}
 
+      {/* Waiting label for non-active team participants */}
+      {isParticipant && !isMyTurn && (
+        <p className="text-gray-500 text-sm text-center">
+          Waiting for <span style={{ color: turnColor }}>{turnTeamName}</span> to unscramble…
+        </p>
+      )}
+
       {/* Read-only label for spectators */}
       {!isParticipant && (
-        <p className="text-gray-600 text-sm">Spectating — watch both teams race</p>
+        <p className="text-gray-600 text-sm">Spectating — watch {turnTeamName} unscramble</p>
       )}
 
       {/* Result feedback */}
@@ -108,10 +122,17 @@ export default function ScrambleBoard({
               {' got it! '}<span className="text-yellow-400">+{scrambleResult.pointsAwarded} pts</span>
               {' — '}<span className="font-black">{scrambleResult.word}</span>
             </>
+          ) : scrambleResult.word ? (
+            // Timeout — word revealed
+            <>
+              <span className="text-gray-400 font-normal text-sm block mb-1">Time&apos;s up! The word was:</span>
+              <span className="font-black text-white text-2xl">{scrambleResult.word}</span>
+            </>
           ) : (
+            // Wrong attempt
             <>
               <span style={{ color: resultTeamColor }}>{scrambleResult.teamName}</span>
-              {' — wrong answer'}
+              {' — wrong answer, keep going!'}
             </>
           )}
         </div>

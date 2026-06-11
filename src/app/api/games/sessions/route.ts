@@ -8,13 +8,18 @@ export async function GET(request: NextRequest) {
   try {
     await verifyAuth(request);
 
+    const { searchParams } = new URL(request.url);
+    const tournamentId = searchParams.get('tournamentId') ?? undefined;
+
     const sessions = await prisma.gameSession.findMany({
+      where: tournamentId ? { tournamentId } : undefined,
       orderBy: { scheduledAt: 'asc' },
       include: {
         teamA: { select: { id: true, name: true, color: true } },
         teamB: { select: { id: true, name: true, color: true } },
         winner: { select: { id: true, name: true } },
         roster: { select: { userId: true, teamId: true } },
+        tournamentRound: { select: { weekNumber: true, gameType: true } },
       },
     });
 

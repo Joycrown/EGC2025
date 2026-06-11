@@ -1,15 +1,15 @@
 import { Server, Socket } from 'socket.io';
 import { ActiveScrambleSession, GameStatePayload } from '../types';
 import { pickRandomWord, scrambleWord, toScrambleClientState, isCorrectAnswer } from '../games/wordScramble';
+import { WORD_BANK, TEST_WORD_BANK_WORDS } from '../games/hangman';
 import { logTurn, persistScore, finalizeSession } from './scoreEngine';
 import { prisma } from '../db/prisma';
 
 export const activeScrambleSessions = new Map<string, ActiveScrambleSession>();
 
-const MAX_SECONDS = 40;
+const TURN_SECONDS = 30;
 const TOTAL_WORDS = 20;
 const WORD_POINTS = 5;
-const WRONG_COOLDOWN_MS = 3000;  // 3s lockout per team after wrong answer
 
 function buildStatePayload(session: ActiveScrambleSession): GameStatePayload {
   return {
@@ -21,7 +21,7 @@ function buildStatePayload(session: ActiveScrambleSession): GameStatePayload {
     teamBName: session.teamBName,
     teamAScore: session.teamAScore,
     teamBScore: session.teamBScore,
-    currentTurnTeamId: '',   // not applicable in race format
+    currentTurnTeamId: session.currentTurnTeamId,
     timeLeft: session.timeLeft,
     status: session.status,
     scramble: toScrambleClientState(
@@ -42,38 +42,47 @@ function clearTimer(session: ActiveScrambleSession): void {
   }
 }
 
-function enableAllMics(io: Server, session: ActiveScrambleSession): void {
-  Array.from(session.participantSockets.entries()).forEach(([, socketId]) => {
-    io.to(socketId).emit('mic:control', { enabled: true });
+// Only the active team's mic is on — same pattern as all other turn-based games
+function emitMicControl(io: Server, session: ActiveScrambleSession): void {
+  Array.from(session.participantSockets.entries()).forEach(([userId, socketId]) => {
+    const teamId = session.participantTeams.get(userId);
+    io.to(socketId).emit('mic:control', { enabled: teamId === session.currentTurnTeamId });
   });
+}
+
+function switchTurn(session: ActiveScrambleSession): void {
+  session.currentTurnTeamId =
+    session.currentTurnTeamId === session.teamAId ? session.teamBId : session.teamAId;
 }
 
 function startWordTimer(io: Server, session: ActiveScrambleSession): void {
   clearTimer(session);
-
   session.timer = setInterval(() => {
     session.timeLeft -= 1;
     io.to(session.sessionId).emit('game:tick', { timeLeft: session.timeLeft });
-
-    if (session.timeLeft <= 0) {
-      handleWordTimeout(io, session);
-    }
+    if (session.timeLeft <= 0) handleWordTimeout(io, session);
   }, 1000);
 }
 
 async function handleWordTimeout(io: Server, session: ActiveScrambleSession): Promise<void> {
   clearTimer(session);
 
+  const teamName = session.currentTurnTeamId === session.teamAId
+    ? session.teamAName : session.teamBName;
+
   io.to(session.sessionId).emit('scramble:timeout', {
     word: session.currentWord,
+    teamId: session.currentTurnTeamId,
+    teamName,
   });
 
-  await logTurn(session.sessionId, '', null, { type: 'timeout' }, false, 0);
+  await logTurn(session.sessionId, session.currentTurnTeamId, null, { type: 'timeout' }, false, 0);
   await persistScore(session.sessionId, session.teamAScore, session.teamBScore);
 
   if (session.wordNumber >= TOTAL_WORDS) {
     await endGame(io, session);
   } else {
+    switchTurn(session);
     setTimeout(() => startNextWord(io, session), 3000);
   }
 }
@@ -87,12 +96,21 @@ function startNextWord(io: Server, session: ActiveScrambleSession): void {
   session.scrambledWord = scrambleWord(nextEntry.word);
   session.category = nextEntry.category;
   session.hint = nextEntry.hint ?? '';
-  session.timeLeft = MAX_SECONDS;
+  session.timeLeft = TURN_SECONDS;
   session.wordSolved = false;
-  session.teamACooldownUntil = 0;
-  session.teamBCooldownUntil = 0;
+
+  const turnTeamName = session.currentTurnTeamId === session.teamAId
+    ? session.teamAName : session.teamBName;
 
   io.to(session.sessionId).emit('game:state', buildStatePayload(session));
+  io.to(session.sessionId).emit('scramble:turn', {
+    teamId: session.currentTurnTeamId,
+    teamName: turnTeamName,
+    wordNumber: session.wordNumber,
+    timeLeft: TURN_SECONDS,
+  });
+
+  emitMicControl(io, session);
   startWordTimer(io, session);
 }
 
@@ -101,11 +119,8 @@ async function endGame(io: Server, session: ActiveScrambleSession): Promise<void
   session.status = 'completed';
 
   const winnerId =
-    session.teamAScore > session.teamBScore
-      ? session.teamAId
-      : session.teamBScore > session.teamAScore
-      ? session.teamBId
-      : null;
+    session.teamAScore > session.teamBScore ? session.teamAId :
+    session.teamBScore > session.teamAScore ? session.teamBId : null;
 
   const winnerName = winnerId
     ? winnerId === session.teamAId ? session.teamAName : session.teamBName
@@ -128,17 +143,19 @@ async function endGame(io: Server, session: ActiveScrambleSession): Promise<void
 export async function startScrambleGame(io: Server, sessionId: string): Promise<void> {
   const dbSession = await prisma.gameSession.findUnique({
     where: { id: sessionId },
-    include: {
-      teamA: true,
-      teamB: true,
-      roster: { include: { user: true } },
-    },
+    include: { teamA: true, teamB: true, roster: { include: { user: true } } },
   });
 
   if (!dbSession) throw new Error('Session not found');
   if (dbSession.status === 'IN_PROGRESS') throw new Error('Game already in progress');
 
-  const firstEntry = pickRandomWord();
+  const assignment = dbSession.poolAssignment as { words?: string[], testMode?: boolean } | null;
+  const testMode = assignment?.testMode === true;
+  const preUsed = testMode
+    ? WORD_BANK.filter(e => !TEST_WORD_BANK_WORDS.includes(e.word)).map(e => e.word)
+    : (assignment?.words ? WORD_BANK.filter(e => !assignment.words!.includes(e.word)).map(e => e.word) : []);
+
+  const firstEntry = pickRandomWord(preUsed);
   const participantTeams = new Map<string, string>();
   dbSession.roster.forEach(r => { participantTeams.set(r.userId, r.teamId); });
 
@@ -148,9 +165,10 @@ export async function startScrambleGame(io: Server, sessionId: string): Promise<
     teamBId: dbSession.teamBId,
     teamAName: dbSession.teamA.name,
     teamBName: dbSession.teamB.name,
+    currentTurnTeamId: dbSession.teamAId, // Team A always goes first
     timer: null,
-    turnDuration: MAX_SECONDS,
-    timeLeft: MAX_SECONDS,
+    turnDuration: TURN_SECONDS,
+    timeLeft: TURN_SECONDS,
     teamAScore: 0,
     teamBScore: 0,
     currentWord: firstEntry.word,
@@ -163,20 +181,25 @@ export async function startScrambleGame(io: Server, sessionId: string): Promise<
     participantSockets: new Map(),
     participantTeams,
     status: 'in_progress',
-    usedWords: [firstEntry.word],
-    teamACooldownUntil: 0,
-    teamBCooldownUntil: 0,
+    usedWords: [...preUsed, firstEntry.word],
   };
 
   activeScrambleSessions.set(sessionId, session);
 
   await prisma.gameSession.update({
     where: { id: sessionId },
-    data: { status: 'IN_PROGRESS', startedAt: new Date() },
+    data: { status: 'IN_PROGRESS', startedAt: new Date(), currentTurnTeamId: dbSession.teamAId },
   });
 
   io.to(sessionId).emit('game:started', buildStatePayload(session));
-  enableAllMics(io, session);
+  io.to(sessionId).emit('scramble:turn', {
+    teamId: session.currentTurnTeamId,
+    teamName: session.teamAName,
+    wordNumber: 1,
+    timeLeft: TURN_SECONDS,
+  });
+
+  emitMicControl(io, session);
   startWordTimer(io, session);
 }
 
@@ -193,15 +216,9 @@ export async function handleScrambleGuess(
   const userTeamId = session.participantTeams.get(userId);
   if (!userTeamId) return; // spectator
 
-  // Team cooldown check
-  const now = Date.now();
-  const cooldownUntil = userTeamId === session.teamAId
-    ? session.teamACooldownUntil
-    : session.teamBCooldownUntil;
-
-  if (now < cooldownUntil) {
-    const remaining = Math.ceil((cooldownUntil - now) / 1000);
-    socket.emit('scramble:cooldown', { seconds: remaining });
+  // Only the active team can submit
+  if (userTeamId !== session.currentTurnTeamId) {
+    socket.emit('scramble:not-your-turn');
     return;
   }
 
@@ -209,12 +226,8 @@ export async function handleScrambleGuess(
     clearTimer(session);
     session.wordSolved = true;
 
-    // Award points
-    if (userTeamId === session.teamAId) {
-      session.teamAScore += WORD_POINTS;
-    } else {
-      session.teamBScore += WORD_POINTS;
-    }
+    if (userTeamId === session.teamAId) session.teamAScore += WORD_POINTS;
+    else session.teamBScore += WORD_POINTS;
 
     const teamName = userTeamId === session.teamAId ? session.teamAName : session.teamBName;
 
@@ -235,16 +248,11 @@ export async function handleScrambleGuess(
     if (session.wordNumber >= TOTAL_WORDS) {
       await endGame(io, session);
     } else {
+      switchTurn(session);
       setTimeout(() => startNextWord(io, session), 3000);
     }
   } else {
-    // Wrong answer — apply cooldown to that team
-    if (userTeamId === session.teamAId) {
-      session.teamACooldownUntil = Date.now() + WRONG_COOLDOWN_MS;
-    } else {
-      session.teamBCooldownUntil = Date.now() + WRONG_COOLDOWN_MS;
-    }
-
+    // Wrong — team keeps trying within the remaining turn time
     const teamName = userTeamId === session.teamAId ? session.teamAName : session.teamBName;
     await logTurn(session.sessionId, userTeamId, userId, { type: 'answer', value: answer.toUpperCase() }, false, 0);
 
