@@ -3,9 +3,6 @@ A comprehensive conference management platform for EGC events with features for 
 
 ## Project Overview
 
-
-
-
 - **Frontend & Backend**: Next.js with App Router
 - **Database**: PostgreSQL
 - **Real-time Communication**: Socket.io
