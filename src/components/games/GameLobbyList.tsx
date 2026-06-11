@@ -55,7 +55,7 @@ function SessionCard({ s, currentUserId }: { s: SessionCard; currentUserId: stri
   const myTeam = isRegistered
     ? (myRosterEntry?.teamId === s.teamA.id ? s.teamA : s.teamB)
     : null;
-  const opponentTeam = myTeam
+  const _opponentTeam = myTeam
     ? (myTeam.id === s.teamA.id ? s.teamB : s.teamA)
     : null;
 
