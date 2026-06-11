@@ -12,7 +12,7 @@ export async function POST(
   try {
     await verifyAuth(request, ['ADMIN', 'SUPER_ADMIN']);
 
-    const { userId } = await request.json();
+    const { userId, teamId: overrideTeamId } = await request.json();
     if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 });
 
     const session = await prisma.gameSession.findUnique({
@@ -31,10 +31,17 @@ export async function POST(
     });
 
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    if (!user.teamId) return NextResponse.json({ error: 'User has no team assigned' }, { status: 400 });
 
-    // Verify user's team is one of the two competing teams
-    if (user.teamId !== session.teamAId && user.teamId !== session.teamBId) {
+    // overrideTeamId is only allowed for users with no team assigned yet
+    if (overrideTeamId && user.teamId && user.teamId !== overrideTeamId) {
+      return NextResponse.json({ error: 'Cannot override team for a user already assigned to a team' }, { status: 400 });
+    }
+
+    const resolvedTeamId = overrideTeamId ?? user.teamId;
+    if (!resolvedTeamId) return NextResponse.json({ error: 'Specify which team to add this player to' }, { status: 400 });
+
+    // Verify the resolved team is one of the two competing teams
+    if (resolvedTeamId !== session.teamAId && resolvedTeamId !== session.teamBId) {
       return NextResponse.json(
         { error: 'User\'s team is not participating in this session' },
         { status: 400 }
@@ -42,7 +49,7 @@ export async function POST(
     }
 
     // Check max players per team
-    const teamCount = session.roster.filter(r => r.teamId === user.teamId).length;
+    const teamCount = session.roster.filter(r => r.teamId === resolvedTeamId).length;
     if (teamCount >= MAX_PLAYERS_PER_TEAM) {
       return NextResponse.json(
         { error: `Maximum ${MAX_PLAYERS_PER_TEAM} players per team` },
@@ -55,7 +62,7 @@ export async function POST(
         id: randomUUID(),
         gameSessionId: params.id,
         userId,
-        teamId: user.teamId,
+        teamId: resolvedTeamId,
       },
       include: {
         user: { select: { id: true, fullName: true, email: true } },

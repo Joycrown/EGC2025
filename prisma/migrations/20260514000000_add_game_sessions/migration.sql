@@ -1,11 +1,17 @@
 -- Safe additive migration for EGC Games system
 -- Only creates new tables/enums. Does not drop or alter existing user/team/attendance data.
 
--- CreateEnum
-CREATE TYPE "EgcGameType" AS ENUM ('HANGMAN', 'TIC_TAC_TOE', 'SUDOKU_RELAY', 'CROSSWORD', 'WORD_CHAIN', 'BIBLE_VERSE_COMPLETION', 'WORD_BLITZ', 'NAME_THAT_TUNE', 'BIBLE_TRIVIA', 'SCRIPTURE_SCRAMBLE', 'BIBLE_CATEGORIES', 'CONNECT_THE_DOTS');
+-- CreateEnum (idempotent)
+DO $$ BEGIN
+  CREATE TYPE "EgcGameType" AS ENUM ('HANGMAN', 'TIC_TAC_TOE', 'SUDOKU_RELAY', 'CROSSWORD', 'WORD_CHAIN', 'BIBLE_VERSE_COMPLETION', 'WORD_BLITZ', 'NAME_THAT_TUNE', 'BIBLE_TRIVIA', 'SCRIPTURE_SCRAMBLE', 'BIBLE_CATEGORIES', 'CONNECT_THE_DOTS');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
--- CreateEnum
-CREATE TYPE "SessionStatus" AS ENUM ('SCHEDULED', 'WAITING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED');
+-- CreateEnum (idempotent)
+DO $$ BEGIN
+  CREATE TYPE "SessionStatus" AS ENUM ('SCHEDULED', 'WAITING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AlterEnum
 BEGIN;
