@@ -62,12 +62,12 @@ export default function AdminGameSessionPage() {
     return () => clearTimeout(t);
   }, [search]);
 
-  async function addPlayer(userId: string) {
+  async function addPlayer(userId: string, teamId?: string) {
     setAdding(userId);
     const r = await fetch(`/api/games/sessions/${sessionId}/roster`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
+      body: JSON.stringify({ userId, teamId }),
     });
     setAdding(null);
     if (r.ok) {
@@ -187,7 +187,13 @@ export default function AdminGameSessionPage() {
           <div className="space-y-2">
             {searchResults.map(u => {
               const onRoster = isOnRoster(u.id);
-              const isValidTeam = u.teamId === session.teamAId || u.teamId === session.teamBId;
+              const matchedTeamId = u.teamId === session.teamAId ? session.teamAId
+                : u.teamId === session.teamBId ? session.teamBId
+                : null;
+              // Wrong team = user has a team assigned but it's not in this session
+              const wrongTeam = u.teamId != null && !matchedTeamId;
+              // Unassigned = user has no team yet — admin picks which side
+              const unassigned = u.teamId == null;
               return (
                 <div key={u.id} className="flex items-center justify-between py-2 border-b border-gray-700 last:border-0">
                   <div>
@@ -196,17 +202,36 @@ export default function AdminGameSessionPage() {
                   </div>
                   {onRoster ? (
                     <span className="text-green-400 text-xs font-semibold">On Roster</span>
-                  ) : !isValidTeam ? (
+                  ) : wrongTeam ? (
                     <span className="text-gray-600 text-xs">Wrong team</span>
-                  ) : (
+                  ) : matchedTeamId ? (
                     <button
                       onClick={() => addPlayer(u.id)}
                       disabled={adding === u.id}
                       className="bg-green-700 hover:bg-green-600 disabled:opacity-40 text-white text-xs font-semibold px-3 py-1.5 rounded-lg"
                     >
-                      {adding === u.id ? 'Adding…' : 'Add'}
+                      {adding === u.id ? 'Adding…' : `Add → ${matchedTeamId === session.teamAId ? session.teamA.name : session.teamB.name}`}
                     </button>
-                  )}
+                  ) : unassigned ? (
+                    <div className="flex gap-1.5">
+                      <button
+                        onClick={() => addPlayer(u.id, session.teamAId)}
+                        disabled={adding === u.id}
+                        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg disabled:opacity-40"
+                        style={{ color: session.teamA.color, border: `1px solid ${session.teamA.color}66` }}
+                      >
+                        {session.teamA.name}
+                      </button>
+                      <button
+                        onClick={() => addPlayer(u.id, session.teamBId)}
+                        disabled={adding === u.id}
+                        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg disabled:opacity-40"
+                        style={{ color: session.teamB.color, border: `1px solid ${session.teamB.color}66` }}
+                      >
+                        {session.teamB.name}
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               );
             })}

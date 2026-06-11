@@ -24,6 +24,8 @@ function isAllowedOrigin(origin: string | undefined): boolean {
   if (origin.includes('.devtunnels.ms') || origin.includes('.github.dev')) return true;
   // Allow any Vercel preview URL
   if (origin.includes('.vercel.app')) return true;
+  // Allow the production custom domain
+  if (origin.includes('gofamintpsakure.org')) return true;
   return false;
 }
 
