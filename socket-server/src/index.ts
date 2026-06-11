@@ -8,7 +8,7 @@ import { registerGameRoomHandlers } from './handlers/gameRoom';
 
 const PORT = process.env.PORT || 3001;
 
-// Allow localhost dev + VS Code tunnel URLs + Vercel production
+
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
   'http://localhost:3001',
