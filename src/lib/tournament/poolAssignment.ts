@@ -14,31 +14,39 @@
 // ── Hangman / Word Scramble word bank (imported here via fetch at build time) ─
 // The actual word list lives in the socket-server. We store word strings directly.
 
+// Tournament word bank — does NOT include TEST_WORD_BANK_WORDS
+// (ADAM, BOAZ, DAVID, EDEN, FLOOD, GRACE, HOSEA, ISAAC, JOEL, RUTH)
+// so test sessions and tournament sessions never share words.
 export const HANGMAN_WORD_BANK = [
-  // Prophets
-  'ISAIAH','JEREMIAH','EZEKIEL','DANIEL','ELIJAH','ELISHA','AMOS','HOSEA','MICAH','MALACHI',
-  'NAHUM','HABAKKUK','ZEPHANIAH','HAGGAI','ZECHARIAH','OBADIAH','JONAH','JOEL',
+  // Prophets — HOSEA and JOEL removed (test words); SAMUEL, NATHAN, MIRIAM added
+  'ISAIAH','JEREMIAH','EZEKIEL','DANIEL','ELIJAH','ELISHA','AMOS','MICAH','MALACHI',
+  'NAHUM','HABAKKUK','ZEPHANIAH','HAGGAI','ZECHARIAH','OBADIAH','JONAH',
+  'SAMUEL','NATHAN','MIRIAM','AGABUS','HULDAH',
   // Places
   'JERUSALEM','BETHLEHEM','NAZARETH','JERICHO','GALILEE','GETHSEMANE','CALVARY','SINAI',
   'BETHANY','CAPERNAUM','ANTIOCH','CORINTH','EPHESUS','BABYLON','NINEVEH','EGYPT',
   'SAMARIA','CAESAREA','DAMASCUS','CANA','BETHSAIDA','EMMAUS',
-  // People
-  'MOSES','ABRAHAM','SOLOMON','JOSEPH','JOSHUA','NEHEMIAH','ESTHER','RUTH','DEBORAH','GIDEON',
+  'PATMOS','CANAAN','HEBRON','JORDAN','CARMEL','BETHEL',
+  // People — RUTH removed (test word); GOLIATH, CALEB, JONATHAN, NOAH added
+  'MOSES','ABRAHAM','SOLOMON','JOSEPH','JOSHUA','NEHEMIAH','ESTHER','DEBORAH','GIDEON',
   'SAMSON','PETER','PAUL','JOHN','JAMES','ANDREW','MARY','MARTHA','LAZARUS','ZACCHAEUS',
   'BARTHOLOMEW','MATTHEW','THOMAS','CORNELIUS','LYDIA','PRISCILLA','AQUILA','BARNABAS',
   'TIMOTHY','TITUS','PHILEMON','STEPHEN','PHILIP','SILAS',
+  'NOAH','GOLIATH','CALEB','JONATHAN','ABSALOM','REBEKAH','JACOB',
   // Concepts
   'SALVATION','REDEMPTION','COVENANT','BAPTISM','RESURRECTION','SANCTIFICATION','COMMUNION',
   'ATONEMENT','RECONCILIATION','JUSTIFICATION','PROPITIATION','INTERCESSION','CONSECRATION',
   'REPENTANCE','FORGIVENESS','RIGHTEOUSNESS','HOLINESS','FAITHFULNESS',
-  // Events
+  'GLORIFICATION','STEWARDSHIP','DISCIPLESHIP','FELLOWSHIP','OMNISCIENCE','OMNIPOTENCE',
+  // Events — FLOOD removed (test word); WILDERNESS, CAPTIVITY, INCARNATION, BETRAYAL added
   'EXODUS','CRUCIFIXION','PENTECOST','TRANSFIGURATION','ASCENSION','ANNUNCIATION',
-  'CREATION','FLOOD','PASSOVER','RAPTURE','TRIBULATION',
+  'CREATION','PASSOVER','RAPTURE','TRIBULATION',
+  'WILDERNESS','CAPTIVITY','INCARNATION','BETRAYAL','RESTORATION',
   // Books
   'GENESIS','LEVITICUS','DEUTERONOMY','PROVERBS','ECCLESIASTES','REVELATION','PHILIPPIANS',
-  'COLOSSIANS','THESSALONIANS','PHILEMON','HEBREWS','GALATIANS','EPHESIANS',
+  'COLOSSIANS','THESSALONIANS','HEBREWS','GALATIANS','EPHESIANS',
   // Additional
-  'KORAH','KETURAH','YAHWEH','WISDOM','AHAB','JEZEBEL','ELIEZER','REBEKAH',
+  'KORAH','KETURAH','YAHWEH','WISDOM','AHAB','JEZEBEL','ELIEZER',
 ];
 
 export const TRIVIA_QUESTION_IDS = [
@@ -56,8 +64,8 @@ export const CATEGORY_IDS = [
   'books-of-paul','miracles-of-jesus','sons-of-jacob','women-of-faith',
   'names-of-god','parables-of-jesus','ten-commandments','gifts-of-spirit',
   'judges-of-israel','mountains-of-bible','beatitudes','occupations-in-bible',
-  'rivers-in-bible','last-words-of-jesus','major-prophets','books-of-moses',
-  'kings-of-israel','tabernacle-items',
+  'rivers-in-bible','major-prophets','books-of-moses','kings-of-israel',
+  'tabernacle-items','animals-of-bible','cities-of-bible',
 ];
 
 function shuffle<T>(arr: T[]): T[] {

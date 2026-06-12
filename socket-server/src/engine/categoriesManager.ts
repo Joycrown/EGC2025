@@ -1,6 +1,6 @@
 import { Server } from 'socket.io';
 import { prisma } from '../db/prisma';
-import { pickCategories, matchAnswer, BibleCategory, BIBLE_CATEGORIES, TEST_CATEGORY_IDS } from '../games/bibleCategories';
+import { pickCategories, matchAnswer, BibleCategory, BIBLE_CATEGORIES, TEST_CATEGORIES, TEST_CATEGORY_IDS } from '../games/bibleCategories';
 import { persistScore, finalizeSession } from './scoreEngine';
 
 const MAX_STRIKES = 3;
@@ -23,6 +23,7 @@ interface ActiveCategorySession {
   foundAnswers: string[]; // canonical text of found answers
   strikes: number;        // total strikes this round
   lastStrikeTeam: string | null;
+  advancing: boolean;     // guard against double advanceRound calls
 
   timer: ReturnType<typeof setTimeout> | null;
   timeLeft: number;
@@ -79,6 +80,8 @@ function switchTurn(s: ActiveCategorySession) {
 }
 
 async function advanceRound(io: Server, s: ActiveCategorySession) {
+  if (s.advancing) return; // prevent double-advance from timer + guess race
+  s.advancing = true;
   clearTimer(s);
 
   // Reveal remaining answers
@@ -98,9 +101,9 @@ async function advanceRound(io: Server, s: ActiveCategorySession) {
 
   await persistScore(s.sessionId, s.teamAScore, s.teamBScore);
 
-  s.currentRound++;
+  const nextRound = s.currentRound + 1;
 
-  if (s.currentRound >= s.totalRounds) {
+  if (nextRound >= s.totalRounds) {
     // Game over
     const winnerId = s.teamAScore > s.teamBScore ? s.teamAId
       : s.teamBScore > s.teamAScore ? s.teamBId : null;
@@ -118,12 +121,16 @@ async function advanceRound(io: Server, s: ActiveCategorySession) {
     return;
   }
 
-  // Next round — 4 second delay to read the board
+  // Next round — 4 second delay to read the board.
+  // Keep s.currentRound unchanged during the delay so reconnecting clients
+  // see the completed round state (not a half-advanced inconsistent state).
   setTimeout(() => {
+    s.currentRound = nextRound;
     s.currentCategory = s.categories[s.currentRound];
     s.foundAnswers = [];
     s.strikes = 0;
     s.lastStrikeTeam = null;
+    s.advancing = false;
 
     io.to(s.sessionId).emit('categories:new-round', buildClientState(s));
     startTurnTimer(io, s);
@@ -162,7 +169,7 @@ export async function startCategoriesGame(io: Server, sessionId: string) {
   const assignment = dbSession.poolAssignment as { categoryIds?: string[], testMode?: boolean } | null;
   const testMode = assignment?.testMode === true;
   const categories = testMode
-    ? BIBLE_CATEGORIES.filter(c => TEST_CATEGORY_IDS.includes(c.id)).slice(0, ROUNDS)
+    ? TEST_CATEGORIES.slice(0, ROUNDS)
     : (assignment?.categoryIds
         ? BIBLE_CATEGORIES.filter(c => assignment.categoryIds!.includes(c.id)).slice(0, ROUNDS)
         : pickCategories(ROUNDS));
@@ -176,11 +183,12 @@ export async function startCategoriesGame(io: Server, sessionId: string) {
     teamBScore: 0,
     categories,
     currentRound: 0,
-    totalRounds: ROUNDS,
+    totalRounds: categories.length, // use actual length — filter may return < ROUNDS items
     currentCategory: categories[0],
     foundAnswers: [],
     strikes: 0,
     lastStrikeTeam: null,
+    advancing: false,
     timer: null,
     timeLeft: TURN_SECONDS,
   };

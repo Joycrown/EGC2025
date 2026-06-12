@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useGameSocket } from '@/hooks/useGameSocket';
 import { useAgora } from '@/hooks/useAgora';
+import { useMicPermission } from '@/hooks/useMicPermission';
+import MicPermissionModal from './MicPermissionModal';
 import GameRoomHeader from './GameRoomHeader';
 import TurnIndicator from './TurnIndicator';
 import ScoreBoard from './ScoreBoard';
@@ -69,8 +71,6 @@ export default function GameRoomClient({
     fetchToken();
   }, [sessionId]);
 
-  const { joined: agoraJoined, failed: agoraFailed } = useAgora(agoraConfig, state.micEnabled);
-
   const role = state.role ?? initialRole;
   const gs = state.gameState;
   const isParticipant = role === 'participant';
@@ -79,6 +79,23 @@ export default function GameRoomClient({
   const isChain = gameType === 'WORD_CHAIN';
   const isCategories = gameType === 'BIBLE_CATEGORIES';
   const isTrivia = gameType === 'BIBLE_TRIVIA';
+
+  // Derive mic state from turn ownership — more reliable than waiting for server mic:control events,
+  // which can be missed on reconnect or are never sent for some game types (categories).
+  const effectiveMicEnabled = (() => {
+    if (!isParticipant || !myTeamId || !gs) return false;
+    // Scramble and Trivia: both teams are always active at the same time
+    if (isScramble || isTrivia) return true;
+    // Turn-based games: only the active team's mic is live
+    return myTeamId === (state.turnTeamId ?? gs.currentTurnTeamId);
+  })();
+
+  // Prompt participants for mic permission before Agora tries to access the device.
+  // Agora config is only passed through once permission is confirmed — this prevents
+  // the browser's default (easily-dismissed) dialog from being the only prompt.
+  const { state: micPermState, requestPermission } = useMicPermission(isParticipant);
+  const micReady = micPermState === 'granted' || micPermState === 'unavailable';
+  const { joined: agoraJoined, failed: agoraFailed } = useAgora(micReady ? agoraConfig : null, effectiveMicEnabled);
 
   // ── Sound effects (Web Audio API — no external files needed) ────────────
   const audioCtx = useRef<AudioContext | null>(null);
@@ -183,6 +200,11 @@ export default function GameRoomClient({
 
   return (
     <div className="h-screen overflow-hidden bg-gray-950 text-white flex flex-col">
+      {/* Mic permission modal — blocks participants until mic is resolved */}
+      {isParticipant && (
+        <MicPermissionModal state={micPermState} onRequest={requestPermission} />
+      )}
+
       {/* Header */}
       <GameRoomHeader
         gameType={gameType}
@@ -199,7 +221,7 @@ export default function GameRoomClient({
       {/* Mic bar for participants */}
       {isParticipant && (
         <MicStatusBar
-          micEnabled={state.micEnabled}
+          micEnabled={effectiveMicEnabled}
           isMyTurn={isMyTurn}
           agoraJoined={agoraJoined}
           agoraFailed={agoraFailed}
@@ -437,7 +459,7 @@ export default function GameRoomClient({
           <SpectatorSidebar
             chat={state.chat}
             spectatorCount={state.spectatorCount}
-            onSend={sendChat}
+            onSend={(msg, replyTo) => sendChat(msg, replyTo)}
             userId={userId}
           />
         )}

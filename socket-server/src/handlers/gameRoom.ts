@@ -126,8 +126,8 @@ export function registerGameRoomHandlers(io: Server, socket: Socket): void {
       const catState = getCategoriesState(sessionId);
       const trivState = getTriviaState(sessionId);
       const state = getCurrentState(sessionId) ?? getCurrentScrambleState(sessionId) ?? getCurrentChainState(sessionId)
-        ?? (catState ? { categories: catState } : null)
-        ?? (trivState ? { trivia: trivState } : null);
+        ?? (catState ? { categories: catState, currentTurnTeamId: catState.currentTurnTeamId, timeLeft: catState.timeLeft } : null)
+        ?? (trivState ? { trivia: trivState, currentTurnTeamId: trivState.currentTurnTeamId, timeLeft: trivState.timeLeft } : null);
       if (state) {
         socket.emit('game:state', state);
 
@@ -212,7 +212,11 @@ export function registerGameRoomHandlers(io: Server, socket: Socket): void {
     handleCategoriesGuess(io, sessionId, entry.teamId, user.id, answer);
   });
 
-  socket.on('chat:send', async ({ sessionId, message }: { sessionId: string; message: string }) => {
+  socket.on('chat:send', async ({ sessionId, message, replyTo }: {
+    sessionId: string;
+    message: string;
+    replyTo?: { userName: string; message: string };
+  }) => {
     if (!message?.trim() || message.length > 500) return;
     try {
       const saved = await prisma.chatMessage.create({
@@ -224,6 +228,7 @@ export function registerGameRoomHandlers(io: Server, socket: Socket): void {
         userName: saved.User.fullName,
         message: saved.message,
         createdAt: saved.createdAt.toISOString(),
+        replyTo: replyTo ?? null,
       });
     } catch {
       // ignore chat failures silently
