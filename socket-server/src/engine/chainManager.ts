@@ -148,6 +148,10 @@ export async function startChainGame(io: Server, sessionId: string): Promise<voi
   const participantTeams = new Map<string, string>();
   dbSession.roster.forEach(r => { participantTeams.set(r.userId, r.teamId); });
 
+  const assignment = dbSession.poolAssignment as { words?: string[], testMode?: boolean } | null;
+  const testMode = assignment?.testMode === true;
+  const totalTurns = testMode ? 6 : TOTAL_TURNS;
+
   const startingLetter = pickSafeLetter();
 
   const session: ActiveChainSession = {
@@ -166,7 +170,7 @@ export async function startChainGame(io: Server, sessionId: string): Promise<voi
     usedWords: [],
     wrongAttempts: [],
     turnNumber: 1,
-    totalTurns: TOTAL_TURNS,
+    totalTurns,
     participantSockets: new Map(),
     participantTeams,
     status: 'in_progress',

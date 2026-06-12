@@ -299,6 +299,86 @@ export const TRIVIA_QUESTIONS: TriviaQuestion[] = [
   },
 ];
 
+// ── Test-only questions ────────────────────────────────────────────
+// IDs prefixed with "test-" so they are NEVER included in TRIVIA_QUESTION_IDS
+// and can never be assigned to a real tournament session.
+export const TEST_TRIVIA_QUESTIONS: TriviaQuestion[] = [
+  {
+    id: 'test-01', category: 'Test', points: 3,
+    question: 'What is the first book of the Bible?',
+    options: ['Exodus', 'Genesis', 'Numbers', 'Leviticus'],
+    answer: 'B',
+  },
+  {
+    id: 'test-02', category: 'Test', points: 3,
+    question: 'How many books are in the Bible?',
+    options: ['60', '63', '66', '70'],
+    answer: 'C',
+  },
+  {
+    id: 'test-03', category: 'Test', points: 3,
+    question: 'Who was the first man God created?',
+    options: ['Noah', 'Moses', 'Abraham', 'Adam'],
+    answer: 'D',
+  },
+  {
+    id: 'test-04', category: 'Test', points: 3,
+    question: 'What is the last book of the Bible?',
+    options: ['Jude', 'Hebrews', 'Revelation', 'Acts'],
+    answer: 'C',
+  },
+  {
+    id: 'test-05', category: 'Test', points: 3,
+    question: 'Who built the ark?',
+    options: ['Moses', 'Abraham', 'David', 'Noah'],
+    answer: 'D',
+  },
+  {
+    id: 'test-06', category: 'Test', points: 3,
+    question: 'Who led Israel out of Egypt?',
+    options: ['Joshua', 'Moses', 'Aaron', 'Samuel'],
+    answer: 'B',
+  },
+  {
+    id: 'test-07', category: 'Test', points: 3,
+    question: 'In which city was Jesus born?',
+    options: ['Nazareth', 'Jerusalem', 'Bethlehem', 'Jericho'],
+    answer: 'C',
+  },
+  {
+    id: 'test-08', category: 'Test', points: 3,
+    question: 'Who was the strongest man in the Bible?',
+    options: ['David', 'Goliath', 'Samson', 'Solomon'],
+    answer: 'C',
+  },
+  {
+    id: 'test-09', category: 'Test', points: 3,
+    question: 'On which day did God rest after creation?',
+    options: ['Fifth day', 'Sixth day', 'Seventh day', 'Eighth day'],
+    answer: 'C',
+  },
+  {
+    id: 'test-10', category: 'Test', points: 3,
+    question: 'Which disciple denied Jesus three times?',
+    options: ['James', 'John', 'Thomas', 'Peter'],
+    answer: 'D',
+  },
+  {
+    id: 'test-11', category: 'Test', points: 3,
+    question: 'What was Jesus\' first miracle?',
+    options: ['Healing a blind man', 'Raising Lazarus', 'Turning water into wine', 'Walking on water'],
+    answer: 'C',
+  },
+  {
+    id: 'test-12', category: 'Test', points: 3,
+    question: 'How many disciples did Jesus choose?',
+    options: ['7', '10', '12', '70'],
+    answer: 'C',
+  },
+];
+
+// Tournament pool — excludes test-only questions
 export function pickQuestions(count: number): TriviaQuestion[] {
-  return [...TRIVIA_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, Math.min(count, TRIVIA_QUESTIONS.length));
+  const pool = TRIVIA_QUESTIONS.filter(q => !q.id.startsWith('test-'));
+  return [...pool].sort(() => Math.random() - 0.5).slice(0, Math.min(count, pool.length));
 }

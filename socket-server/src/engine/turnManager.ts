@@ -197,13 +197,12 @@ export async function startGame(io: Server, sessionId: string): Promise<void> {
 
   io.to(sessionId).emit('game:started', buildStatePayload(session));
 
-  // Announce word 1 and activate Team A's mics
+  // Announce word 1 — mic:control sent per-socket in gameRoom join handler
   io.to(sessionId).emit('game:turn', {
     teamId: session.currentTurnTeamId,
     teamName: session.teamAName,
     timeLeft: MAX_SECONDS,
   });
-  emitMicControl(io, session, session.currentTurnTeamId);
   startWordTimer(io, session);
 }
 

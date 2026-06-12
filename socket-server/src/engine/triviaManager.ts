@@ -1,6 +1,6 @@
 import { Server } from 'socket.io';
 import { prisma } from '../db/prisma';
-import { pickQuestions, TriviaQuestion, TRIVIA_QUESTIONS } from '../games/bibleTrivia';
+import { pickQuestions, TriviaQuestion, TRIVIA_QUESTIONS, TEST_TRIVIA_QUESTIONS } from '../games/bibleTrivia';
 import { persistScore, finalizeSession } from './scoreEngine';
 
 const BUZZ_WINDOW_SECONDS = 20;  // time to buzz in
@@ -151,7 +151,7 @@ export async function startTriviaGame(io: Server, sessionId: string) {
   const assignment = dbSession.poolAssignment as { questionIds?: string[], testMode?: boolean } | null;
   const testMode = assignment?.testMode === true;
   const questions: TriviaQuestion[] = testMode
-    ? TRIVIA_QUESTIONS.filter(q => q.points === 3).slice(0, QUESTIONS_PER_GAME)  // easy questions only
+    ? TEST_TRIVIA_QUESTIONS.slice(0, QUESTIONS_PER_GAME)
     : (assignment?.questionIds
         ? TRIVIA_QUESTIONS.filter(q => assignment.questionIds!.includes(q.id)).slice(0, QUESTIONS_PER_GAME)
         : pickQuestions(QUESTIONS_PER_GAME));

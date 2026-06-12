@@ -58,7 +58,6 @@ egc-conference-app/
 ├── prisma/                   # Database schema & migrations
 └── ...config files
 ```
-
 ## Key Features
 - User registration system with team assignment based on birth month
 - Digital ID card generation

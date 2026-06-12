@@ -138,6 +138,7 @@ export interface ChatMsg {
   userId: string;
   userName: string;
   message: string;
+  replyTo?: { userName: string; message: string } | null;
   createdAt: string;
 }
 
@@ -241,7 +242,9 @@ export function useGameSocket(sessionId: string, token: string) {
     });
 
     socket.on('game:state', (gs: GameState) => {
-      update({ gameState: gs, turnTeamId: gs.currentTurnTeamId, timeLeft: gs.timeLeft });
+      const turnTeamId = gs.currentTurnTeamId ?? gs.categories?.currentTurnTeamId ?? gs.trivia?.currentTurnTeamId;
+      const timeLeft = gs.timeLeft ?? gs.categories?.timeLeft ?? gs.trivia?.timeLeft;
+      update({ gameState: gs, turnTeamId, timeLeft, categoriesRoundEnd: null });
     });
 
     socket.on('game:started', (gs: GameState) => {
@@ -519,6 +522,9 @@ export function useGameSocket(sessionId: string, token: string) {
         'hangman:update', 'hangman:solved', 'hangman:failed',
         'scramble:turn', 'scramble:correct', 'scramble:wrong', 'scramble:timeout',
         'chain:correct', 'chain:attempt', 'chain:timeout', 'chain:invalid', 'chain:turn',
+        'categories:state', 'categories:new-round', 'categories:correct', 'categories:wrong',
+        'categories:strike', 'categories:round-end', 'categories:invalid',
+        'trivia:question', 'trivia:buzz-locked', 'trivia:pass', 'trivia:correct', 'trivia:wrong', 'trivia:reveal',
         'mic:control', 'chat:message', 'error',
       ].forEach(ev => socket.off(ev));
     };
@@ -533,8 +539,8 @@ export function useGameSocket(sessionId: string, token: string) {
     socketRef.current?.emit('scramble:guess', { sessionId, answer });
   }, [sessionId]);
 
-  const sendChat = useCallback((message: string) => {
-    socketRef.current?.emit('chat:send', { sessionId, message });
+  const sendChat = useCallback((message: string, replyTo?: { userName: string; message: string }) => {
+    socketRef.current?.emit('chat:send', { sessionId, message, replyTo });
   }, [sessionId]);
 
   const adminStart = useCallback(() => {
