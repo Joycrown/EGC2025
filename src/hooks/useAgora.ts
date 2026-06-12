@@ -16,6 +16,10 @@ export function useAgora(config: AgoraConfig | null, micEnabled: boolean) {
   const clientRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const localTrackRef = useRef<any>(null);
+  // Always holds the latest micEnabled value so the async init can read it
+  // after the promise resolves (the closure would stale-capture it otherwise).
+  const micEnabledRef = useRef(micEnabled);
+  micEnabledRef.current = micEnabled;
   const [joined, setJoined] = useState(false);
   const [failed, setFailed] = useState(false);
   const [remoteCount, setRemoteCount] = useState(0);
@@ -58,7 +62,9 @@ export function useAgora(config: AgoraConfig | null, micEnabled: boolean) {
           const localTrack = await AgoraRTC.createMicrophoneAudioTrack();
           localTrackRef.current = localTrack;
           await client.publish(localTrack);
-          localTrack.setEnabled(false);
+          // Use the ref (not the stale closure value) so the enabled state
+          // matches whatever micEnabled is at the moment init finishes.
+          localTrack.setEnabled(micEnabledRef.current);
         }
 
         if (mounted) {

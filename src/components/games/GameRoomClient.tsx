@@ -84,17 +84,20 @@ export default function GameRoomClient({
   // which can be missed on reconnect or are never sent for some game types (categories).
   const effectiveMicEnabled = (() => {
     if (!isParticipant || !myTeamId || !gs) return false;
-    // Scramble and Trivia: both teams are always active at the same time
-    if (isScramble || isTrivia) return true;
-    // Turn-based games: only the active team's mic is live
+    // Trivia: buzz-in format — both teams are always in contention, keep both mics live
+    if (isTrivia) return true;
+    // All other games (Hangman, Scramble, Chain, Categories): turn-based — only the active team's mic is live
     return myTeamId === (state.turnTeamId ?? gs.currentTurnTeamId);
   })();
 
   // Prompt participants for mic permission before Agora tries to access the device.
   // Agora config is only passed through once permission is confirmed — this prevents
   // the browser's default (easily-dismissed) dialog from being the only prompt.
+  // Only participants need to grant mic permission before Agora publishes.
+  // Spectators/admins always get micReady=true — they join the channel to listen
+  // but never publish (their agoraConfig role is 'subscriber').
   const { state: micPermState, requestPermission } = useMicPermission(isParticipant);
-  const micReady = micPermState === 'granted' || micPermState === 'unavailable';
+  const micReady = !isParticipant || micPermState === 'granted' || micPermState === 'unavailable';
   const { joined: agoraJoined, failed: agoraFailed } = useAgora(micReady ? agoraConfig : null, effectiveMicEnabled);
 
   // ── Sound effects (Web Audio API — no external files needed) ────────────
