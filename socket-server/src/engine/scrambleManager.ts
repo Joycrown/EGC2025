@@ -8,8 +8,9 @@ import { prisma } from '../db/prisma';
 export const activeScrambleSessions = new Map<string, ActiveScrambleSession>();
 
 const TURN_SECONDS = 30;
-const TOTAL_WORDS = 20;
+const TOTAL_WORDS = 40;        // 20 per half, 10 per team per half
 const WORD_POINTS = 5;
+const HALF_TIME_SECONDS = 90;  // auto-resume break between halves
 
 function buildStatePayload(session: ActiveScrambleSession): GameStatePayload {
   return {
@@ -81,6 +82,8 @@ async function handleWordTimeout(io: Server, session: ActiveScrambleSession): Pr
 
   if (session.wordNumber >= TOTAL_WORDS) {
     await endGame(io, session);
+  } else if (session.wordNumber === TOTAL_WORDS / 2 && session.currentHalf === 1) {
+    setTimeout(() => triggerHalfTime(io, session), 3000);
   } else {
     switchTurn(session);
     setTimeout(() => startNextWord(io, session), 3000);
@@ -114,8 +117,38 @@ function startNextWord(io: Server, session: ActiveScrambleSession): void {
   startWordTimer(io, session);
 }
 
+function triggerHalfTime(io: Server, session: ActiveScrambleSession): void {
+  clearTimer(session);
+  session.status = 'half_time';
+
+  io.to(session.sessionId).emit('game:half-time', {
+    teamAScore: session.teamAScore,
+    teamBScore: session.teamBScore,
+    teamAName: session.teamAName,
+    teamBName: session.teamBName,
+    resumeIn: HALF_TIME_SECONDS,
+  });
+
+  session.halfTimeTimer = setTimeout(() => {
+    session.halfTimeTimer = null;
+    beginSecondHalf(io, session);
+  }, HALF_TIME_SECONDS * 1000);
+}
+
+function beginSecondHalf(io: Server, session: ActiveScrambleSession): void {
+  session.currentHalf = 2;
+  session.status = 'in_progress';
+  switchTurn(session);
+  io.to(session.sessionId).emit('game:second-half', {
+    teamAScore: session.teamAScore,
+    teamBScore: session.teamBScore,
+  });
+  startNextWord(io, session);
+}
+
 async function endGame(io: Server, session: ActiveScrambleSession): Promise<void> {
   clearTimer(session);
+  if (session.halfTimeTimer) { clearTimeout(session.halfTimeTimer); session.halfTimeTimer = null; }
   session.status = 'completed';
 
   const winnerId =
@@ -167,6 +200,7 @@ export async function startScrambleGame(io: Server, sessionId: string): Promise<
     teamBName: dbSession.teamB.name,
     currentTurnTeamId: dbSession.teamAId, // Team A always goes first
     timer: null,
+    halfTimeTimer: null,
     turnDuration: TURN_SECONDS,
     timeLeft: TURN_SECONDS,
     teamAScore: 0,
@@ -181,6 +215,7 @@ export async function startScrambleGame(io: Server, sessionId: string): Promise<
     participantSockets: new Map(),
     participantTeams,
     status: 'in_progress',
+    currentHalf: 1,
     usedWords: [...preUsed, firstEntry.word],
   };
 
@@ -247,6 +282,8 @@ export async function handleScrambleGuess(
 
     if (session.wordNumber >= TOTAL_WORDS) {
       await endGame(io, session);
+    } else if (session.wordNumber === TOTAL_WORDS / 2 && session.currentHalf === 1) {
+      setTimeout(() => triggerHalfTime(io, session), 3000);
     } else {
       switchTurn(session);
       setTimeout(() => startNextWord(io, session), 3000);
@@ -279,4 +316,11 @@ export function getCurrentScrambleState(sessionId: string): GameStatePayload | n
   const session = activeScrambleSessions.get(sessionId);
   if (!session) return null;
   return buildStatePayload(session);
+}
+
+export function startScrambleSecondHalf(io: Server, sessionId: string): void {
+  const session = activeScrambleSessions.get(sessionId);
+  if (!session || session.status !== 'half_time') return;
+  if (session.halfTimeTimer) { clearTimeout(session.halfTimeTimer); session.halfTimeTimer = null; }
+  beginSecondHalf(io, session);
 }

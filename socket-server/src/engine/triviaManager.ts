@@ -3,12 +3,13 @@ import { prisma } from '../db/prisma';
 import { pickQuestions, TriviaQuestion, TRIVIA_QUESTIONS, TEST_TRIVIA_QUESTIONS } from '../games/bibleTrivia';
 import { persistScore, finalizeSession } from './scoreEngine';
 
-const BUZZ_WINDOW_SECONDS = 20;  // time to buzz in
-const ANSWER_SECONDS = 12;        // time to answer after buzzing
-const PASS_SECONDS = 8;           // time for other team to answer after pass
-const QUESTIONS_PER_GAME = 12;
+const BUZZ_WINDOW_SECONDS = 20;   // time to buzz in
+const ANSWER_SECONDS = 12;         // time to answer after buzzing
+const PASS_SECONDS = 8;            // time for other team to answer after pass
+const QUESTIONS_PER_GAME = 20;   // 10 per half
 const POINTS_FIRST = 5;
-const POINTS_SECOND = 3;          // answering after other team passed
+const POINTS_SECOND = 3;           // answering after other team passed
+const HALF_TIME_SECONDS = 90;     // auto-resume break between halves
 
 type PhaseType = 'buzzing' | 'answering' | 'passing' | 'reveal';
 
@@ -19,6 +20,8 @@ interface ActiveTriviaSession {
   teamAScore: number;
   teamBScore: number;
   currentTurnTeamId: string;
+  teamAName: string;
+  teamBName: string;
 
   questions: TriviaQuestion[];
   currentIndex: number;
@@ -30,7 +33,9 @@ interface ActiveTriviaSession {
   pointsOnOffer: number;
 
   timer: ReturnType<typeof setTimeout> | null;
+  halfTimeTimer: ReturnType<typeof setTimeout> | null;
   timeLeft: number;
+  currentHalf: number;
 }
 
 export const activeTrivaSessions = new Map<string, ActiveTriviaSession>();
@@ -102,6 +107,7 @@ async function revealAndAdvance(io: Server, s: ActiveTriviaSession, correctTeamI
   s.currentIndex++;
 
   if (s.currentIndex >= s.totalQuestions) {
+    if (s.halfTimeTimer) { clearTimeout(s.halfTimeTimer); s.halfTimeTimer = null; }
     const winnerId = s.teamAScore > s.teamBScore ? s.teamAId
       : s.teamBScore > s.teamAScore ? s.teamBId : null;
 
@@ -115,6 +121,33 @@ async function revealAndAdvance(io: Server, s: ActiveTriviaSession, correctTeamI
     });
 
     activeTrivaSessions.delete(s.sessionId);
+    return;
+  }
+
+  // Check for half-time
+  if (s.currentIndex === s.totalQuestions / 2 && s.currentHalf === 1) {
+    setTimeout(() => {
+      s.phase = 'buzzing';
+      s.buzzedTeamId = null;
+      s.passingToTeamId = null;
+      s.pointsOnOffer = POINTS_FIRST;
+
+      s.halfTimeTimer = setTimeout(() => {
+        s.halfTimeTimer = null;
+        s.currentHalf = 2;
+        io.to(s.sessionId).emit('game:second-half', { teamAScore: s.teamAScore, teamBScore: s.teamBScore });
+        io.to(s.sessionId).emit('trivia:question', buildClientState(s));
+        startBuzzWindow(io, s);
+      }, HALF_TIME_SECONDS * 1000);
+
+      io.to(s.sessionId).emit('game:half-time', {
+        teamAScore: s.teamAScore,
+        teamBScore: s.teamBScore,
+        teamAName: s.teamAName,
+        teamBName: s.teamBName,
+        resumeIn: HALF_TIME_SECONDS,
+      });
+    }, 4000);
     return;
   }
 
@@ -156,6 +189,11 @@ export async function startTriviaGame(io: Server, sessionId: string) {
         ? TRIVIA_QUESTIONS.filter(q => assignment.questionIds!.includes(q.id)).slice(0, QUESTIONS_PER_GAME)
         : pickQuestions(QUESTIONS_PER_GAME));
 
+  const dbSessionFull = await prisma.gameSession.findUnique({
+    where: { id: sessionId },
+    include: { teamA: true, teamB: true },
+  });
+
   const session: ActiveTriviaSession = {
     sessionId,
     teamAId: dbSession.teamAId,
@@ -163,6 +201,8 @@ export async function startTriviaGame(io: Server, sessionId: string) {
     teamAScore: 0,
     teamBScore: 0,
     currentTurnTeamId: dbSession.teamAId,
+    teamAName: dbSessionFull?.teamA.name ?? 'Team A',
+    teamBName: dbSessionFull?.teamB.name ?? 'Team B',
     questions,
     currentIndex: 0,
     totalQuestions: questions.length,
@@ -171,7 +211,9 @@ export async function startTriviaGame(io: Server, sessionId: string) {
     passingToTeamId: null,
     pointsOnOffer: POINTS_FIRST,
     timer: null,
+    halfTimeTimer: null,
     timeLeft: BUZZ_WINDOW_SECONDS,
+    currentHalf: 1,
   };
 
   activeTrivaSessions.set(sessionId, session);
@@ -300,4 +342,15 @@ export function getTriviaState(sessionId: string) {
   const s = activeTrivaSessions.get(sessionId);
   if (!s) return null;
   return buildClientState(s);
+}
+
+export function startTriviaSecondHalf(io: Server, sessionId: string): void {
+  const s = activeTrivaSessions.get(sessionId);
+  if (!s || s.currentHalf !== 1 || !s.halfTimeTimer) return;
+  clearTimeout(s.halfTimeTimer);
+  s.halfTimeTimer = null;
+  s.currentHalf = 2;
+  io.to(s.sessionId).emit('game:second-half', { teamAScore: s.teamAScore, teamBScore: s.teamBScore });
+  io.to(s.sessionId).emit('trivia:question', buildClientState(s));
+  startBuzzWindow(io, s);
 }

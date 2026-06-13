@@ -5,12 +5,15 @@ import { persistScore, finalizeSession } from './scoreEngine';
 
 const MAX_STRIKES = 3;
 const TURN_SECONDS = 25;
-const ROUNDS = 5;
+const ROUNDS = 6;              // 3 per half
+const HALF_TIME_SECONDS = 90;  // auto-resume break between halves
 
 interface ActiveCategorySession {
   sessionId: string;
   teamAId: string;
   teamBId: string;
+  teamAName: string;
+  teamBName: string;
   currentTurnTeamId: string;
   teamAScore: number;
   teamBScore: number;
@@ -26,7 +29,9 @@ interface ActiveCategorySession {
   advancing: boolean;     // guard against double advanceRound calls
 
   timer: ReturnType<typeof setTimeout> | null;
+  halfTimeTimer: ReturnType<typeof setTimeout> | null;
   timeLeft: number;
+  currentHalf: number;
 }
 
 export const activeCategorySessions = new Map<string, ActiveCategorySession>();
@@ -105,6 +110,7 @@ async function advanceRound(io: Server, s: ActiveCategorySession) {
 
   if (nextRound >= s.totalRounds) {
     // Game over
+    if (s.halfTimeTimer) { clearTimeout(s.halfTimeTimer); s.halfTimeTimer = null; }
     const winnerId = s.teamAScore > s.teamBScore ? s.teamAId
       : s.teamBScore > s.teamAScore ? s.teamBId : null;
 
@@ -118,6 +124,35 @@ async function advanceRound(io: Server, s: ActiveCategorySession) {
     });
 
     activeCategorySessions.delete(s.sessionId);
+    return;
+  }
+
+  // Half-time check: after round 3 of 6 (nextRound === totalRounds/2)
+  if (nextRound === Math.floor(s.totalRounds / 2) && s.currentHalf === 1) {
+    setTimeout(() => {
+      s.advancing = false;
+
+      s.halfTimeTimer = setTimeout(() => {
+        s.halfTimeTimer = null;
+        s.currentHalf = 2;
+        s.currentRound = nextRound;
+        s.currentCategory = s.categories[s.currentRound];
+        s.foundAnswers = [];
+        s.strikes = 0;
+        s.lastStrikeTeam = null;
+        io.to(s.sessionId).emit('game:second-half', { teamAScore: s.teamAScore, teamBScore: s.teamBScore });
+        io.to(s.sessionId).emit('categories:new-round', buildClientState(s));
+        startTurnTimer(io, s);
+      }, HALF_TIME_SECONDS * 1000);
+
+      io.to(s.sessionId).emit('game:half-time', {
+        teamAScore: s.teamAScore,
+        teamBScore: s.teamBScore,
+        teamAName: s.teamAName,
+        teamBName: s.teamBName,
+        resumeIn: HALF_TIME_SECONDS,
+      });
+    }, 4000);
     return;
   }
 
@@ -174,10 +209,17 @@ export async function startCategoriesGame(io: Server, sessionId: string) {
         ? BIBLE_CATEGORIES.filter(c => assignment.categoryIds!.includes(c.id)).slice(0, ROUNDS)
         : pickCategories(ROUNDS));
 
+  const dbSessionFull = await prisma.gameSession.findUnique({
+    where: { id: sessionId },
+    include: { teamA: true, teamB: true },
+  });
+
   const session: ActiveCategorySession = {
     sessionId,
     teamAId: dbSession.teamAId,
     teamBId: dbSession.teamBId,
+    teamAName: dbSessionFull?.teamA.name ?? 'Team A',
+    teamBName: dbSessionFull?.teamB.name ?? 'Team B',
     currentTurnTeamId: dbSession.teamAId,
     teamAScore: 0,
     teamBScore: 0,
@@ -190,7 +232,9 @@ export async function startCategoriesGame(io: Server, sessionId: string) {
     lastStrikeTeam: null,
     advancing: false,
     timer: null,
+    halfTimeTimer: null,
     timeLeft: TURN_SECONDS,
+    currentHalf: 1,
   };
 
   activeCategorySessions.set(sessionId, session);
@@ -291,4 +335,22 @@ export function getCategoriesState(sessionId: string) {
   const s = activeCategorySessions.get(sessionId);
   if (!s) return null;
   return buildClientState(s);
+}
+
+export function startCategoriesSecondHalf(io: Server, sessionId: string): void {
+  const s = activeCategorySessions.get(sessionId);
+  if (!s || s.currentHalf !== 1 || !s.halfTimeTimer) return;
+  clearTimeout(s.halfTimeTimer);
+  s.halfTimeTimer = null;
+  const nextRound = Math.floor(s.totalRounds / 2);
+  s.currentHalf = 2;
+  s.currentRound = nextRound;
+  s.currentCategory = s.categories[s.currentRound];
+  s.foundAnswers = [];
+  s.strikes = 0;
+  s.lastStrikeTeam = null;
+  s.advancing = false;
+  io.to(s.sessionId).emit('game:second-half', { teamAScore: s.teamAScore, teamBScore: s.teamBScore });
+  io.to(s.sessionId).emit('categories:new-round', buildClientState(s));
+  startTurnTimer(io, s);
 }

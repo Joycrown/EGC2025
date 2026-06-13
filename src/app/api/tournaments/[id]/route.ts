@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prismaClient';
+import { verifyAuth } from '@/lib/auth/utils';
 
 // GET — tournament detail + live leaderboard
 export async function GET(
@@ -73,4 +74,31 @@ export async function GET(
   });
 
   return NextResponse.json({ tournament, leaderboard: ranked });
+}
+
+// DELETE — permanently remove a tournament and all its sessions / rounds
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await verifyAuth(request, ['ADMIN', 'SUPER_ADMIN']);
+  } catch {
+    return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
+  }
+
+  const { id } = params;
+
+  const tournament = await prisma.tournament.findUnique({ where: { id } });
+  if (!tournament) {
+    return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });
+  }
+
+  // Delete game sessions first — cascades TurnLog, GameRoster, ChatMessage automatically
+  await prisma.gameSession.deleteMany({ where: { tournamentId: id } });
+
+  // Delete tournament — cascades TournamentRound automatically
+  await prisma.tournament.delete({ where: { id } });
+
+  return NextResponse.json({ success: true });
 }

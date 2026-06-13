@@ -150,6 +150,14 @@ export interface ScrambleResult {
   pointsAwarded?: number;
 }
 
+export interface HalfTimePayload {
+  teamAScore: number;
+  teamBScore: number;
+  teamAName: string;
+  teamBName: string;
+  resumeIn: number;
+}
+
 export interface GameRoomState {
   role: 'participant' | 'spectator' | null;
   myTeamId: string | null;
@@ -161,6 +169,8 @@ export interface GameRoomState {
   isConnected: boolean;
   turnTeamId: string | null;
   timeLeft: number;
+  currentHalf: number;
+  halfTime: HalfTimePayload | null;
   // Hangman
   solvedWord: string | null;
   failedWord: string | null;
@@ -193,6 +203,8 @@ const defaultState: GameRoomState = {
   isConnected: false,
   turnTeamId: null,
   timeLeft: 40,
+  currentHalf: 1,
+  halfTime: null,
   solvedWord: null,
   failedWord: null,
   scrambleResult: null,
@@ -511,8 +523,16 @@ export function useGameSocket(sessionId: string, token: string) {
       setState(prev => ({ ...prev, chat: [...prev.chat.slice(-99), msg] }));
     });
 
+    socket.on('game:half-time', (payload: HalfTimePayload) => {
+      update({ halfTime: payload, currentHalf: 1 });
+    });
+
+    socket.on('game:second-half', () => {
+      update({ halfTime: null, currentHalf: 2 });
+    });
+
     socket.on('game:ended', (payload) => {
-      update({ gameEnded: payload });
+      update({ gameEnded: payload, halfTime: null });
     });
 
     socket.on('error', ({ message }: { message: string }) => {
@@ -533,6 +553,7 @@ export function useGameSocket(sessionId: string, token: string) {
         'categories:strike', 'categories:round-end', 'categories:invalid',
         'trivia:question', 'trivia:buzz-locked', 'trivia:pass', 'trivia:correct', 'trivia:wrong', 'trivia:reveal',
         'mic:control', 'room:mic-status', 'chat:message', 'error',
+        'game:half-time', 'game:second-half',
       ].forEach(ev => socket.off(ev));
     };
   }, [sessionId, token, update]);
@@ -580,5 +601,9 @@ export function useGameSocket(sessionId: string, token: string) {
     socketRef.current?.emit('player:mic-ready', { sessionId });
   }, [sessionId]);
 
-  return { state, guessLetter, submitScrambleAnswer, submitChainWord, submitCategoriesAnswer, buzzIn, submitTriviaAnswer, sendChat, adminStart, adminEnd, emitMicReady };
+  const adminSecondHalf = useCallback(() => {
+    socketRef.current?.emit('admin:second-half', { sessionId });
+  }, [sessionId]);
+
+  return { state, guessLetter, submitScrambleAnswer, submitChainWord, submitCategoriesAnswer, buzzIn, submitTriviaAnswer, sendChat, adminStart, adminEnd, adminSecondHalf, emitMicReady };
 }

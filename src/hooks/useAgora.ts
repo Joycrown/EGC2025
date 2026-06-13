@@ -16,10 +16,8 @@ export function useAgora(config: AgoraConfig | null, micEnabled: boolean) {
   const clientRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const localTrackRef = useRef<any>(null);
-  // Always holds the latest micEnabled value so the async init can read it
-  // after the promise resolves (the closure would stale-capture it otherwise).
-  const micEnabledRef = useRef(micEnabled);
-  micEnabledRef.current = micEnabled;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const agoraRTCRef = useRef<any>(null);
   const [joined, setJoined] = useState(false);
   const [failed, setFailed] = useState(false);
   const [remoteCount, setRemoteCount] = useState(0);
@@ -27,11 +25,10 @@ export function useAgora(config: AgoraConfig | null, micEnabled: boolean) {
   useEffect(() => {
     if (!config) return;
 
-    const { appId, channel, token, uid, role } = config;
+    const { appId, channel, token, uid } = config;
     let mounted = true;
     setFailed(false);
 
-    // 10-second timeout — if Agora hasn't joined by then, mark as failed
     const timeout = setTimeout(() => {
       if (mounted && !joined) setFailed(true);
     }, 10000);
@@ -40,6 +37,7 @@ export function useAgora(config: AgoraConfig | null, micEnabled: boolean) {
       try {
         const AgoraRTC = (await import('agora-rtc-sdk-ng')).default;
         AgoraRTC.setLogLevel(4);
+        agoraRTCRef.current = AgoraRTC;
 
         const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
         clientRef.current = client;
@@ -52,20 +50,17 @@ export function useAgora(config: AgoraConfig | null, micEnabled: boolean) {
           }
         });
 
-        client.on('user-unpublished', () => {
-          if (mounted) setRemoteCount(c => Math.max(0, c - 1));
+        client.on('user-unpublished', (_user: IAgoraRTCRemoteUser, mediaType: string) => {
+          if (mediaType === 'audio' && mounted) setRemoteCount(c => Math.max(0, c - 1));
         });
 
         await client.join(appId, channel, token, uid);
-
-        if (role === 'publisher') {
-          const localTrack = await AgoraRTC.createMicrophoneAudioTrack();
-          localTrackRef.current = localTrack;
-          await client.publish(localTrack);
-          // Use the ref (not the stale closure value) so the enabled state
-          // matches whatever micEnabled is at the moment init finishes.
-          localTrack.setEnabled(micEnabledRef.current);
-        }
+        // Track creation is intentionally deferred to the micEnabled effect below.
+        // We close() + recreate the track on each turn rather than using setEnabled
+        // or unpublish alone. This is required on iOS: as long as a live
+        // MediaStreamTrack exists (even unpublished / muted), iOS routes ALL audio
+        // output to the earpiece. close() fully ends the stream so iOS switches
+        // back to the speaker when it is not the participant's turn.
 
         if (mounted) {
           setJoined(true);
@@ -92,11 +87,69 @@ export function useAgora(config: AgoraConfig | null, micEnabled: boolean) {
   }, [config?.appId, config?.channel, config?.token, config?.uid, config?.role]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    localTrackRef.current?.setEnabled?.(micEnabled);
-  }, [micEnabled]);
+    if (!joined || config?.role !== 'publisher') return;
+
+    const client = clientRef.current;
+    const AgoraRTC = agoraRTCRef.current;
+    if (!client || !AgoraRTC) return;
+
+    let cancelled = false;
+
+    if (micEnabled) {
+      AgoraRTC.createMicrophoneAudioTrack()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .then((newTrack: any) => {
+          if (cancelled) {
+            newTrack.close();
+            return;
+          }
+          localTrackRef.current = newTrack;
+          return client.publish(newTrack);
+        })
+        .catch(() => {});
+    } else {
+      const track = localTrackRef.current;
+      if (track) {
+        client
+          .unpublish(track)
+          .catch(() => {})
+          .finally(() => {
+            track.close();
+            localTrackRef.current = null;
+          });
+      }
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [micEnabled, joined, config?.role]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleMic = useCallback((enabled: boolean) => {
-    localTrackRef.current?.setEnabled?.(enabled);
+    const client = clientRef.current;
+    const AgoraRTC = agoraRTCRef.current;
+    if (!client || !AgoraRTC) return;
+
+    if (enabled) {
+      AgoraRTC.createMicrophoneAudioTrack()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .then((newTrack: any) => {
+          localTrackRef.current = newTrack;
+          return client.publish(newTrack);
+        })
+        .catch(() => {});
+    } else {
+      const track = localTrackRef.current;
+      if (track) {
+        client
+          .unpublish(track)
+          .catch(() => {})
+          .finally(() => {
+            track.close();
+            localTrackRef.current = null;
+          });
+      }
+    }
   }, []);
 
   return { joined, failed, remoteCount, toggleMic };

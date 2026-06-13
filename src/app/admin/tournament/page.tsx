@@ -53,6 +53,12 @@ export default function AdminTournamentPage() {
   const [editValue, setEditValue] = useState('');
   const [saveStatus, setSaveStatus] = useState<Record<string, 'saving' | 'saved' | 'error'>>({});
 
+  // Delete tournament state
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
   const [form, setForm] = useState({
     name: 'EGC 2026 Games Tournament',
     teamIds: ['', '', '', ''],
@@ -154,6 +160,23 @@ export default function AdminTournamentPage() {
       setSaveStatus(s => ({ ...s, [sessionId]: 'error' }));
       setTimeout(() => setSaveStatus(s => { const c = { ...s }; delete c[sessionId]; return c; }), 4000);
     }
+  }
+
+  async function handleDelete(tournamentId: string) {
+    setDeleting(true);
+    setDeleteError('');
+    const res = await fetch(`/api/tournaments/${tournamentId}`, { method: 'DELETE' });
+    setDeleting(false);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setDeleteError(d.error ?? 'Failed to delete tournament');
+      return;
+    }
+    setTournaments(prev => prev.filter(t => t.id !== tournamentId));
+    setSessionsMap(prev => { const c = { ...prev }; delete c[tournamentId]; return c; });
+    if (expandedId === tournamentId) setExpandedId(null);
+    setDeleteTargetId(null);
+    setDeleteConfirmText('');
   }
 
   const teamsReady = form.teamIds.every(id => id) && new Set(form.teamIds).size === 4;
@@ -334,8 +357,49 @@ export default function AdminTournamentPage() {
                     className="text-sm text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400 px-3 py-1.5 rounded-lg transition-colors">
                     {expandedId === t.id ? 'Hide' : 'Schedule'}
                   </button>
+                  <button
+                    onClick={() => { setDeleteTargetId(t.id); setDeleteConfirmText(''); setDeleteError(''); }}
+                    className="text-sm text-red-500 hover:text-red-400 border border-red-900/40 hover:border-red-700/60 px-3 py-1.5 rounded-lg transition-colors">
+                    Delete
+                  </button>
                 </div>
               </div>
+
+              {/* Delete confirmation panel */}
+              {deleteTargetId === t.id && (
+                <div className="border-t border-red-900/40 bg-red-950/20 px-5 py-4">
+                  <p className="text-red-400 font-semibold text-sm mb-1">Delete this tournament?</p>
+                  <p className="text-gray-400 text-xs mb-3">
+                    This permanently deletes <span className="text-white font-semibold">{t.name}</span> and all its sessions, rosters, turn logs, and chat — including scheduled, in-progress, and completed games. This cannot be undone.
+                  </p>
+                  <p className="text-gray-500 text-xs mb-2">
+                    Type <span className="text-white font-mono">{t.name}</span> to confirm:
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      value={deleteConfirmText}
+                      onChange={e => setDeleteConfirmText(e.target.value)}
+                      placeholder={t.name}
+                      className="flex-1 bg-gray-800 border border-red-800/50 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-600"
+                    />
+                    <button
+                      onClick={() => handleDelete(t.id)}
+                      disabled={deleteConfirmText !== t.name || deleting}
+                      className="bg-red-700 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors shrink-0">
+                      {deleting ? 'Deleting…' : 'Yes, delete everything'}
+                    </button>
+                    <button
+                      onClick={() => { setDeleteTargetId(null); setDeleteConfirmText(''); setDeleteError(''); }}
+                      className="text-gray-400 hover:text-white border border-gray-600 px-4 py-2 rounded-lg text-sm transition-colors shrink-0">
+                      Cancel
+                    </button>
+                  </div>
+                  {deleteError && (
+                    <p className="text-red-400 text-xs mt-2">{deleteError}</p>
+                  )}
+                </div>
+              )}
 
               {/* Expanded session schedule */}
               {expandedId === t.id && (
