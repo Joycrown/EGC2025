@@ -11,7 +11,6 @@ A comprehensive conference management platform for EGC events with features for 
 ## Getting Started
 
 ### Environment Setup
-
 1. Clone this repository
 2. Install dependencies:
    ```bash
