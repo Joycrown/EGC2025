@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useGameSocket } from '@/hooks/useGameSocket';
 import { useAgora } from '@/hooks/useAgora';
-import { useMicPermission } from '@/hooks/useMicPermission';
-import MicPermissionModal from './MicPermissionModal';
+import { useMicSetup } from '@/hooks/useMicSetup';
+import MicSetupModal from './MicSetupModal';
 import GameRoomHeader from './GameRoomHeader';
 import TurnIndicator from './TurnIndicator';
 import ScoreBoard from './ScoreBoard';
@@ -48,7 +48,8 @@ export default function GameRoomClient({
   gameType, status,
 }: Props) {
   const isAdmin = userType === 'ADMIN' || userType === 'SUPER_ADMIN';
-  const { state, guessLetter, submitScrambleAnswer, submitChainWord, submitCategoriesAnswer, buzzIn, submitTriviaAnswer, sendChat, adminStart, adminEnd } = useGameSocket(sessionId, token);
+  const { state, guessLetter, submitScrambleAnswer, submitChainWord, submitCategoriesAnswer, buzzIn, submitTriviaAnswer, sendChat, adminStart, adminEnd, emitMicReady } = useGameSocket(sessionId, token);
+  const [showStartConfirm, setShowStartConfirm] = useState(false);
   const [agoraConfig, setAgoraConfig] = useState<AgoraTokenResponse | null>(null);
 
   // Fetch Agora token on mount
@@ -80,25 +81,33 @@ export default function GameRoomClient({
   const isCategories = gameType === 'BIBLE_CATEGORIES';
   const isTrivia = gameType === 'BIBLE_TRIVIA';
 
-  // Derive mic state from turn ownership — more reliable than waiting for server mic:control events,
-  // which can be missed on reconnect or are never sent for some game types (categories).
+  // Derive mic state from turn ownership.
   const effectiveMicEnabled = (() => {
-    if (!isParticipant || !myTeamId || !gs) return false;
-    // Trivia: buzz-in format — both teams are always in contention, keep both mics live
+    if (!gs) return false;
+    // Admin/super admin: always live — they are the game MC
+    if (isAdmin) return true;
+    if (!isParticipant || !myTeamId) return false;
+    // Trivia: buzz-in format — both teams always in contention
     if (isTrivia) return true;
-    // All other games (Hangman, Scramble, Chain, Categories): turn-based — only the active team's mic is live
+    // All other games: turn-based — only the active team's mic is live
     return myTeamId === (state.turnTeamId ?? gs.currentTurnTeamId);
   })();
 
-  // Prompt participants for mic permission before Agora tries to access the device.
-  // Agora config is only passed through once permission is confirmed — this prevents
-  // the browser's default (easily-dismissed) dialog from being the only prompt.
-  // Only participants need to grant mic permission before Agora publishes.
-  // Spectators/admins always get micReady=true — they join the channel to listen
-  // but never publish (their agoraConfig role is 'subscriber').
-  const { state: micPermState, requestPermission } = useMicPermission(isParticipant);
-  const micReady = !isParticipant || micPermState === 'granted' || micPermState === 'unavailable';
+  // Participants go through full permission + mic test (useMicSetup).
+  // Admins get autoConfirm=true — permission only, no test required, mic always live.
+  // Spectators skip setup entirely (needsMicSetup=false → micReady immediately true).
+  const needsMicSetup = isParticipant || isAdmin;
+  const { state: micSetupState, requestPermission, testMic, confirmReady, skipTest } = useMicSetup(
+    needsMicSetup,
+    isAdmin ? { autoConfirm: true } : undefined,
+  );
+  const micReady = !needsMicSetup || micSetupState === 'confirmed' || micSetupState === 'unavailable';
   const { joined: agoraJoined, failed: agoraFailed } = useAgora(micReady ? agoraConfig : null, effectiveMicEnabled);
+
+  // Signal mic readiness to server once setup is complete (participants only)
+  useEffect(() => {
+    if (micSetupState === 'confirmed' && isParticipant) emitMicReady();
+  }, [micSetupState, isParticipant, emitMicReady]);
 
   // ── Sound effects (Web Audio API — no external files needed) ────────────
   const audioCtx = useRef<AudioContext | null>(null);
@@ -203,9 +212,15 @@ export default function GameRoomClient({
 
   return (
     <div className="h-screen overflow-hidden bg-gray-950 text-white flex flex-col">
-      {/* Mic permission modal — blocks participants until mic is resolved */}
-      {isParticipant && (
-        <MicPermissionModal state={micPermState} onRequest={requestPermission} />
+      {/* Mic setup modal — blocks participants (and admin) until mic is resolved */}
+      {needsMicSetup && (
+        <MicSetupModal
+          state={micSetupState}
+          onRequest={requestPermission}
+          onTest={testMic}
+          onConfirm={confirmReady}
+          onSkip={skipTest}
+        />
       )}
 
       {/* Header */}
@@ -354,20 +369,98 @@ export default function GameRoomClient({
 
         {/* Center — game board */}
         <main className="flex-1 min-h-0 flex flex-col items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          {!gs && status !== 'IN_PROGRESS' && (
-            <div className="text-center">
-              <p className="text-gray-400 text-lg mb-2">Waiting for the game to start…</p>
-              {!state.isConnected && <p className="text-yellow-400 text-sm">Connecting to game server…</p>}
-              {isAdmin && (
-                <button
-                  onClick={adminStart}
-                  className="mt-6 bg-green-700 hover:bg-green-600 text-white font-bold px-8 py-3 rounded-xl text-lg"
-                >
-                  Start Game
-                </button>
-              )}
-            </div>
-          )}
+          {!gs && status !== 'IN_PROGRESS' && (() => {
+            const totalParticipants = state.participants.length;
+            const readyCount = state.micReadyUserIds.length;
+            const allReady = totalParticipants > 0 && readyCount >= totalParticipants;
+            const unreadyCount = totalParticipants - readyCount;
+
+            return (
+              <div className="w-full max-w-md mx-auto text-center">
+                <p className="text-gray-400 text-lg mb-1">Waiting for the game to start…</p>
+                {!state.isConnected && (
+                  <p className="text-yellow-400 text-sm mb-3">Connecting to game server…</p>
+                )}
+
+                {/* Mic readiness panel */}
+                {totalParticipants > 0 && (
+                  <div className="mt-4 bg-gray-800/60 border border-gray-700 rounded-2xl p-4 text-left">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Mic Readiness</p>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                        allReady
+                          ? 'text-green-400 bg-green-900/40'
+                          : 'text-yellow-400 bg-yellow-900/40'
+                      }`}>
+                        {readyCount} / {totalParticipants} ready
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {state.participants.map(p => {
+                        const isReady = state.micReadyUserIds.includes(p.userId);
+                        return (
+                          <div key={p.userId} className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2">
+                              <span>{isReady ? '✅' : '⏳'}</span>
+                              <span className={isReady ? 'text-white' : 'text-gray-400'}>{p.fullName}</span>
+                            </div>
+                            <span className="text-xs text-gray-600">{p.teamName}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Start button — soft gate */}
+                {isAdmin && (
+                  <div className="mt-5">
+                    {showStartConfirm && !allReady ? (
+                      <div className="bg-yellow-900/30 border border-yellow-700/40 rounded-xl p-4 mb-3 text-sm text-yellow-300">
+                        <p className="font-semibold mb-3">
+                          {unreadyCount} participant{unreadyCount !== 1 ? 's haven\'t' : ' hasn\'t'} confirmed their mic. Start anyway?
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => { setShowStartConfirm(false); adminStart(); }}
+                            className="flex-1 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-500 text-black font-bold text-sm"
+                          >
+                            Yes, start now
+                          </button>
+                          <button
+                            onClick={() => setShowStartConfirm(false)}
+                            className="flex-1 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm"
+                          >
+                            Wait
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (!allReady && totalParticipants > 0) {
+                            setShowStartConfirm(true);
+                          } else {
+                            adminStart();
+                          }
+                        }}
+                        className={`w-full py-3 rounded-xl font-bold text-lg transition-all ${
+                          allReady
+                            ? 'bg-green-700 hover:bg-green-600 text-white'
+                            : 'bg-yellow-600 hover:bg-yellow-500 text-black'
+                        }`}
+                      >
+                        {allReady
+                          ? '✅ Start Game'
+                          : `⚠️ Start Game — ${unreadyCount} not mic-ready`
+                        }
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {gs && gameType === 'HANGMAN' && (
             <HangmanBoard

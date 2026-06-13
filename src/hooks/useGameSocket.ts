@@ -178,6 +178,8 @@ export interface GameRoomState {
   // Shared
   gameEnded: { winnerId: string | null; winnerName: string | null; teamAScore: number; teamBScore: number } | null;
   error: string | null;
+  // Mic readiness tracking (pre-game lobby)
+  micReadyUserIds: string[];
 }
 
 const defaultState: GameRoomState = {
@@ -202,6 +204,7 @@ const defaultState: GameRoomState = {
   triviaWrong: null,
   gameEnded: null,
   error: null,
+  micReadyUserIds: [],
 };
 
 export function useGameSocket(sessionId: string, token: string) {
@@ -500,6 +503,10 @@ export function useGameSocket(sessionId: string, token: string) {
       update({ micEnabled: enabled });
     });
 
+    socket.on('room:mic-status', ({ readyUserIds }: { readyUserIds: string[] }) => {
+      update({ micReadyUserIds: readyUserIds });
+    });
+
     socket.on('chat:message', (msg: ChatMsg) => {
       setState(prev => ({ ...prev, chat: [...prev.chat.slice(-99), msg] }));
     });
@@ -525,7 +532,7 @@ export function useGameSocket(sessionId: string, token: string) {
         'categories:state', 'categories:new-round', 'categories:correct', 'categories:wrong',
         'categories:strike', 'categories:round-end', 'categories:invalid',
         'trivia:question', 'trivia:buzz-locked', 'trivia:pass', 'trivia:correct', 'trivia:wrong', 'trivia:reveal',
-        'mic:control', 'chat:message', 'error',
+        'mic:control', 'room:mic-status', 'chat:message', 'error',
       ].forEach(ev => socket.off(ev));
     };
   }, [sessionId, token, update]);
@@ -569,5 +576,9 @@ export function useGameSocket(sessionId: string, token: string) {
     socketRef.current?.emit('trivia:answer', { sessionId, answer });
   }, [sessionId]);
 
-  return { state, guessLetter, submitScrambleAnswer, submitChainWord, submitCategoriesAnswer, buzzIn, submitTriviaAnswer, sendChat, adminStart, adminEnd };
+  const emitMicReady = useCallback(() => {
+    socketRef.current?.emit('player:mic-ready', { sessionId });
+  }, [sessionId]);
+
+  return { state, guessLetter, submitScrambleAnswer, submitChainWord, submitCategoriesAnswer, buzzIn, submitTriviaAnswer, sendChat, adminStart, adminEnd, emitMicReady };
 }
