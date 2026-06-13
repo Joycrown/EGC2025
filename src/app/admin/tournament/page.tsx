@@ -55,7 +55,6 @@ export default function AdminTournamentPage() {
 
   // Delete tournament state
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
@@ -176,7 +175,6 @@ export default function AdminTournamentPage() {
     setSessionsMap(prev => { const c = { ...prev }; delete c[tournamentId]; return c; });
     if (expandedId === tournamentId) setExpandedId(null);
     setDeleteTargetId(null);
-    setDeleteConfirmText('');
   }
 
   const teamsReady = form.teamIds.every(id => id) && new Set(form.teamIds).size === 4;
@@ -358,7 +356,7 @@ export default function AdminTournamentPage() {
                     {expandedId === t.id ? 'Hide' : 'Schedule'}
                   </button>
                   <button
-                    onClick={() => { setDeleteTargetId(t.id); setDeleteConfirmText(''); setDeleteError(''); }}
+                    onClick={() => { setDeleteTargetId(t.id); setDeleteError(''); }}
                     className="text-sm text-red-500 hover:text-red-400 border border-red-900/40 hover:border-red-700/60 px-3 py-1.5 rounded-lg transition-colors">
                     Delete
                   </button>
@@ -368,35 +366,25 @@ export default function AdminTournamentPage() {
               {/* Delete confirmation panel */}
               {deleteTargetId === t.id && (
                 <div className="border-t border-red-900/40 bg-red-950/20 px-5 py-4">
-                  <p className="text-red-400 font-semibold text-sm mb-1">Delete this tournament?</p>
-                  <p className="text-gray-400 text-xs mb-3">
-                    This permanently deletes <span className="text-white font-semibold">{t.name}</span> and all its sessions, rosters, turn logs, and chat — including scheduled, in-progress, and completed games. This cannot be undone.
+                  <p className="text-red-400 font-semibold text-sm mb-1">Delete &quot;{t.name}&quot;?</p>
+                  <p className="text-gray-400 text-xs mb-4">
+                    This permanently removes the tournament and all its sessions, rosters, turn logs, and chat — including scheduled, in-progress, and completed games. This cannot be undone.
                   </p>
-                  <p className="text-gray-500 text-xs mb-2">
-                    Type <span className="text-white font-mono">{t.name.trim()}</span> to confirm:
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="text"
-                      value={deleteConfirmText}
-                      onChange={e => setDeleteConfirmText(e.target.value)}
-                      placeholder={t.name}
-                      className="flex-1 bg-gray-800 border border-red-800/50 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-600"
-                    />
+                  <div className="flex gap-3">
                     <button
                       onClick={() => handleDelete(t.id)}
-                      disabled={deleteConfirmText.trim() !== t.name.trim() || deleting}
-                      className="bg-red-700 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors shrink-0">
+                      disabled={deleting}
+                      className="bg-red-700 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-5 py-2 rounded-lg text-sm transition-colors">
                       {deleting ? 'Deleting…' : 'Yes, delete everything'}
                     </button>
                     <button
-                      onClick={() => { setDeleteTargetId(null); setDeleteConfirmText(''); setDeleteError(''); }}
-                      className="text-gray-400 hover:text-white border border-gray-600 px-4 py-2 rounded-lg text-sm transition-colors shrink-0">
+                      onClick={() => { setDeleteTargetId(null); setDeleteError(''); }}
+                      className="text-gray-400 hover:text-white border border-gray-600 px-5 py-2 rounded-lg text-sm transition-colors">
                       Cancel
                     </button>
                   </div>
                   {deleteError && (
-                    <p className="text-red-400 text-xs mt-2">{deleteError}</p>
+                    <p className="text-red-400 text-xs mt-3">{deleteError}</p>
                   )}
                 </div>
               )}
