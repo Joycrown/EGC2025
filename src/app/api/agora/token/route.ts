@@ -17,7 +17,10 @@ export async function POST(request: NextRequest) {
       where: { gameSessionId_userId: { gameSessionId: sessionId, userId: user.id } },
     });
 
-    const role = rosterEntry ? 'publisher' : 'subscriber';
+    // Participants and admins both publish (admins are always-on MC mic).
+    // Spectators only subscribe (listen only).
+    const isAdminUser = user.userType === 'ADMIN' || user.userType === 'SUPER_ADMIN';
+    const role = (rosterEntry || isAdminUser) ? 'publisher' : 'subscriber';
     const result = generateRtcToken(sessionId, user.id, role);
 
     return NextResponse.json({ ...result, role });

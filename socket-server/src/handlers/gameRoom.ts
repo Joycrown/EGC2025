@@ -41,6 +41,10 @@ import {
 } from '../engine/triviaManager';
 import { isAdmin } from '../middleware/auth';
 
+// Tracks which participant userIds have confirmed their mic per session.
+// In-memory only — resets on server restart, which is fine (players re-join).
+const micReadyMap = new Map<string, Set<string>>();
+
 interface RosterEntry {
   userId: string;
   fullName: string;
@@ -160,6 +164,16 @@ export function registerGameRoomHandlers(io: Server, socket: Socket): void {
       console.error('join-room error', err);
       socket.emit('error', { message: 'Failed to join room' });
     }
+  });
+
+  socket.on('player:mic-ready', ({ sessionId }: { sessionId: string }) => {
+    // Only participants report mic readiness
+    if (socket.data.role !== 'participant') return;
+    if (!micReadyMap.has(sessionId)) micReadyMap.set(sessionId, new Set());
+    micReadyMap.get(sessionId)!.add(user.id);
+    io.to(sessionId).emit('room:mic-status', {
+      readyUserIds: Array.from(micReadyMap.get(sessionId)!),
+    });
   });
 
   socket.on('hangman:guess', async ({ sessionId, letter }: { sessionId: string; letter: string }) => {
