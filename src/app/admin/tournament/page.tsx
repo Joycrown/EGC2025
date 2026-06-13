@@ -373,7 +373,7 @@ export default function AdminTournamentPage() {
                     This permanently deletes <span className="text-white font-semibold">{t.name}</span> and all its sessions, rosters, turn logs, and chat — including scheduled, in-progress, and completed games. This cannot be undone.
                   </p>
                   <p className="text-gray-500 text-xs mb-2">
-                    Type <span className="text-white font-mono">{t.name}</span> to confirm:
+                    Type <span className="text-white font-mono">{t.name.trim()}</span> to confirm:
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <input
@@ -385,7 +385,7 @@ export default function AdminTournamentPage() {
                     />
                     <button
                       onClick={() => handleDelete(t.id)}
-                      disabled={deleteConfirmText !== t.name || deleting}
+                      disabled={deleteConfirmText.trim() !== t.name.trim() || deleting}
                       className="bg-red-700 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors shrink-0">
                       {deleting ? 'Deleting…' : 'Yes, delete everything'}
                     </button>
