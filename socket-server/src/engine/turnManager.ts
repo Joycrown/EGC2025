@@ -14,10 +14,11 @@ import { prisma } from '../db/prisma';
 
 export const activeSessions = new Map<string, ActiveSession>();
 
-const MAX_SECONDS = 40;   // hard cap on timer
-const BONUS_SECONDS = 5;  // added per correct letter
-const TOTAL_WORDS = 20;   // 10 per team, alternating
-const WORD_POINTS = 5;    // flat points for solving a word
+const MAX_SECONDS = 40;        // hard cap on timer
+const BONUS_SECONDS = 5;       // added per correct letter
+const TOTAL_WORDS = 40;        // 20 per half, 10 per team per half
+const WORD_POINTS = 5;         // flat points for solving a word
+const HALF_TIME_SECONDS = 90;  // auto-resume break between halves
 
 function buildStatePayload(session: ActiveSession): GameStatePayload {
   return {
@@ -32,6 +33,7 @@ function buildStatePayload(session: ActiveSession): GameStatePayload {
     currentTurnTeamId: session.currentTurnTeamId,
     timeLeft: session.timeLeft,
     status: session.status,
+    currentHalf: session.currentHalf,
     hangman: toClientState(session.hangman),
   };
 }
@@ -81,6 +83,8 @@ async function handleWordFailed(
 
   if (session.wordNumber >= TOTAL_WORDS) {
     await endGame(io, session);
+  } else if (session.wordNumber === TOTAL_WORDS / 2 && session.currentHalf === 1) {
+    setTimeout(() => triggerHalfTime(io, session), 3000);
   } else {
     setTimeout(() => startNextWord(io, session), 3000);
   }
@@ -110,8 +114,37 @@ function startNextWord(io: Server, session: ActiveSession): void {
   startWordTimer(io, session);
 }
 
+function triggerHalfTime(io: Server, session: ActiveSession): void {
+  clearTimer(session);
+  session.status = 'half_time';
+
+  io.to(session.sessionId).emit('game:half-time', {
+    teamAScore: session.teamAScore,
+    teamBScore: session.teamBScore,
+    teamAName: session.teamAName,
+    teamBName: session.teamBName,
+    resumeIn: HALF_TIME_SECONDS,
+  });
+
+  session.halfTimeTimer = setTimeout(() => {
+    session.halfTimeTimer = null;
+    beginSecondHalf(io, session);
+  }, HALF_TIME_SECONDS * 1000);
+}
+
+function beginSecondHalf(io: Server, session: ActiveSession): void {
+  session.currentHalf = 2;
+  session.status = 'in_progress';
+  io.to(session.sessionId).emit('game:second-half', {
+    teamAScore: session.teamAScore,
+    teamBScore: session.teamBScore,
+  });
+  startNextWord(io, session);
+}
+
 async function endGame(io: Server, session: ActiveSession): Promise<void> {
   clearTimer(session);
+  if (session.halfTimeTimer) { clearTimeout(session.halfTimeTimer); session.halfTimeTimer = null; }
   session.status = 'completed';
 
   const winnerId =
@@ -176,6 +209,7 @@ export async function startGame(io: Server, sessionId: string): Promise<void> {
     teamBName: dbSession.teamB.name,
     currentTurnTeamId: dbSession.teamAId, // Team A owns word 1
     timer: null,
+    halfTimeTimer: null,
     turnDuration: MAX_SECONDS,
     timeLeft: MAX_SECONDS,
     teamAScore: 0,
@@ -184,6 +218,7 @@ export async function startGame(io: Server, sessionId: string): Promise<void> {
     participantSockets,
     participantTeams,
     status: 'in_progress',
+    currentHalf: 1,
     usedWords: [...preUsed, firstEntry.word],
     wordNumber: 1,
   };
@@ -276,6 +311,8 @@ export async function handleHangmanGuess(
 
     if (session.wordNumber >= TOTAL_WORDS) {
       await endGame(io, session);
+    } else if (session.wordNumber === TOTAL_WORDS / 2 && session.currentHalf === 1) {
+      setTimeout(() => triggerHalfTime(io, session), 3000);
     } else {
       setTimeout(() => startNextWord(io, session), 3000);
     }
@@ -311,4 +348,11 @@ export function getCurrentState(sessionId: string): GameStatePayload | null {
   const session = activeSessions.get(sessionId);
   if (!session) return null;
   return buildStatePayload(session);
+}
+
+export function startHangmanSecondHalf(io: Server, sessionId: string): void {
+  const session = activeSessions.get(sessionId);
+  if (!session || session.status !== 'half_time') return;
+  if (session.halfTimeTimer) { clearTimeout(session.halfTimeTimer); session.halfTimeTimer = null; }
+  beginSecondHalf(io, session);
 }

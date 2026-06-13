@@ -48,8 +48,9 @@ export default function GameRoomClient({
   gameType, status,
 }: Props) {
   const isAdmin = userType === 'ADMIN' || userType === 'SUPER_ADMIN';
-  const { state, guessLetter, submitScrambleAnswer, submitChainWord, submitCategoriesAnswer, buzzIn, submitTriviaAnswer, sendChat, adminStart, adminEnd, emitMicReady } = useGameSocket(sessionId, token);
+  const { state, guessLetter, submitScrambleAnswer, submitChainWord, submitCategoriesAnswer, buzzIn, submitTriviaAnswer, sendChat, adminStart, adminEnd, adminSecondHalf, emitMicReady } = useGameSocket(sessionId, token);
   const [showStartConfirm, setShowStartConfirm] = useState(false);
+  const [halfTimeCountdown, setHalfTimeCountdown] = useState(90);
   const [agoraConfig, setAgoraConfig] = useState<AgoraTokenResponse | null>(null);
 
   // Fetch Agora token on mount
@@ -197,6 +198,16 @@ export default function GameRoomClient({
     prevTriviaWrong.current = state.triviaWrong;
   }, [state.triviaWrong, playWrong]);
 
+  // ── Half-time countdown ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (!state.halfTime) return;
+    setHalfTimeCountdown(state.halfTime.resumeIn);
+    const id = setInterval(() => {
+      setHalfTimeCountdown(prev => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [state.halfTime]);
+
   // ── Winner calculation (engines emit winnerId but winnerName may be null) ─
   const gameEndedWinner = (() => {
     if (!state.gameEnded) return null;
@@ -235,6 +246,19 @@ export default function GameRoomClient({
         status={gs?.status ?? status}
         sessionId={sessionId}
       />
+
+      {/* Half indicator — only shows once game is live */}
+      {gs && (
+        <div className="flex justify-center items-center py-1 bg-gray-900/60 border-b border-gray-800/50 shrink-0">
+          <span className={`text-xs font-bold px-3 py-0.5 rounded-full ${
+            state.currentHalf === 2
+              ? 'bg-blue-900/50 text-blue-300'
+              : 'bg-gray-800 text-gray-500'
+          }`}>
+            {state.currentHalf === 1 ? '1st Round' : '2nd Round'}
+          </span>
+        </div>
+      )}
 
       {/* Mic bar for participants */}
       {isParticipant && (
@@ -338,6 +362,45 @@ export default function GameRoomClient({
           </div>
         </div>
       )}
+      {/* Half-time overlay */}
+      {state.halfTime && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-10 text-center max-w-sm w-full mx-4 shadow-2xl">
+            <div className="text-5xl mb-3">⚽</div>
+            <h2 className="text-3xl font-black mb-1 text-white uppercase tracking-wider">Round Break</h2>
+            <p className="text-gray-500 text-sm mb-5">1st round complete — 2nd round coming up</p>
+
+            <div className="flex justify-center gap-6 my-4 py-4 border-y border-gray-800">
+              <div className="text-center">
+                <p className="text-2xl font-black" style={{ color: teamAColor }}>{state.halfTime.teamAScore}</p>
+                <p className="text-gray-500 text-xs mt-0.5">{state.halfTime.teamAName}</p>
+              </div>
+              <div className="text-gray-700 text-xl self-center">—</div>
+              <div className="text-center">
+                <p className="text-2xl font-black" style={{ color: teamBColor }}>{state.halfTime.teamBScore}</p>
+                <p className="text-gray-500 text-xs mt-0.5">{state.halfTime.teamBName}</p>
+              </div>
+            </div>
+
+            <div className="mt-5 mb-5">
+              <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">2nd round in</p>
+              <p className={`text-5xl font-black font-mono ${halfTimeCountdown <= 10 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
+                {halfTimeCountdown}s
+              </p>
+            </div>
+
+            {isAdmin && (
+              <button
+                onClick={adminSecondHalf}
+                className="w-full py-3 rounded-xl bg-green-700 hover:bg-green-600 text-white font-bold text-base transition-colors"
+              >
+                Skip Break — Start 2nd Round Now
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {state.error && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-red-800 text-white text-sm px-5 py-3 rounded-lg shadow-lg">
           {state.error}

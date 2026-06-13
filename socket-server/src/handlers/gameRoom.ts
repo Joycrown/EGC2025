@@ -8,6 +8,7 @@ import {
   handleHangmanGuess,
   registerParticipantSocket,
   startGame,
+  startHangmanSecondHalf,
   unregisterParticipantSocket,
 } from '../engine/turnManager';
 import {
@@ -16,6 +17,7 @@ import {
   handleScrambleGuess,
   registerScrambleParticipantSocket,
   startScrambleGame,
+  startScrambleSecondHalf,
   unregisterScrambleParticipantSocket,
 } from '../engine/scrambleManager';
 import {
@@ -24,6 +26,7 @@ import {
   handleChainGuess,
   registerChainParticipantSocket,
   startChainGame,
+  startChainSecondHalf,
   unregisterChainParticipantSocket,
 } from '../engine/chainManager';
 import {
@@ -31,6 +34,7 @@ import {
   getCategoriesState,
   handleCategoriesGuess,
   startCategoriesGame,
+  startCategoriesSecondHalf,
 } from '../engine/categoriesManager';
 import {
   activeTrivaSessions,
@@ -38,6 +42,7 @@ import {
   handleTriviaBuzz,
   handleTriviaAnswer,
   startTriviaGame,
+  startTriviaSecondHalf,
 } from '../engine/triviaManager';
 import { isAdmin } from '../middleware/auth';
 
@@ -311,6 +316,25 @@ export function registerGameRoomHandlers(io: Server, socket: Socket): void {
       const msg = err instanceof Error ? err.message : 'Failed to start game';
       socket.emit('error', { message: msg });
     }
+  });
+
+  socket.on('admin:second-half', ({ sessionId }: { sessionId: string }) => {
+    if (!isAdmin(user)) {
+      socket.emit('error', { message: 'Admin access required' });
+      return;
+    }
+    const gameType = activeSessions.get(sessionId)?.status === 'half_time' ? 'HANGMAN'
+      : activeScrambleSessions.get(sessionId)?.status === 'half_time' ? 'WORD_SCRAMBLE'
+      : activeChainSessions.get(sessionId)?.status === 'half_time' ? 'WORD_CHAIN'
+      : activeCategorySessions.get(sessionId)?.currentHalf === 1 && activeCategorySessions.get(sessionId)?.halfTimeTimer ? 'BIBLE_CATEGORIES'
+      : activeTrivaSessions.get(sessionId)?.currentHalf === 1 && activeTrivaSessions.get(sessionId)?.halfTimeTimer ? 'BIBLE_TRIVIA'
+      : null;
+
+    if (gameType === 'HANGMAN') startHangmanSecondHalf(io, sessionId);
+    else if (gameType === 'WORD_SCRAMBLE') startScrambleSecondHalf(io, sessionId);
+    else if (gameType === 'WORD_CHAIN') startChainSecondHalf(io, sessionId);
+    else if (gameType === 'BIBLE_CATEGORIES') startCategoriesSecondHalf(io, sessionId);
+    else if (gameType === 'BIBLE_TRIVIA') startTriviaSecondHalf(io, sessionId);
   });
 
   socket.on('admin:end', async ({ sessionId }: { sessionId: string }) => {

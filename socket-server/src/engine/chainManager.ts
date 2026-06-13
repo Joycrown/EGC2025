@@ -8,7 +8,8 @@ import { prisma } from '../db/prisma';
 export const activeChainSessions = new Map<string, ActiveChainSession>();
 
 const TURN_SECONDS = 40;
-const TOTAL_TURNS = 20;
+const TOTAL_TURNS = 40;        // 20 per half, 10 per team per half
+const HALF_TIME_SECONDS = 90;  // auto-resume break between halves
 const POINTS_BIBLE = 3;   // word found in the curated Bible bank
 const POINTS_ENGLISH = 1; // valid English word not in Bible bank
 const MIN_WORD_LENGTH = 4;
@@ -83,6 +84,8 @@ async function handleTurnTimeout(io: Server, session: ActiveChainSession): Promi
 
   if (session.turnNumber >= TOTAL_TURNS) {
     await endGame(io, session);
+  } else if (session.turnNumber === TOTAL_TURNS / 2 && session.currentHalf === 1) {
+    setTimeout(() => triggerHalfTime(io, session), 3000);
   } else {
     switchTurn(session);
     setTimeout(() => startNextTurn(io, session), 3000);
@@ -110,8 +113,38 @@ function startNextTurn(io: Server, session: ActiveChainSession): void {
   startTurnTimer(io, session);
 }
 
+function triggerHalfTime(io: Server, session: ActiveChainSession): void {
+  clearTimer(session);
+  session.status = 'half_time';
+
+  io.to(session.sessionId).emit('game:half-time', {
+    teamAScore: session.teamAScore,
+    teamBScore: session.teamBScore,
+    teamAName: session.teamAName,
+    teamBName: session.teamBName,
+    resumeIn: HALF_TIME_SECONDS,
+  });
+
+  session.halfTimeTimer = setTimeout(() => {
+    session.halfTimeTimer = null;
+    beginSecondHalf(io, session);
+  }, HALF_TIME_SECONDS * 1000);
+}
+
+function beginSecondHalf(io: Server, session: ActiveChainSession): void {
+  session.currentHalf = 2;
+  session.status = 'in_progress';
+  switchTurn(session);
+  io.to(session.sessionId).emit('game:second-half', {
+    teamAScore: session.teamAScore,
+    teamBScore: session.teamBScore,
+  });
+  startNextTurn(io, session);
+}
+
 async function endGame(io: Server, session: ActiveChainSession): Promise<void> {
   clearTimer(session);
+  if (session.halfTimeTimer) { clearTimeout(session.halfTimeTimer); session.halfTimeTimer = null; }
   session.status = 'completed';
 
   const winnerId =
@@ -162,6 +195,7 @@ export async function startChainGame(io: Server, sessionId: string): Promise<voi
     teamBName: dbSession.teamB.name,
     currentTurnTeamId: dbSession.teamAId,
     timer: null,
+    halfTimeTimer: null,
     timeLeft: TURN_SECONDS,
     teamAScore: 0,
     teamBScore: 0,
@@ -174,6 +208,7 @@ export async function startChainGame(io: Server, sessionId: string): Promise<voi
     participantSockets: new Map(),
     participantTeams,
     status: 'in_progress',
+    currentHalf: 1,
   };
 
   activeChainSessions.set(sessionId, session);
@@ -283,6 +318,8 @@ export async function handleChainGuess(
 
   if (session.turnNumber >= TOTAL_TURNS) {
     await endGame(io, session);
+  } else if (session.turnNumber === TOTAL_TURNS / 2 && session.currentHalf === 1) {
+    setTimeout(() => triggerHalfTime(io, session), 3000);
   } else {
     switchTurn(session);
     setTimeout(() => startNextTurn(io, session), 3000);
@@ -305,4 +342,11 @@ export function getCurrentChainState(sessionId: string): GameStatePayload | null
   const session = activeChainSessions.get(sessionId);
   if (!session) return null;
   return buildStatePayload(session);
+}
+
+export function startChainSecondHalf(io: Server, sessionId: string): void {
+  const session = activeChainSessions.get(sessionId);
+  if (!session || session.status !== 'half_time') return;
+  if (session.halfTimeTimer) { clearTimeout(session.halfTimeTimer); session.halfTimeTimer = null; }
+  beginSecondHalf(io, session);
 }

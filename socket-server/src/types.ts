@@ -47,6 +47,7 @@ export interface ActiveSession {
   teamBName: string;
   currentTurnTeamId: string;
   timer: ReturnType<typeof setTimeout> | null;
+  halfTimeTimer: ReturnType<typeof setTimeout> | null;
   turnDuration: number;
   timeLeft: number;
   teamAScore: number;
@@ -54,7 +55,8 @@ export interface ActiveSession {
   hangman: HangmanState;
   participantSockets: Map<string, string>;
   participantTeams: Map<string, string>;
-  status: 'waiting' | 'in_progress' | 'completed';
+  status: 'waiting' | 'in_progress' | 'half_time' | 'completed';
+  currentHalf: number;
   usedWords: string[];
   wordNumber: number;
 }
@@ -78,6 +80,7 @@ export interface ActiveScrambleSession {
   teamBName: string;
   currentTurnTeamId: string;
   timer: ReturnType<typeof setInterval> | null;
+  halfTimeTimer: ReturnType<typeof setTimeout> | null;
   turnDuration: number;
   timeLeft: number;
   teamAScore: number;
@@ -91,7 +94,8 @@ export interface ActiveScrambleSession {
   wordSolved: boolean;
   participantSockets: Map<string, string>;
   participantTeams: Map<string, string>;
-  status: 'waiting' | 'in_progress' | 'completed';
+  status: 'waiting' | 'in_progress' | 'half_time' | 'completed';
+  currentHalf: number;
   usedWords: string[];
 }
 
@@ -113,6 +117,7 @@ export interface ActiveChainSession {
   teamBName: string;
   currentTurnTeamId: string;
   timer: ReturnType<typeof setInterval> | null;
+  halfTimeTimer: ReturnType<typeof setTimeout> | null;
   timeLeft: number;
   teamAScore: number;
   teamBScore: number;
@@ -124,7 +129,8 @@ export interface ActiveChainSession {
   wrongAttempts: string[];
   participantSockets: Map<string, string>;
   participantTeams: Map<string, string>;
-  status: 'waiting' | 'in_progress' | 'completed';
+  status: 'waiting' | 'in_progress' | 'half_time' | 'completed';
+  currentHalf: number;
 }
 
 // ─── Shared payload types ─────────────────────────────────────────────────────
@@ -141,6 +147,7 @@ export interface GameStatePayload {
   currentTurnTeamId: string;
   timeLeft: number;
   status: string;
+  currentHalf?: number;
   hangman?: HangmanClientState;
   scramble?: ScrambleClientState;
   chain?: ChainClientState;
