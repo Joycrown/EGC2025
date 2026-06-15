@@ -35,6 +35,7 @@ export default function AdminGameSessionPage() {
   const [adding, setAdding] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
+  const [pendingAdd, setPendingAdd] = useState<{ userId: string; teamId: string; teamName: string; userName: string } | null>(null);
 
   const loadSession = useCallback(async () => {
     const r = await fetch(`/api/games/sessions/${sessionId}`);
@@ -70,6 +71,7 @@ export default function AdminGameSessionPage() {
       body: JSON.stringify({ userId, teamId }),
     });
     setAdding(null);
+    setPendingAdd(null);
     if (r.ok) {
       setMsg('Player added');
       loadSession();
@@ -190,48 +192,77 @@ export default function AdminGameSessionPage() {
               const matchedTeamId = u.teamId === session.teamAId ? session.teamAId
                 : u.teamId === session.teamBId ? session.teamBId
                 : null;
-              // Wrong team = user has a team assigned but it's not in this session
               const wrongTeam = u.teamId != null && !matchedTeamId;
-              // Unassigned = user has no team yet — admin picks which side
               const unassigned = u.teamId == null;
+              const isPending = pendingAdd?.userId === u.id;
+
               return (
-                <div key={u.id} className="flex items-center justify-between py-2 border-b border-gray-700 last:border-0">
-                  <div>
-                    <p className="text-white text-sm">{u.fullName}</p>
-                    <p className="text-gray-500 text-xs">{u.email}</p>
-                  </div>
-                  {onRoster ? (
-                    <span className="text-green-400 text-xs font-semibold">On Roster</span>
-                  ) : wrongTeam ? (
-                    <span className="text-gray-600 text-xs">Wrong team</span>
-                  ) : matchedTeamId ? (
-                    <button
-                      onClick={() => addPlayer(u.id)}
-                      disabled={adding === u.id}
-                      className="bg-green-700 hover:bg-green-600 disabled:opacity-40 text-white text-xs font-semibold px-3 py-1.5 rounded-lg"
-                    >
-                      {adding === u.id ? 'Adding…' : `Add → ${matchedTeamId === session.teamAId ? session.teamA.name : session.teamB.name}`}
-                    </button>
-                  ) : unassigned ? (
-                    <div className="flex gap-1.5">
-                      <button
-                        onClick={() => addPlayer(u.id, session.teamAId)}
-                        disabled={adding === u.id}
-                        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg disabled:opacity-40"
-                        style={{ color: session.teamA.color, border: `1px solid ${session.teamA.color}66` }}
-                      >
-                        {session.teamA.name}
-                      </button>
-                      <button
-                        onClick={() => addPlayer(u.id, session.teamBId)}
-                        disabled={adding === u.id}
-                        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg disabled:opacity-40"
-                        style={{ color: session.teamB.color, border: `1px solid ${session.teamB.color}66` }}
-                      >
-                        {session.teamB.name}
-                      </button>
+                <div key={u.id} className="py-2 border-b border-gray-700 last:border-0">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-white text-sm">{u.fullName}</p>
+                      <p className="text-gray-500 text-xs">{u.email}</p>
                     </div>
-                  ) : null}
+                    {onRoster ? (
+                      <span className="text-green-400 text-xs font-semibold">On Roster</span>
+                    ) : wrongTeam ? (
+                      <span className="text-gray-600 text-xs">Wrong team</span>
+                    ) : matchedTeamId && !isPending ? (
+                      <button
+                        onClick={() => setPendingAdd({ userId: u.id, teamId: matchedTeamId, teamName: matchedTeamId === session.teamAId ? session.teamA.name : session.teamB.name, userName: u.fullName })}
+                        className="bg-green-900/60 hover:bg-green-800 border border-green-700/50 text-green-300 text-xs font-semibold px-3 py-1.5 rounded-lg"
+                      >
+                        Add → {matchedTeamId === session.teamAId ? session.teamA.name : session.teamB.name}
+                      </button>
+                    ) : unassigned && !isPending ? (
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => setPendingAdd({ userId: u.id, teamId: session.teamAId, teamName: session.teamA.name, userName: u.fullName })}
+                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg"
+                          style={{ color: session.teamA.color, border: `1px solid ${session.teamA.color}66` }}
+                        >
+                          {session.teamA.name}
+                        </button>
+                        <button
+                          onClick={() => setPendingAdd({ userId: u.id, teamId: session.teamBId, teamName: session.teamB.name, userName: u.fullName })}
+                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg"
+                          style={{ color: session.teamB.color, border: `1px solid ${session.teamB.color}66` }}
+                        >
+                          {session.teamB.name}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* Inline confirmation */}
+                  {isPending && pendingAdd && (
+                    <div className="mt-2 bg-yellow-950/30 border border-yellow-700/40 rounded-lg px-3 py-2.5 flex flex-col sm:flex-row sm:items-center gap-2">
+                      <p className="text-yellow-300 text-xs flex-1">
+                        Confirm: Add <span className="font-bold text-white">{pendingAdd.userName}</span> to <span className="font-bold" style={{ color: pendingAdd.teamId === session.teamAId ? session.teamA.color : session.teamB.color }}>{pendingAdd.teamName}</span>?
+                        {u.teamId && u.teamId !== pendingAdd.teamId && (
+                          <span className="text-red-400 ml-1">(⚠ user belongs to a different team)</span>
+                        )}
+                        {!u.teamId && (
+                          <span className="text-gray-400 ml-1">(user has no team assigned)</span>
+                        )}
+                      </p>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => addPlayer(pendingAdd.userId, pendingAdd.teamId)}
+                          disabled={adding === pendingAdd.userId}
+                          className="bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white text-xs font-bold px-3 py-1.5 rounded-lg"
+                        >
+                          {adding === pendingAdd.userId ? 'Adding…' : 'Yes, add player'}
+                        </button>
+                        <button
+                          onClick={() => setPendingAdd(null)}
+                          className="text-gray-400 hover:text-white border border-gray-600 text-xs px-3 py-1.5 rounded-lg"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

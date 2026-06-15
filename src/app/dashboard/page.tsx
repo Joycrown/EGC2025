@@ -302,7 +302,7 @@ export default function DashboardPage() {
                         <span style={{ color: s.teamA.color }}>{s.teamA.name}</span>
                         <span className="text-gray-700"> vs </span>
                         <span style={{ color: s.teamB.color }}>{s.teamB.name}</span>
-                        {s.roundNumber && <span className="text-gray-700"> · Round {s.roundNumber}</span>}
+                        {s.roundNumber && <span className="text-gray-700"> · Match {s.roundNumber}</span>}
                       </p>
                     </div>
                     <div className="text-right shrink-0">

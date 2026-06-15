@@ -419,7 +419,7 @@ export default function AdminTournamentPage() {
                                   <div key={s.id} className="flex flex-col sm:flex-row sm:items-center gap-2 bg-gray-800/60 rounded-lg px-3 py-2">
                                     <div className="flex-1 min-w-0">
                                       <p className="text-xs text-gray-300">
-                                        Round {s.roundNumber ?? '?'} &nbsp;·&nbsp;
+                                        Match {s.roundNumber ?? '?'} &nbsp;·&nbsp;
                                         <span style={{ color: s.teamA.color }}>{s.teamA.name}</span>
                                         {' vs '}
                                         <span style={{ color: s.teamB.color }}>{s.teamB.name}</span>

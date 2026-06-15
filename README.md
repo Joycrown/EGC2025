@@ -7,6 +7,7 @@ A comprehensive conference management platform for EGC events with features for 
 - **Database**: PostgreSQL
 - **Real-time Communication**: Socket.io
 - **Styling**: TailwindCSS
+  
 
 ## Getting Started
 
