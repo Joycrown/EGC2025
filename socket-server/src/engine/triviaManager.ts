@@ -9,7 +9,7 @@ const PASS_SECONDS = 8;            // time for other team to answer after pass
 const QUESTIONS_PER_GAME = 20;   // 10 per half
 const POINTS_FIRST = 5;
 const POINTS_SECOND = 3;           // answering after other team passed
-const HALF_TIME_SECONDS = 90;     // auto-resume break between halves
+const HALF_TIME_SECONDS = 30;     // auto-resume break between halves
 
 type PhaseType = 'buzzing' | 'answering' | 'passing' | 'reveal';
 

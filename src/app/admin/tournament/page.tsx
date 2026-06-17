@@ -58,6 +58,23 @@ export default function AdminTournamentPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
+  // Fix pools state
+  const [fixingPools, setFixingPools] = useState<string | null>(null); // tournamentId being fixed
+  const [fixPoolsMsg, setFixPoolsMsg] = useState<Record<string, string>>({});
+
+  async function handleFixPools(tournamentId: string) {
+    setFixingPools(tournamentId);
+    const res = await fetch('/api/admin/fix-pools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tournamentId }),
+    });
+    const d = await res.json().catch(() => ({}));
+    setFixingPools(null);
+    setFixPoolsMsg(prev => ({ ...prev, [tournamentId]: res.ok ? (d.message ?? 'Done') : (d.error ?? 'Failed') }));
+    setTimeout(() => setFixPoolsMsg(prev => { const c = { ...prev }; delete c[tournamentId]; return c; }), 6000);
+  }
+
   const [form, setForm] = useState({
     name: 'EGC 2026 Games Tournament',
     teamIds: ['', '', '', ''],
@@ -356,12 +373,26 @@ export default function AdminTournamentPage() {
                     {expandedId === t.id ? 'Hide' : 'Schedule'}
                   </button>
                   <button
+                    onClick={() => handleFixPools(t.id)}
+                    disabled={fixingPools === t.id}
+                    title="Regenerate non-overlapping 40-word pools for all pending Word Scramble sessions"
+                    className="text-sm text-blue-400 hover:text-blue-300 border border-blue-900/40 hover:border-blue-700/60 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors">
+                    {fixingPools === t.id ? 'Fixing…' : 'Fix Scramble Pools'}
+                  </button>
+                  <button
                     onClick={() => { setDeleteTargetId(t.id); setDeleteError(''); }}
                     className="text-sm text-red-500 hover:text-red-400 border border-red-900/40 hover:border-red-700/60 px-3 py-1.5 rounded-lg transition-colors">
                     Delete
                   </button>
                 </div>
               </div>
+
+              {/* Fix pools feedback */}
+              {fixPoolsMsg[t.id] && (
+                <div className="border-t border-blue-900/30 bg-blue-950/20 px-5 py-3">
+                  <p className="text-blue-300 text-sm">{fixPoolsMsg[t.id]}</p>
+                </div>
+              )}
 
               {/* Delete confirmation panel */}
               {deleteTargetId === t.id && (

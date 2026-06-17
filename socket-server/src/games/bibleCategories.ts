@@ -404,8 +404,6 @@ export const BIBLE_CATEGORIES: BibleCategory[] = [
       { text: 'Priest',      aliases: ['priest', 'levite'],                  points: 1 },
     ],
   },
-];
-
   {
     id: 'feasts-of-israel',
     title: 'Name a Feast or Festival of Israel',
@@ -524,6 +522,7 @@ export const BIBLE_CATEGORIES: BibleCategory[] = [
       { text: 'Jude',    aliases: ['jude'],                                        points: 3 },
     ],
   },
+];
 
 // ── Test-only categories ─────────────────────────────────────────
 // These IDs are NOT in CATEGORY_IDS (poolAssignment) so they can

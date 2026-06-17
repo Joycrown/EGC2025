@@ -1,6 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import { ActiveScrambleSession, GameStatePayload } from '../types';
-import { pickRandomWord, scrambleWord, toScrambleClientState, isCorrectAnswer } from '../games/wordScramble';
+import { pickWordWithDifficulty, scrambleWord, toScrambleClientState, isCorrectAnswer } from '../games/wordScramble';
 import { WORD_BANK, TEST_WORD_BANK_WORDS } from '../games/hangman';
 import { logTurn, persistScore, finalizeSession } from './scoreEngine';
 import { prisma } from '../db/prisma';
@@ -10,7 +10,7 @@ export const activeScrambleSessions = new Map<string, ActiveScrambleSession>();
 const TURN_SECONDS = 30;
 const TOTAL_WORDS = 40;        // 20 per half, 10 per team per half
 const WORD_POINTS = 5;
-const HALF_TIME_SECONDS = 90;  // auto-resume break between halves
+const HALF_TIME_SECONDS = 30;  // auto-resume break between halves
 
 function buildStatePayload(session: ActiveScrambleSession): GameStatePayload {
   return {
@@ -93,7 +93,7 @@ async function handleWordTimeout(io: Server, session: ActiveScrambleSession): Pr
 function startNextWord(io: Server, session: ActiveScrambleSession): void {
   session.wordNumber += 1;
 
-  const nextEntry = pickRandomWord(session.usedWords);
+  const nextEntry = pickWordWithDifficulty(session.usedWords);
   session.usedWords.push(nextEntry.word);
   session.currentWord = nextEntry.word;
   session.scrambledWord = scrambleWord(nextEntry.word);
@@ -188,7 +188,7 @@ export async function startScrambleGame(io: Server, sessionId: string): Promise<
     ? WORD_BANK.filter(e => !TEST_WORD_BANK_WORDS.includes(e.word)).map(e => e.word)
     : (assignment?.words ? WORD_BANK.filter(e => !assignment.words!.includes(e.word)).map(e => e.word) : []);
 
-  const firstEntry = pickRandomWord(preUsed);
+  const firstEntry = pickWordWithDifficulty(preUsed);
   const participantTeams = new Map<string, string>();
   dbSession.roster.forEach(r => { participantTeams.set(r.userId, r.teamId); });
 
