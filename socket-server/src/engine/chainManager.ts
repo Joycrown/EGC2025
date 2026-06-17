@@ -9,7 +9,7 @@ export const activeChainSessions = new Map<string, ActiveChainSession>();
 
 const TURN_SECONDS = 40;
 const TOTAL_TURNS = 40;        // 20 per half, 10 per team per half
-const HALF_TIME_SECONDS = 90;  // auto-resume break between halves
+const HALF_TIME_SECONDS = 30;  // auto-resume break between halves
 const POINTS_BIBLE = 3;   // word found in the curated Bible bank
 const POINTS_ENGLISH = 1; // valid English word not in Bible bank
 const MIN_WORD_LENGTH = 4;

@@ -1,8 +1,28 @@
-import { pickRandomWord, WordEntry } from './hangman';
+import { pickRandomWord, WordEntry, WORD_BANK } from './hangman';
 import { ScrambleClientState } from '../types';
 
 export { pickRandomWord };
 export type { WordEntry };
+
+// 70 % hard (9+ letters), 30 % medium (6–8 letters) — easy words never shown
+export function pickWordWithDifficulty(usedWords: string[] = []): WordEntry {
+  const available = WORD_BANK.filter(w => !usedWords.includes(w.word));
+  const pool = available.length > 0 ? available : WORD_BANK;
+
+  const hard   = pool.filter(w => w.word.length >= 9);
+  const medium = pool.filter(w => w.word.length >= 6 && w.word.length < 9);
+
+  let tier: WordEntry[];
+  if (Math.random() < 0.7 && hard.length > 0) {
+    tier = hard;
+  } else if (medium.length > 0) {
+    tier = medium;
+  } else {
+    tier = hard.length > 0 ? hard : pool; // fallback if medium pool exhausted
+  }
+
+  return tier[Math.floor(Math.random() * tier.length)];
+}
 
 // Fisher-Yates shuffle, ensures result !== original
 export function scrambleWord(word: string): string {

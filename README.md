@@ -2,7 +2,6 @@
 A comprehensive conference management platform for EGC events with features for member registration, team assignment, ID card generation, and virtual games coordination.
 
 ## Project Overview
-
 - **Frontend & Backend**: Next.js with App Router
 - **Database**: PostgreSQL
 - **Real-time Communication**: Socket.io

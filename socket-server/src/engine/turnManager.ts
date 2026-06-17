@@ -18,7 +18,7 @@ const MAX_SECONDS = 40;        // hard cap on timer
 const BONUS_SECONDS = 5;       // added per correct letter
 const TOTAL_WORDS = 40;        // 20 per half, 10 per team per half
 const WORD_POINTS = 5;         // flat points for solving a word
-const HALF_TIME_SECONDS = 90;  // auto-resume break between halves
+const HALF_TIME_SECONDS = 30;  // auto-resume break between halves
 
 function buildStatePayload(session: ActiveSession): GameStatePayload {
   return {

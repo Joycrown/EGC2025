@@ -6,7 +6,7 @@ import { persistScore, finalizeSession } from './scoreEngine';
 const MAX_STRIKES = 3;
 const TURN_SECONDS = 25;
 const ROUNDS = 6;              // 3 per half
-const HALF_TIME_SECONDS = 90;  // auto-resume break between halves
+const HALF_TIME_SECONDS = 30;  // auto-resume break between halves
 
 interface ActiveCategorySession {
   sessionId: string;

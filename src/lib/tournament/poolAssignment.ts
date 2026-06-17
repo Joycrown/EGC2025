@@ -107,7 +107,7 @@ export function generateTournamentPools(sessionCountPerGameType: Record<string, 
     const count = sessionCountPerGameType[gameType] ?? 0;
     if (count === 0) continue;
 
-    const WORDS_PER_SESSION = gameType === 'WORD_CHAIN' ? 10 : 8; // words per session
+    const WORDS_PER_SESSION = gameType === 'WORD_CHAIN' ? 10 : 40; // words per session (Hangman/Scramble play 40 words)
     const needed = count * WORDS_PER_SESSION;
     const shuffled = shuffle(HANGMAN_WORD_BANK).slice(0, Math.min(needed, HANGMAN_WORD_BANK.length));
     const chunks = splitIntoChunks(shuffled, WORDS_PER_SESSION);
