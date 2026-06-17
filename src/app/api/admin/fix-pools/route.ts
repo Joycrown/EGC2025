@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/auth/utils';
-import { prisma } from '@/lib/db/prisma';
+import { prisma } from '@/lib/db/prismaClient';
 import { HANGMAN_WORD_BANK } from '@/lib/tournament/poolAssignment';
 
 const WORDS_PER_SESSION = 40;
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     where: {
       tournamentId,
       gameType: 'WORD_SCRAMBLE',
-      status: { in: ['SCHEDULED', 'PENDING'] },
+      status: { in: ['SCHEDULED', 'WAITING'] },
     },
     select: { id: true },
   });

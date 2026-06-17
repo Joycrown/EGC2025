@@ -7,7 +7,6 @@ A comprehensive conference management platform for EGC events with features for 
 - **Real-time Communication**: Socket.io
 - **Styling**: TailwindCSS
   
-
 ## Getting Started
 
 
