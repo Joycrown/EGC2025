@@ -3,9 +3,9 @@
 import { useState } from 'react';
 
 const DAYS = [
-  { value: 'day1', label: 'Day 1', date: 'Thursday, 10 July 2026' },
-  { value: 'day2', label: 'Day 2', date: 'Friday, 11 July 2026' },
-  { value: 'day3', label: 'Day 3', date: 'Saturday, 12 July 2026' },
+  { value: 'day1', label: 'Day 1', date: 'Friday, 11 December 2026' },
+  { value: 'day2', label: 'Day 2', date: 'Saturday, 12 December 2026' },
+  { value: 'day3', label: 'Day 3', date: 'Sunday, 13 December 2026' },
 ];
 
 export default function AdminQRPage() {

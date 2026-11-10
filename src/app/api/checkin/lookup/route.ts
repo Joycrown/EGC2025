@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prismaClient';
 import { verifyCheckinToken } from '@/lib/qr/token';
+import { getActiveEdition } from '@/lib/editions/activeEdition';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,6 +19,10 @@ export async function POST(request: NextRequest) {
 
     const term = search.trim();
 
+    // "Already checked in" must only look at this year's attendance — a 2025
+    // record for the same day doesn't count.
+    const activeEdition = await getActiveEdition();
+
     const users = await prisma.user.findMany({
       where: {
         OR: [
@@ -33,9 +38,8 @@ export async function POST(request: NextRequest) {
         email: true,
         role: true,
         attendances: {
-          where: { editionId: { not: null } },
+          where: { editionId: activeEdition?.id ?? '__no_active_edition__' },
           select: { day1: true, day2: true, day3: true, editionId: true },
-          orderBy: { createdAt: 'desc' },
           take: 1,
         },
       },

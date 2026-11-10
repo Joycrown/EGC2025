@@ -16,11 +16,40 @@ interface Attendee {
 
 type ConferenceDay = 'day1' | 'day2' | 'day3';
 
-const DAYS: { value: ConferenceDay; label: string; date: string }[] = [
-  { value: 'day1', label: 'Thu', date: 'Jul 10' },
-  { value: 'day2', label: 'Fri', date: 'Jul 11' },
-  { value: 'day3', label: 'Sat', date: 'Jul 12' },
-];
+interface Edition {
+  id: string;
+  year: number;
+  name: string;
+  isActive: boolean;
+  startDate: string;
+  endDate: string;
+}
+
+const DAY_KEYS: ConferenceDay[] = ['day1', 'day2', 'day3'];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Edition dates are stored as midnight UTC, so format them in UTC to get the right calendar day
+function editionDays(edition: Edition): { value: ConferenceDay; label: string; date: string }[] {
+  const start = new Date(edition.startDate).getTime();
+  return DAY_KEYS.map((value, i) => {
+    const d = new Date(start + i * DAY_MS);
+    return {
+      value,
+      label: d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }),
+      date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }),
+    };
+  });
+}
+
+// e.g. "December 11–13" (or "November 30 – December 2" across months)
+function editionRange(edition: Edition): string {
+  const start = new Date(edition.startDate);
+  const end = new Date(new Date(edition.startDate).getTime() + 2 * DAY_MS);
+  const month = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', timeZone: 'UTC' });
+  return month(start) === month(end)
+    ? `${month(start)} ${start.getUTCDate()}–${end.getUTCDate()}`
+    : `${month(start)} ${start.getUTCDate()} – ${month(end)} ${end.getUTCDate()}`;
+}
 
 const ROLE_STYLES: Record<string, string> = {
   ADMIN:       'bg-red-100 text-red-700 border-red-200',
@@ -43,12 +72,34 @@ const AttendanceViewer = () => {
   const [totalAttendees, setTotalAttendees] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
+  const [editions, setEditions] = useState<Edition[]>([]);
+  const [selectedEditionId, setSelectedEditionId] = useState<string | null>(null);
 
-  const fetchAttendees = useCallback(async (day: ConferenceDay, page: number, term: string, role: string) => {
+  // Load conference years; default to the current one
+  useEffect(() => {
+    fetch('/api/admin/editions')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load conference years.');
+        return res.json();
+      })
+      .then(data => {
+        const list: Edition[] = data.editions ?? [];
+        setEditions(list);
+        const current = list.find(e => e.isActive) ?? list[0];
+        if (current) setSelectedEditionId(current.id);
+        else { setError('No conference edition has been set up yet.'); setLoading(false); }
+      })
+      .catch(err => { setError(err instanceof Error ? err.message : 'Failed to load conference years.'); setLoading(false); });
+  }, []);
+
+  const selectedEdition = editions.find(e => e.id === selectedEditionId) ?? null;
+  const days = selectedEdition ? editionDays(selectedEdition) : [];
+
+  const fetchAttendees = useCallback(async (editionId: string, day: ConferenceDay, page: number, term: string, role: string) => {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ day, page: page.toString(), pageSize: '10', searchTerm: term, roleFilter: role });
+      const params = new URLSearchParams({ editionId, day, page: page.toString(), pageSize: '10', searchTerm: term, roleFilter: role });
       const res = await fetch(`/api/admin/attendance?${params}`);
       if (!res.ok) throw new Error('Failed to fetch attendance data.');
       const data = await res.json();
@@ -63,8 +114,9 @@ const AttendanceViewer = () => {
   }, []);
 
   useEffect(() => {
-    fetchAttendees(selectedDay, currentPage, searchTerm, roleFilter);
-  }, [selectedDay, currentPage, searchTerm, roleFilter, fetchAttendees]);
+    if (!selectedEditionId) return;
+    fetchAttendees(selectedEditionId, selectedDay, currentPage, searchTerm, roleFilter);
+  }, [selectedEditionId, selectedDay, currentPage, searchTerm, roleFilter, fetchAttendees]);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -73,17 +125,46 @@ const AttendanceViewer = () => {
       <div className="px-6 pt-6 pb-4 border-b border-gray-100">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Attendance Register</h2>
-            <p className="text-sm text-gray-500 mt-0.5">EGC 2026 · July 10–12</p>
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              Attendance Register
+              {selectedEdition && !selectedEdition.isActive && (
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
+                  Past edition
+                </span>
+              )}
+            </h2>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {selectedEdition ? `${selectedEdition.name} · ${editionRange(selectedEdition)}` : '…'}
+            </p>
           </div>
           <span className="inline-flex px-3 py-1 bg-red-50 text-red-700 font-semibold text-sm rounded-full border border-red-100">
             {totalAttendees} present
           </span>
         </div>
 
+        {/* Conference year */}
+        {editions.length > 1 && (
+          <div className="flex flex-wrap items-center gap-2 mt-5">
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mr-1">Year</span>
+            {editions.map(e => (
+              <button
+                key={e.id}
+                onClick={() => { setSelectedEditionId(e.id); setSelectedDay('day1'); setCurrentPage(1); }}
+                className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition-all ${
+                  selectedEditionId === e.id
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                }`}
+              >
+                {e.year}{e.isActive ? ' · Current' : ''}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Day tabs */}
-        <div className="flex gap-2 mt-5">
-          {DAYS.map(d => (
+        <div className="flex gap-2 mt-4">
+          {days.map(d => (
             <button
               key={d.value}
               onClick={() => { setSelectedDay(d.value); setCurrentPage(1); }}

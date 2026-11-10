@@ -225,7 +225,7 @@ export const welcomeEmailTemplate = (userData: {
                           <img src="https://i.ibb.co/FXwg99q/calendar-icon.png" alt="Date" width="20" height="20" style="display: block;">
                         </td>
                         <td style="padding-left: 10px;">
-                          <p style="margin: 0; color: #111827; font-weight: bold; font-size: 14px;">10th&ndash;12th July, 2026</p>
+                          <p style="margin: 0; color: #111827; font-weight: bold; font-size: 14px;">11th&ndash;13th December, 2026</p>
                           <p style="margin: 0; color: #6b7280; font-size: 13px;">GOFAMINT Pace Setters Assembly, Akure</p>
                         </td>
                       </tr>

@@ -3,6 +3,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { GAME_LABELS, GAME_ICONS } from '@/lib/games/constants';
+import {
+  TOURNAMENT_GAME_SEQUENCE,
+  defaultGameForWeek,
+  getRoundRobinSchedule,
+  getWeekPairings,
+} from '@/lib/tournament/schedule';
 
 interface Team { id: string; name: string; color: string; }
 interface SessionItem {
@@ -18,20 +24,56 @@ interface SessionItem {
 }
 interface Tournament {
   id: string; name: string; status: string; startDate: string;
+  rounds?: { weekNumber: number }[];
   _count: { sessions: number };
 }
 
-const GAME_SEQUENCE = ['HANGMAN', 'WORD_SCRAMBLE', 'WORD_CHAIN', 'BIBLE_CATEGORIES', 'BIBLE_TRIVIA'];
+// Weeks being added to an existing tournament: game + one date-time per match
+interface NewWeekDraft { gameType: string; dates: [string, string]; }
 
-const ROUND_ROBIN_SCHEDULE = [
-  [[0, 1], [2, 3]], [[0, 2], [1, 3]], [[0, 3], [1, 2]],
-  [[0, 1], [2, 3]], [[0, 2], [1, 3]],
-];
+const GAME_SEQUENCE: readonly string[] = TOURNAMENT_GAME_SEQUENCE;
+const ROUND_ROBIN_SCHEDULE = getRoundRobinSchedule(GAME_SEQUENCE.length);
+const DEFAULT_EXTRA_WEEKS = 4;
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 function toLocalDatetimeValue(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Datetime-local input values are in the admin's own timezone; send them as UTC ISO. */
+function localValueToIso(value: string): string {
+  return new Date(value).toISOString();
+}
+
+function lastWeekNumber(sessions: SessionItem[]): number {
+  return sessions.reduce((max, s) => Math.max(max, s.tournamentRound?.weekNumber ?? 0), 0);
+}
+
+/** Team order the tournament was created with, recovered from week 1 (match 1 = 0 v 1, match 2 = 2 v 3). */
+function teamOrderOf(sessions: SessionItem[]): SessionItem['teamA'][] {
+  const week1 = sessions
+    .filter(s => s.tournamentRound?.weekNumber === 1)
+    .sort((a, b) => (a.roundNumber ?? 0) - (b.roundNumber ?? 0));
+  return week1.length === 2 ? [week1[0].teamA, week1[0].teamB, week1[1].teamA, week1[1].teamB] : [];
+}
+
+/**
+ * Suggested draft for the k-th new week (1-based): the next game in the sequence,
+ * at the same weekday/time as the last scheduled week's matches, k weeks later.
+ */
+function defaultNewWeek(sessions: SessionItem[], k: number): NewWeekDraft {
+  const lastWeek = lastWeekNumber(sessions);
+  const lastMatches = sessions
+    .filter(s => (s.tournamentRound?.weekNumber ?? 0) === lastWeek)
+    .sort((a, b) => (a.roundNumber ?? 0) - (b.roundNumber ?? 0));
+  const shift = (s?: SessionItem) =>
+    s ? toLocalDatetimeValue(new Date(new Date(s.scheduledAt).getTime() + k * WEEK_MS).toISOString()) : '';
+  return {
+    gameType: defaultGameForWeek(lastWeek + k),
+    dates: [shift(lastMatches[0]), shift(lastMatches[1] ?? lastMatches[0])],
+  };
 }
 
 export default function AdminTournamentPage() {
@@ -61,6 +103,14 @@ export default function AdminTournamentPage() {
   // Fix pools state
   const [fixingPools, setFixingPools] = useState<string | null>(null); // tournamentId being fixed
   const [fixPoolsMsg, setFixPoolsMsg] = useState<Record<string, string>>({});
+
+  // Add-weeks (extend tournament) state
+  const [extendTargetId, setExtendTargetId] = useState<string | null>(null);
+  const [extendWeeks, setExtendWeeks] = useState<NewWeekDraft[]>([]);
+  const [extendLoading, setExtendLoading] = useState(false);
+  const [extending, setExtending] = useState(false);
+  const [extendError, setExtendError] = useState('');
+  const [extendMsg, setExtendMsg] = useState<Record<string, string>>({});
 
   async function handleFixPools(tournamentId: string) {
     setFixingPools(tournamentId);
@@ -112,7 +162,12 @@ export default function AdminTournamentPage() {
     const res = await fetch('/api/tournaments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: form.name, teamIds: form.teamIds, roundDates: form.roundDates, testMode: form.testMode }),
+      body: JSON.stringify({
+        name: form.name,
+        teamIds: form.teamIds,
+        roundDates: form.roundDates.map(matchDates => matchDates.map(localValueToIso)),
+        testMode: form.testMode,
+      }),
     });
     const d = await res.json();
     setCreating(false);
@@ -122,14 +177,74 @@ export default function AdminTournamentPage() {
     setTournaments(prev => [d.tournament, ...prev]);
   }
 
-  const loadSessions = useCallback(async (tournamentId: string) => {
-    if (sessionsMap[tournamentId]) return; // already loaded
+  const fetchSessions = useCallback(async (tournamentId: string): Promise<SessionItem[]> => {
     setSessionsLoading(true);
     const res = await fetch(`/api/games/sessions?tournamentId=${tournamentId}`);
     const d = await res.json();
-    setSessionsMap(prev => ({ ...prev, [tournamentId]: d.sessions ?? [] }));
+    const sessions: SessionItem[] = d.sessions ?? [];
+    setSessionsMap(prev => ({ ...prev, [tournamentId]: sessions }));
     setSessionsLoading(false);
-  }, [sessionsMap]);
+    return sessions;
+  }, []);
+
+  const loadSessions = useCallback(async (tournamentId: string) => {
+    if (sessionsMap[tournamentId]) return; // already loaded
+    await fetchSessions(tournamentId);
+  }, [sessionsMap, fetchSessions]);
+
+  async function openExtend(tournamentId: string) {
+    setExtendError('');
+    setExtendTargetId(tournamentId);
+    setExtendLoading(true);
+    // Always fetch fresh so the suggested weeks follow the latest schedule
+    const sessions = await fetchSessions(tournamentId);
+    setExtendWeeks(Array.from({ length: DEFAULT_EXTRA_WEEKS }, (_, i) => defaultNewWeek(sessions, i + 1)));
+    setExtendLoading(false);
+  }
+
+  function setExtendWeekCount(tournamentId: string, count: number) {
+    const sessions = sessionsMap[tournamentId] ?? [];
+    setExtendWeeks(prev =>
+      count <= prev.length
+        ? prev.slice(0, count)
+        : [...prev, ...Array.from({ length: count - prev.length }, (_, i) => defaultNewWeek(sessions, prev.length + i + 1))]
+    );
+  }
+
+  function updateExtendWeek(index: number, patch: Partial<NewWeekDraft>) {
+    setExtendWeeks(prev => prev.map((w, i) => (i === index ? { ...w, ...patch } : w)));
+  }
+
+  async function handleExtend(tournamentId: string) {
+    setExtendError('');
+    if (extendWeeks.some(w => w.dates.some(d => !d))) {
+      setExtendError('Set a date and time for every match in every new week.');
+      return;
+    }
+    setExtending(true);
+    const res = await fetch(`/api/tournaments/${tournamentId}/rounds`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        weeks: extendWeeks.map(w => ({ gameType: w.gameType, matchDates: w.dates.map(localValueToIso) })),
+      }),
+    });
+    const d = await res.json().catch(() => ({}));
+    setExtending(false);
+    if (!res.ok) { setExtendError(d.error ?? 'Failed to add weeks'); return; }
+
+    const added: number[] = d.addedWeeks ?? [];
+    const label = added.length > 1 ? `Weeks ${added[0]}–${added[added.length - 1]}` : `Week ${added[0]}`;
+    setExtendMsg(prev => ({ ...prev, [tournamentId]: `${label} added · ${d.sessionsCreated} new matches · scores carry over` }));
+    setTimeout(() => setExtendMsg(prev => { const c = { ...prev }; delete c[tournamentId]; return c; }), 8000);
+    setExtendTargetId(null);
+
+    // Refresh the list (session/week counts) and show the updated schedule
+    const tourData = await fetch('/api/tournaments').then(r => r.json()).catch(() => null);
+    if (tourData?.tournaments) setTournaments(tourData.tournaments);
+    await fetchSessions(tournamentId);
+    setExpandedId(tournamentId);
+  }
 
   function toggleExpand(tournamentId: string) {
     if (expandedId === tournamentId) {
@@ -212,7 +327,7 @@ export default function AdminTournamentPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Tournament</h1>
-          <p className="text-gray-500 text-sm mt-0.5">5-week competition · 4 teams · 5 game types · 10 sessions</p>
+          <p className="text-gray-500 text-sm mt-0.5">4 teams · 5 game types · 2 matches per week · add weeks any time</p>
         </div>
         <button onClick={() => setShowForm(v => !v)}
           className="bg-yellow-600 hover:bg-yellow-500 text-black font-bold px-4 py-2 rounded-lg text-sm transition-all">
@@ -354,10 +469,11 @@ export default function AdminTournamentPage() {
                   <p className="text-white font-bold">{t.name}</p>
                   <p className="text-gray-500 text-xs mt-0.5">
                     Starts {new Date(t.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    {t.rounds && <>{' · '}{t.rounds.length} weeks</>}
                     {' · '}{t._count?.sessions ?? 0} sessions
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   <span className={`text-xs font-bold px-2 py-1 rounded-full border ${
                     t.status === 'IN_PROGRESS' ? 'text-green-400 border-green-800/40 bg-green-900/20' :
                     t.status === 'COMPLETED' ? 'text-gray-500 border-gray-700' :
@@ -371,6 +487,12 @@ export default function AdminTournamentPage() {
                     onClick={() => toggleExpand(t.id)}
                     className="text-sm text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400 px-3 py-1.5 rounded-lg transition-colors">
                     {expandedId === t.id ? 'Hide' : 'Schedule'}
+                  </button>
+                  <button
+                    onClick={() => (extendTargetId === t.id ? setExtendTargetId(null) : openExtend(t.id))}
+                    title="Add more weeks to this tournament — scores carry over"
+                    className="text-sm text-green-400 hover:text-green-300 border border-green-900/40 hover:border-green-700/60 px-3 py-1.5 rounded-lg transition-colors">
+                    {extendTargetId === t.id ? 'Close' : '+ Add Weeks'}
                   </button>
                   <button
                     onClick={() => handleFixPools(t.id)}
@@ -391,6 +513,119 @@ export default function AdminTournamentPage() {
               {fixPoolsMsg[t.id] && (
                 <div className="border-t border-blue-900/30 bg-blue-950/20 px-5 py-3">
                   <p className="text-blue-300 text-sm">{fixPoolsMsg[t.id]}</p>
+                </div>
+              )}
+
+              {/* Add-weeks feedback */}
+              {extendMsg[t.id] && (
+                <div className="border-t border-green-900/30 bg-green-950/20 px-5 py-3">
+                  <p className="text-green-300 text-sm">✓ {extendMsg[t.id]}</p>
+                </div>
+              )}
+
+              {/* Add-weeks panel — extends this tournament; leaderboard keeps adding up */}
+              {extendTargetId === t.id && (
+                <div className="border-t border-green-900/40 bg-green-950/10 px-5 py-4 space-y-4">
+                  <div>
+                    <p className="text-green-400 font-semibold text-sm">Add weeks to &quot;{t.name}&quot;</p>
+                    <p className="text-gray-400 text-xs mt-1">
+                      New weeks continue this tournament: the team rotation carries on, scores keep adding up on the
+                      leaderboard, and no word, question or category already used in this tournament is repeated.
+                      No emails are sent.
+                    </p>
+                  </div>
+
+                  {extendLoading ? (
+                    <p className="text-gray-500 text-sm">Loading schedule…</p>
+                  ) : (() => {
+                    const sessions = sessionsMap[t.id] ?? [];
+                    const order = teamOrderOf(sessions);
+                    const lastWeek = lastWeekNumber(sessions);
+                    const n = extendWeeks.length;
+                    return (
+                      <>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <label className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Weeks to add</label>
+                          <select
+                            value={n}
+                            onChange={e => setExtendWeekCount(t.id, Number(e.target.value))}
+                            className="bg-gray-700 text-white rounded-lg px-3 py-1.5 text-sm border border-gray-600 focus:border-green-500 focus:outline-none">
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                          <span className="text-xs text-gray-500">
+                            {n > 1 ? `Weeks ${lastWeek + 1}–${lastWeek + n}` : `Week ${lastWeek + 1}`} · {n * 2} matches
+                          </span>
+                        </div>
+
+                        {order.length !== 4 && (
+                          <p className="text-red-400 text-xs">
+                            Week 1 doesn&apos;t have two matches between four different teams, so the rotation can&apos;t be continued.
+                          </p>
+                        )}
+
+                        <div className="space-y-3">
+                          {extendWeeks.map((w, i) => {
+                            const weekNumber = lastWeek + i + 1;
+                            return (
+                              <div key={i} className="bg-gray-900 rounded-xl px-4 py-3 space-y-3">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                  <p className="text-white text-sm font-semibold shrink-0 sm:w-28">
+                                    <span className="mr-1.5">{GAME_ICONS[w.gameType] ?? '🎮'}</span>Week {weekNumber}
+                                  </p>
+                                  <select
+                                    value={w.gameType}
+                                    onChange={e => updateExtendWeek(i, { gameType: e.target.value })}
+                                    className="bg-gray-700 text-white rounded-lg px-3 py-1.5 text-sm border border-gray-600 focus:border-green-500 focus:outline-none">
+                                    {GAME_SEQUENCE.map(g => <option key={g} value={g}>{GAME_LABELS[g] ?? g}</option>)}
+                                  </select>
+                                </div>
+                                {getWeekPairings(weekNumber).map(([a, b], mi) => (
+                                  <div key={mi} className="flex flex-col sm:flex-row sm:items-center gap-2 pl-8">
+                                    <p className="flex-1 min-w-0 text-xs text-gray-400 font-medium">
+                                      Match {mi + 1} &nbsp;·&nbsp;{' '}
+                                      {order.length === 4 ? (
+                                        <>
+                                          <span style={{ color: order[a].color }}>{order[a].name}</span>
+                                          {' vs '}
+                                          <span style={{ color: order[b].color }}>{order[b].name}</span>
+                                        </>
+                                      ) : `Team ${a + 1} vs Team ${b + 1}`}
+                                    </p>
+                                    <input
+                                      type="datetime-local"
+                                      value={w.dates[mi]}
+                                      onChange={e => {
+                                        const dates: [string, string] = [w.dates[0], w.dates[1]];
+                                        dates[mi] = e.target.value;
+                                        updateExtendWeek(i, { dates });
+                                      }}
+                                      className="bg-gray-700 text-white rounded-lg px-3 py-2 text-sm border border-gray-600 focus:border-green-500 focus:outline-none shrink-0 w-full sm:w-52"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {extendError && <p className="text-red-400 text-xs">{extendError}</p>}
+
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => handleExtend(t.id)}
+                            disabled={extending || order.length !== 4 || n === 0}
+                            className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold px-5 py-2 rounded-lg text-sm transition-colors">
+                            {extending ? 'Adding…' : `Add ${n} week${n === 1 ? '' : 's'} (${n * 2} matches)`}
+                          </button>
+                          <button
+                            onClick={() => setExtendTargetId(null)}
+                            className="text-gray-400 hover:text-white border border-gray-600 px-5 py-2 rounded-lg text-sm transition-colors">
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               )}
 

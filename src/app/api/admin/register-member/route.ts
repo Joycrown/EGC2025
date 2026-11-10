@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { Role } from '@prisma/client';
 import { getActiveEdition } from '@/lib/editions/activeEdition';
+import { DAY_DATES, type CheckinDay } from '@/lib/qr/token';
 import { generateEgcUserId } from '@/lib/auth/userService';
 
 const registerSchema = z.object({
@@ -57,16 +58,11 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(await generateEgcUserId(), 4); // random unusable password
     const userId = await generateEgcUserId();
 
-    const now = new Date();
-    const month = now.getMonth(); // July = 6
-    const day = now.getDate();
-
-    // Determine which day to auto-mark based on conferenceDay param or today's date
-    const dayToMark = conferenceDay ?? (
-      month === 6 && day === 10 ? 'day1' :
-      month === 6 && day === 11 ? 'day2' :
-      month === 6 && day === 12 ? 'day3' : null
-    );
+    // Determine which day to auto-mark: the conferenceDay param, or whichever
+    // conference day today is in Nigeria (the server itself runs on UTC).
+    const todayInNigeria = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos' }).format(new Date()); // YYYY-MM-DD
+    const todaysConferenceDay = (Object.keys(DAY_DATES) as CheckinDay[]).find(d => DAY_DATES[d] === todayInNigeria) ?? null;
+    const dayToMark = conferenceDay ?? todaysConferenceDay;
 
     const newUser = await prisma.user.create({
       data: {

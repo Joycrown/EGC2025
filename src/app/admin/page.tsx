@@ -8,6 +8,7 @@ interface Stats {
   totalUsers: number | null;
   totalAdmins: number | null;
   totalAttendees: number | null;
+  attendeesEdition: string | null;
 }
 
 const AdminDashboardPage = () => {
@@ -15,6 +16,7 @@ const AdminDashboardPage = () => {
     totalUsers: null,
     totalAdmins: null,
     totalAttendees: null,
+    attendeesEdition: null,
   });
   const [loading, setLoading] = useState(true);
 
@@ -40,6 +42,7 @@ const AdminDashboardPage = () => {
           totalUsers: usersData.totalUsers,
           totalAdmins: adminsData.totalAdmins,
           totalAttendees: attendeesData.totalAttendees,
+          attendeesEdition: attendeesData.editionName ?? null,
         });
       } catch (err) {
         if (err instanceof Error) {
@@ -69,7 +72,7 @@ const AdminDashboardPage = () => {
       color: 'bg-green-100',
     },
     {
-      title: 'Total Unique Attendees',
+      title: stats.attendeesEdition ? `Unique Attendees · ${stats.attendeesEdition}` : 'Unique Attendees',
       value: stats.totalAttendees,
       icon: <UserCheck size={24} className="text-purple-500" />,
       color: 'bg-purple-100',

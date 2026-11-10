@@ -5,16 +5,8 @@ import { randomUUID } from 'crypto';
 import {
   generateTournamentPools,
   getRoundRobinSchedule,
+  TOURNAMENT_GAME_SEQUENCE as GAME_SEQUENCE,
 } from '@/lib/tournament/poolAssignment';
-import { EgcGameType } from '@prisma/client';
-
-const GAME_SEQUENCE: EgcGameType[] = [
-  EgcGameType.HANGMAN,
-  EgcGameType.WORD_SCRAMBLE,
-  EgcGameType.WORD_CHAIN,
-  EgcGameType.BIBLE_CATEGORIES,
-  EgcGameType.BIBLE_TRIVIA,
-];
 
 // GET — list all tournaments (public)
 export async function GET() {
