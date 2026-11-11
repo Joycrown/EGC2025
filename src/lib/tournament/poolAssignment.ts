@@ -1,72 +1,70 @@
 /**
  * Pool Assignment Utility
  *
- * When a tournament is created, each GameSession receives a pre-assigned,
- * non-overlapping pool of words/questions. This guarantees zero repeats
- * across all sessions of the same game type in the tournament.
+ * When a tournament is created (or extended with more weeks), each GameSession
+ * receives a pre-assigned pool of words/questions. Pools never overlap with
+ * other sessions of the same game type in the tournament, including sessions
+ * that were created earlier, so content does not repeat across the competition.
  *
  * Pool structure stored in GameSession.poolAssignment (Json):
  *   { words: string[] }          — Hangman, Word Scramble, Word Chain
  *   { questionIds: string[] }    — Bible Trivia
  *   { categoryIds: string[] }    — Bible Categories
+ *
+ * The content banks are imported straight from the socket server, which is what
+ * actually plays the games. A pool can therefore only ever contain words and IDs
+ * the game engine knows about. (These used to be hand-copied lists that drifted
+ * out of sync.)
+ *
+ * Deploy note: the socket server must be deployed with the same banks before
+ * pools generated here are played, otherwise it won't recognise new entries.
  */
 
-// ── Hangman / Word Scramble word bank (imported here via fetch at build time) ─
-// The actual word list lives in the socket-server. We store word strings directly.
+import { WORD_BANK, TEST_WORD_BANK_WORDS } from '../../../socket-server/src/games/hangman';
+import { TRIVIA_QUESTIONS } from '../../../socket-server/src/games/bibleTrivia';
+import { BIBLE_CATEGORIES } from '../../../socket-server/src/games/bibleCategories';
+import { TOURNAMENT_GAME_SEQUENCE, type TournamentGameType } from './schedule';
 
-// Tournament word bank — does NOT include TEST_WORD_BANK_WORDS
-// (ADAM, BOAZ, DAVID, EDEN, FLOOD, GRACE, HOSEA, ISAAC, JOEL, RUTH)
-// so test sessions and tournament sessions never share words.
-export const HANGMAN_WORD_BANK = [
-  // Prophets — HOSEA and JOEL removed (test words); SAMUEL, NATHAN, MIRIAM added
-  'ISAIAH','JEREMIAH','EZEKIEL','DANIEL','ELIJAH','ELISHA','AMOS','MICAH','MALACHI',
-  'NAHUM','HABAKKUK','ZEPHANIAH','HAGGAI','ZECHARIAH','OBADIAH','JONAH',
-  'SAMUEL','NATHAN','MIRIAM','AGABUS','HULDAH',
-  // Places
-  'JERUSALEM','BETHLEHEM','NAZARETH','JERICHO','GALILEE','GETHSEMANE','CALVARY','SINAI',
-  'BETHANY','CAPERNAUM','ANTIOCH','CORINTH','EPHESUS','BABYLON','NINEVEH','EGYPT',
-  'SAMARIA','CAESAREA','DAMASCUS','CANA','BETHSAIDA','EMMAUS',
-  'PATMOS','CANAAN','HEBRON','JORDAN','CARMEL','BETHEL',
-  // People — RUTH removed (test word); GOLIATH, CALEB, JONATHAN, NOAH added
-  'MOSES','ABRAHAM','SOLOMON','JOSEPH','JOSHUA','NEHEMIAH','ESTHER','DEBORAH','GIDEON',
-  'SAMSON','PETER','PAUL','JOHN','JAMES','ANDREW','MARY','MARTHA','LAZARUS','ZACCHAEUS',
-  'BARTHOLOMEW','MATTHEW','THOMAS','CORNELIUS','LYDIA','PRISCILLA','AQUILA','BARNABAS',
-  'TIMOTHY','TITUS','PHILEMON','STEPHEN','PHILIP','SILAS',
-  'NOAH','GOLIATH','CALEB','JONATHAN','ABSALOM','REBEKAH','JACOB',
-  // Concepts
-  'SALVATION','REDEMPTION','COVENANT','BAPTISM','RESURRECTION','SANCTIFICATION','COMMUNION',
-  'ATONEMENT','RECONCILIATION','JUSTIFICATION','PROPITIATION','INTERCESSION','CONSECRATION',
-  'REPENTANCE','FORGIVENESS','RIGHTEOUSNESS','HOLINESS','FAITHFULNESS',
-  'GLORIFICATION','STEWARDSHIP','DISCIPLESHIP','FELLOWSHIP','OMNISCIENCE','OMNIPOTENCE',
-  // Events — FLOOD removed (test word); WILDERNESS, CAPTIVITY, INCARNATION, BETRAYAL added
-  'EXODUS','CRUCIFIXION','PENTECOST','TRANSFIGURATION','ASCENSION','ANNUNCIATION',
-  'CREATION','PASSOVER','RAPTURE','TRIBULATION',
-  'WILDERNESS','CAPTIVITY','INCARNATION','BETRAYAL','RESTORATION',
-  // Books
-  'GENESIS','LEVITICUS','DEUTERONOMY','PROVERBS','ECCLESIASTES','REVELATION','PHILIPPIANS',
-  'COLOSSIANS','THESSALONIANS','HEBREWS','GALATIANS','EPHESIANS',
-  // Additional
-  'KORAH','KETURAH','YAHWEH','WISDOM','AHAB','JEZEBEL','ELIEZER',
-];
+export {
+  TOURNAMENT_GAME_SEQUENCE,
+  isTournamentGameType,
+  getWeekPairings,
+  getRoundRobinSchedule,
+} from './schedule';
+export type { TournamentGameType } from './schedule';
 
-export const TRIVIA_QUESTION_IDS = [
-  'ot-01','ot-02','ot-03','ot-04','ot-05','ot-06','ot-07','ot-08','ot-09','ot-10',
-  'nt-01','nt-02','nt-03','nt-04','nt-05','nt-06','nt-07','nt-08','nt-09','nt-10',
-  'bb-01','bb-02','bb-03','bb-04','bb-05',
-  'lj-01','lj-02','lj-03','lj-04','lj-05',
-  'ps-01','ps-02','ps-03','ps-04',
-  'pr-01','pr-02','pr-03','pr-04',
-  'gn-01','gn-02','gn-03','gn-04','gn-05','gn-06','gn-07','gn-08',
-];
+// How much content one match consumes. Kept identical for every week so that
+// matches stay comparable on the leaderboard.
+export const ITEMS_PER_SESSION: Record<TournamentGameType, number> = {
+  HANGMAN: 40,
+  WORD_SCRAMBLE: 40,
+  WORD_CHAIN: 10,
+  BIBLE_TRIVIA: 10,
+  BIBLE_CATEGORIES: 5,
+};
 
-export const CATEGORY_IDS = [
-  'fruits-of-spirit','armour-of-god','twelve-disciples','plagues-of-egypt',
-  'books-of-paul','miracles-of-jesus','sons-of-jacob','women-of-faith',
-  'names-of-god','parables-of-jesus','ten-commandments','gifts-of-spirit',
-  'judges-of-israel','mountains-of-bible','beatitudes','occupations-in-bible',
-  'rivers-in-bible','major-prophets','books-of-moses','kings-of-israel',
-  'tabernacle-items','animals-of-bible','cities-of-bible',
-];
+// Tournament word bank: every socket-server word of 4+ letters, minus the test
+// words (ADAM, BOAZ, DAVID, …) so test sessions and real sessions never share words.
+const MIN_TOURNAMENT_WORD_LENGTH = 4;
+export const HANGMAN_WORD_BANK: string[] = Array.from(
+  new Set(
+    WORD_BANK.map(e => e.word).filter(
+      w => w.length >= MIN_TOURNAMENT_WORD_LENGTH && !TEST_WORD_BANK_WORDS.includes(w)
+    )
+  )
+);
+
+export const TRIVIA_QUESTION_IDS: string[] = TRIVIA_QUESTIONS.map(q => q.id);
+
+export const CATEGORY_IDS: string[] = BIBLE_CATEGORIES.map(c => c.id);
+
+function bankFor(gameType: TournamentGameType): string[] {
+  switch (gameType) {
+    case 'BIBLE_TRIVIA': return TRIVIA_QUESTION_IDS;
+    case 'BIBLE_CATEGORIES': return CATEGORY_IDS;
+    default: return HANGMAN_WORD_BANK;
+  }
+}
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -77,82 +75,85 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function splitIntoChunks<T>(arr: T[], chunkSize: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < arr.length; i += chunkSize) {
-    chunks.push(arr.slice(i, i + chunkSize));
-  }
-  return chunks;
-}
-
 export interface SessionPool {
   words?: string[];       // Hangman, Scramble, Chain
   questionIds?: string[]; // Trivia
   categoryIds?: string[]; // Categories
 }
 
+/** Content already assigned in a tournament, keyed by game type. */
+export type UsedContent = Partial<Record<string, Set<string>>>;
+
 /**
- * Generates non-overlapping pools for all sessions of each game type in a tournament.
- *
- * sessionCountPerGameType: how many sessions need a pool for each game type
- *   e.g. { HANGMAN: 4, WORD_SCRAMBLE: 4, WORD_CHAIN: 4, BIBLE_CATEGORIES: 4, BIBLE_TRIVIA: 4 }
- *
- * Returns a map of gameType → array of pools (one per session, in order)
+ * Collects every word / question / category already assigned to sessions in a
+ * tournament, per game type. Test-mode sessions are ignored.
  */
-export function generateTournamentPools(sessionCountPerGameType: Record<string, number>): Record<string, SessionPool[]> {
-  const result: Record<string, SessionPool[]> = {};
-
-  // Word-based games: Hangman, Word Scramble, Word Chain
-  for (const gameType of ['HANGMAN', 'WORD_SCRAMBLE', 'WORD_CHAIN']) {
-    const count = sessionCountPerGameType[gameType] ?? 0;
-    if (count === 0) continue;
-
-    const WORDS_PER_SESSION = gameType === 'WORD_CHAIN' ? 10 : 40; // words per session (Hangman/Scramble play 40 words)
-    const needed = count * WORDS_PER_SESSION;
-    const shuffled = shuffle(HANGMAN_WORD_BANK).slice(0, Math.min(needed, HANGMAN_WORD_BANK.length));
-    const chunks = splitIntoChunks(shuffled, WORDS_PER_SESSION);
-
-    // Pad if bank ran short
-    while (chunks.length < count) chunks.push(shuffle(HANGMAN_WORD_BANK).slice(0, WORDS_PER_SESSION));
-
-    result[gameType] = chunks.slice(0, count).map(words => ({ words }));
+export function collectUsedContent(
+  sessions: { gameType: string; poolAssignment: unknown }[]
+): UsedContent {
+  const used: UsedContent = {};
+  for (const s of sessions) {
+    const pool = s.poolAssignment as (SessionPool & { testMode?: boolean }) | null;
+    if (!pool || pool.testMode) continue;
+    const items = pool.words ?? pool.questionIds ?? pool.categoryIds ?? [];
+    const set = used[s.gameType] ?? new Set<string>();
+    items.forEach(item => set.add(item));
+    used[s.gameType] = set;
   }
-
-  // Bible Trivia
-  const triviaCount = sessionCountPerGameType['BIBLE_TRIVIA'] ?? 0;
-  if (triviaCount > 0) {
-    const QUESTIONS_PER_SESSION = 10;
-    const shuffled = shuffle(TRIVIA_QUESTION_IDS);
-    const chunks = splitIntoChunks(shuffled, QUESTIONS_PER_SESSION);
-    while (chunks.length < triviaCount) chunks.push(shuffle(TRIVIA_QUESTION_IDS).slice(0, QUESTIONS_PER_SESSION));
-    result['BIBLE_TRIVIA'] = chunks.slice(0, triviaCount).map(ids => ({ questionIds: ids }));
-  }
-
-  // Bible Categories
-  const catCount = sessionCountPerGameType['BIBLE_CATEGORIES'] ?? 0;
-  if (catCount > 0) {
-    const CATS_PER_SESSION = 5;
-    const shuffled = shuffle(CATEGORY_IDS);
-    const chunks = splitIntoChunks(shuffled, CATS_PER_SESSION);
-    while (chunks.length < catCount) chunks.push(shuffle(CATEGORY_IDS).slice(0, CATS_PER_SESSION));
-    result['BIBLE_CATEGORIES'] = chunks.slice(0, catCount).map(ids => ({ categoryIds: ids }));
-  }
-
-  return result;
+  return used;
 }
 
 /**
- * Returns the round-robin match schedule for 4 teams across 5 rounds.
- * Returns pairs of [teamIndex_A, teamIndex_B] for each round.
- * Teams indices 0-3 map to the teams array passed in.
+ * Draws `count` pools of `perSession` items from `bank`.
+ * Order of preference: items never used in this tournament, then previously
+ * used items (oldest repeat is better than a repeat inside the same batch).
+ * Only if the whole bank is smaller than what's needed do items repeat across
+ * the new sessions.
  */
-export function getRoundRobinSchedule(): [number, number][][] {
-  // Rounds 1-3: all unique matchups. Rounds 4-5: rematches (different games).
-  return [
-    [[0, 1], [2, 3]], // Round 1: A vs B | C vs D
-    [[0, 2], [1, 3]], // Round 2: A vs C | B vs D
-    [[0, 3], [1, 2]], // Round 3: A vs D | B vs C
-    [[0, 1], [2, 3]], // Round 4: A vs B | C vs D  (rematch, different game)
-    [[0, 2], [1, 3]], // Round 5: A vs C | B vs D  (rematch, different game)
-  ];
+export function drawPools(
+  bank: string[],
+  used: Set<string> | undefined,
+  count: number,
+  perSession: number
+): string[][] {
+  const fresh = shuffle(bank.filter(item => !used?.has(item)));
+  const reused = shuffle(bank.filter(item => used?.has(item)));
+  let sequence = fresh.concat(reused);
+  while (sequence.length < count * perSession && bank.length > 0) {
+    sequence = sequence.concat(shuffle(bank));
+  }
+  return Array.from({ length: count }, (_, i) =>
+    sequence.slice(i * perSession, (i + 1) * perSession)
+  );
+}
+
+/**
+ * Generates pools for new sessions of each game type in a tournament.
+ *
+ * sessionCountPerGameType: how many new sessions need a pool for each game type
+ *   e.g. { HANGMAN: 2, WORD_SCRAMBLE: 2 }
+ * used: content already assigned to existing sessions (see collectUsedContent),
+ *   so new pools avoid repeating it.
+ *
+ * Returns a map of gameType → array of pools (one per session, in order)
+ */
+export function generateTournamentPools(
+  sessionCountPerGameType: Record<string, number>,
+  used: UsedContent = {}
+): Record<string, SessionPool[]> {
+  const result: Record<string, SessionPool[]> = {};
+
+  for (const gameType of TOURNAMENT_GAME_SEQUENCE) {
+    const count = sessionCountPerGameType[gameType] ?? 0;
+    if (count === 0) continue;
+
+    const pools = drawPools(bankFor(gameType), used[gameType], count, ITEMS_PER_SESSION[gameType]);
+    result[gameType] = pools.map(items =>
+      gameType === 'BIBLE_TRIVIA' ? { questionIds: items }
+        : gameType === 'BIBLE_CATEGORIES' ? { categoryIds: items }
+          : { words: items }
+    );
+  }
+
+  return result;
 }

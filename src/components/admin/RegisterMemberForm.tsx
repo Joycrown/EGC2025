@@ -26,9 +26,9 @@ const MEMBER_TYPES: { value: MemberType; label: string }[] = [
 ];
 
 const CONFERENCE_DAYS = [
-  { value: 'day1', label: 'Day 1 — Thu, 10 July 2026' },
-  { value: 'day2', label: 'Day 2 — Fri, 11 July 2026' },
-  { value: 'day3', label: 'Day 3 — Sat, 12 July 2026' },
+  { value: 'day1', label: 'Day 1 — Fri, 11 December 2026' },
+  { value: 'day2', label: 'Day 2 — Sat, 12 December 2026' },
+  { value: 'day3', label: 'Day 3 — Sun, 13 December 2026' },
 ];
 
 const RegisterMemberForm = () => {

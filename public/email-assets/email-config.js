@@ -11,7 +11,7 @@ const emailConfig = {
   // Conference details
   conferenceName: 'EGC Conference 2026',
   conferenceFullName: 'Emerging Generals\' Conference 2026',
-  conferenceDate: 'July 10-12, 2026',
+  conferenceDate: 'December 11-13, 2026',
   
   // Organization details
   orgName: 'The Gospel Faith Mission International',

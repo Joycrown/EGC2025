@@ -41,8 +41,8 @@ async function main() {
     create: {
       year: 2026,
       name: 'EGC 2026',
-      startDate: new Date('2026-07-11T00:00:00.000Z'),
-      endDate: new Date('2026-07-13T23:59:59.000Z'),
+      startDate: new Date('2026-12-11T00:00:00.000Z'),
+      endDate: new Date('2026-12-13T23:59:59.000Z'),
       isActive: true,
     },
   });

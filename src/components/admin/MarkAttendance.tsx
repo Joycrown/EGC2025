@@ -15,9 +15,9 @@ interface UserSearchResult {
 type ConferenceDay = 'day1' | 'day2' | 'day3';
 
 const CONFERENCE_DAYS = [
-  { value: 'day1' as ConferenceDay, day: 'Thursday', date: '10 July 2026', fullDate: new Date('2026-07-10T00:00:00') },
-  { value: 'day2' as ConferenceDay, day: 'Friday',   date: '11 July 2026', fullDate: new Date('2026-07-11T00:00:00') },
-  { value: 'day3' as ConferenceDay, day: 'Saturday', date: '12 July 2026', fullDate: new Date('2026-07-12T00:00:00') },
+  { value: 'day1' as ConferenceDay, day: 'Friday',   date: '11 December 2026', fullDate: new Date('2026-12-11T00:00:00') },
+  { value: 'day2' as ConferenceDay, day: 'Saturday', date: '12 December 2026', fullDate: new Date('2026-12-12T00:00:00') },
+  { value: 'day3' as ConferenceDay, day: 'Sunday',   date: '13 December 2026', fullDate: new Date('2026-12-13T00:00:00') },
 ];
 
 const today = new Date();
@@ -87,7 +87,7 @@ const MarkAttendance = () => {
       {/* Header */}
       <div className="px-6 py-5 border-b border-gray-100">
         <h2 className="text-xl font-bold text-gray-900">Mark Attendance</h2>
-        <p className="text-sm text-gray-500 mt-0.5">EGC 2026 · July 10–12</p>
+        <p className="text-sm text-gray-500 mt-0.5">EGC 2026 · December 11–13</p>
       </div>
 
       <div className="p-6 space-y-6">

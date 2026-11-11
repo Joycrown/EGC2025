@@ -11,8 +11,8 @@ const EventSchema = () => ({
     "@type": "Event",
     "name": "EGC Conference 2026",
     "description": "Annual gathering of The Gospel Faith Mission International youth for spiritual enrichment, fellowship, and transformation.",
-    "startDate": "2026-07-10T09:00:00",
-    "endDate": "2026-07-12T18:00:00",
+    "startDate": "2026-12-11T09:00:00",
+    "endDate": "2026-12-13T18:00:00",
     "eventStatus": "https://schema.org/EventScheduled",
     "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
     "location": {
@@ -52,7 +52,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const conferenceDate = new Date('2026-07-10T00:00:00');
+    const conferenceDate = new Date('2026-12-11T00:00:00');
     const calculateTimeLeft = () => {
       const difference = +conferenceDate - +new Date();
       if (difference <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
@@ -158,7 +158,7 @@ export default function Home() {
 
               <div className="mt-auto mb-[6vh] xs:mb-[7vh] sm:mb-[8vh] flex flex-col items-center">
                 <div className="text-yellow-400 font-medium text-center text-sm xs:text-base sm:text-2xl my-2 sm:mb-3">
-                  10th–12th July, 2026
+                  11th–13th December, 2026
                 </div>
                 <Link
                   href="/register"
@@ -200,7 +200,7 @@ export default function Home() {
 
                 <div className="mb-2">
                   <h3 className="md:text-sm lg:text-lg font-medium text-yellow-400">
-                    10th–12th July, 2026
+                    11th–13th December, 2026
                   </h3>
                 </div>
 
@@ -246,7 +246,7 @@ export default function Home() {
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-50 w-auto max-w-[95vw]">
           <div className="backdrop-blur-md bg-black/70 border border-white/10 rounded-t-2xl shadow-2xl px-5 py-3 sm:px-8 sm:py-4">
             <p className="text-center text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase text-yellow-400/80 mb-3">
-              Countdown to EGC &apos;26 · 10–12 July 2026
+              Countdown to EGC &apos;26 · 11–13 December 2026
             </p>
             <div className="flex items-end gap-2 sm:gap-3">
               {[

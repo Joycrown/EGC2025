@@ -3,15 +3,15 @@ import { createHmac } from 'crypto';
 export type CheckinDay = 'day1' | 'day2' | 'day3';
 
 export const DAY_LABELS: Record<CheckinDay, string> = {
-  day1: 'Day 1 — Thursday, 10 July 2026',
-  day2: 'Day 2 — Friday, 11 July 2026',
-  day3: 'Day 3 — Saturday, 12 July 2026',
+  day1: 'Day 1 — Friday, 11 December 2026',
+  day2: 'Day 2 — Saturday, 12 December 2026',
+  day3: 'Day 3 — Sunday, 13 December 2026',
 };
 
 export const DAY_DATES: Record<CheckinDay, string> = {
-  day1: '2026-07-10',
-  day2: '2026-07-11',
-  day3: '2026-07-12',
+  day1: '2026-12-11',
+  day2: '2026-12-12',
+  day3: '2026-12-13',
 };
 
 export interface CheckinToken {

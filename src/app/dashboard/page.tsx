@@ -49,7 +49,7 @@ export default function DashboardPage() {
   const [lbData, setLbData] = useState<LeaderboardData | null>(null);
   const [countdown, setCountdown] = useState<CountdownValues>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
-  const conferenceDate = useMemo(() => new Date('2026-07-10T00:00:00'), []);
+  const conferenceDate = useMemo(() => new Date('2026-12-11T00:00:00'), []);
 
   useEffect(() => {
     let mounted = true;
@@ -128,7 +128,7 @@ export default function DashboardPage() {
             <h2 className="text-2xl sm:text-3xl font-black text-white">
               Welcome, {user?.fullName?.split(' ')[0] || 'Participant'}!
             </h2>
-            <p className="text-blue-200/60 text-sm mt-1">July 10–12 · Akure, Nigeria</p>
+            <p className="text-blue-200/60 text-sm mt-1">December 11–13 · Akure, Nigeria</p>
           </div>
 
           <div className="text-center sm:text-right shrink-0">
