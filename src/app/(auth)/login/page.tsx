@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import ResendVerificationButton from '@/components/auth/ResendVerificationButton';
 
 export default function Login() {
   const router = useRouter();
@@ -12,6 +13,8 @@ export default function Login() {
     password: '',
   });
   const [error, setError] = useState('');
+  // Email of an account that logged in correctly but hasn't verified yet
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -24,6 +27,7 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setUnverifiedEmail('');
 
     try {
       const response = await fetch('/api/auth/login', {
@@ -33,8 +37,9 @@ export default function Login() {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
+        if (data.code === 'EMAIL_NOT_VERIFIED') setUnverifiedEmail(formData.email);
         throw new Error(data.error || 'Login failed');
       }
 
@@ -63,6 +68,12 @@ export default function Login() {
       {error && (
         <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
           <p>{error}</p>
+          {unverifiedEmail && (
+            <>
+              <p className="text-sm text-gray-600 mt-2">Didn&apos;t get the verification email?</p>
+              <ResendVerificationButton email={unverifiedEmail} className="mt-1" />
+            </>
+          )}
         </div>
       )}
 

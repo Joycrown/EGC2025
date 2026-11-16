@@ -1,10 +1,10 @@
-import nodemailer from 'nodemailer';
 import {
   verificationEmailTemplate,
   welcomeEmailTemplate,
   scheduleChangeEmailTemplate,
   gameInviteEmailTemplate,
 } from './emailTemplates';
+import { sendEmailViaBrevoApi } from './brevoApiService';
 
 export interface EmailOptions {
   to: string;
@@ -13,71 +13,13 @@ export interface EmailOptions {
 }
 
 /**
- * Creates a nodemailer transporter using SMTP configuration from environment variables
- * @returns Nodemailer transporter
- */
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: false, // TLS is used on port 587
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_APP_PASSWORD,
-    },
-  });
-}
-
-
-
-/**
- * Verifies SMTP configuration is working
- * @returns Promise<boolean> True if verification succeeds
- */
-export async function verifyEmailConfig(): Promise<boolean> {
-  try {
-    const transporter = createTransporter();
-    await transporter.verify();
-    return true;
-  } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      // Log detailed error info in development only
-      console.error('SMTP connection verification failed:', 
-        error instanceof Error ? error.message : error);
-    }
-    return false;
-  }
-}
-
-/**
- * Send email using the configured transporter
- * @param options Email options (to, subject, html)
+ * Send an email. All app email goes through the Brevo REST API (one key:
+ * BREVO_API_KEY), so there is a single place to configure and a single place
+ * where failures are logged — including in production.
  * @returns Promise<boolean> True if email was sent successfully
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
-  try {
-    // Create transporter
-    const transporter = createTransporter();
-
-    // Setup email data
-    const mailOptions = {
-      from: `"Gofamint Pace Setters Akure" <${process.env.EMAIL_USER}>`,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
-    };
-
-    // Send mail with defined transport object
-    await transporter.sendMail(mailOptions);
-    
-    return true;
-  } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error('Error sending email:', 
-        error instanceof Error ? error.message : error);
-    }
-    return false;
-  }
+  return sendEmailViaBrevoApi(options);
 }
 
 /**
