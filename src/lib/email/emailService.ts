@@ -110,7 +110,7 @@ export function generateGameInviteEmail(
   };
 }
 
-// Get WhatsApp link based on team name
+
 function getWhatsAppLinkByTeam(teamName: string): string {
   const whatsappLinks: Record<string, string> = {
     'Bethel': process.env.WHATSAPP_LINK_BETHEL || 'https://chat.whatsapp.com/example-bethel-link',
