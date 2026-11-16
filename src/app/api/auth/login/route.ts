@@ -25,19 +25,20 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Check if user is verified
-    if (!user.isVerified) {
-      return NextResponse.json(
-        { error: 'Please verify your email before logging in' },
-        { status: 401 }
-      );
-    }
-    
-    // Verify password
+    // Verify password first, so the "not verified" message is only shown to
+    // someone who knows the password (otherwise it reveals that an account exists)
     const isPasswordValid = await comparePasswords(password, user.password);
     if (!isPasswordValid) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
+        { status: 401 }
+      );
+    }
+
+    // Check if user is verified
+    if (!user.isVerified) {
+      return NextResponse.json(
+        { error: 'Please verify your email before logging in', code: 'EMAIL_NOT_VERIFIED' },
         { status: 401 }
       );
     }

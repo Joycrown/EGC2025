@@ -29,7 +29,12 @@ export async function POST(request: NextRequest) {
     const verificationToken = generateVerificationToken();
     await setVerificationToken(user.id, verificationToken);
 
-    await sendVerificationEmailViaApi(user.email!, verificationToken, userData.fullName);
+    // The account is created either way; if the email fails the user can resend it
+    // from the success page or the login page.
+    const emailSent = await sendVerificationEmailViaApi(user.email!, verificationToken, userData.fullName);
+    if (!emailSent) {
+      console.error(`Registration: verification email could not be sent for user ${user.id}`);
+    }
 
     // Register for the active conference edition
     const activeEdition = await getActiveEdition();
@@ -44,9 +49,12 @@ export async function POST(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = user;
     return NextResponse.json({
-      message: 'User registered successfully. Please check your email to verify your account.',
+      message: emailSent
+        ? 'User registered successfully. Please check your email to verify your account.'
+        : 'User registered successfully, but the verification email could not be sent. Please use "Resend verification email".',
       user: userWithoutPassword,
-      redirectUrl: '/registration-success?email=' + encodeURIComponent(user.email!),
+      emailSent,
+      redirectUrl: '/registration-success?email=' + encodeURIComponent(user.email!) + (emailSent ? '' : '&emailSent=0'),
     }, { status: 201 });
 
   } catch (error) {

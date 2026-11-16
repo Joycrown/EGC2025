@@ -1,12 +1,14 @@
-import { EmailOptions } from './emailService';
+import type { EmailOptions } from './emailService';
 import { verificationEmailTemplate, welcomeEmailTemplate, passwordResetEmailTemplate } from './emailTemplates';
 
 /**
- * Gets the Brevo API key from environment variables
+ * Gets the Brevo API key from environment variables.
+ * BREVO_API_KEY is the intended variable; EMAIL_APP_PASSWORD is still read as a
+ * fallback so existing deployments keep working until they're updated.
  * @returns The API key
  */
 function getApiKey() {
-  const apiKey = process.env.BREVO_API_KEY || process.env.EMAIL_APP_PASSWORD;
+  const apiKey = (process.env.BREVO_API_KEY || process.env.EMAIL_APP_PASSWORD || '').trim();
   if (!apiKey) {
     throw new Error('BREVO_API_KEY is not defined in environment variables');
   }
@@ -24,11 +26,6 @@ function getApiKey() {
  */
 export async function sendEmailViaBrevoApi(options: EmailOptions): Promise<boolean> {
   try {
-    if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
-      // Send email to recipient
-    }
-    
     const apiKey = getApiKey();
     const senderEmail = process.env.EMAIL_USER || 'no-reply@gofamintpsakure.org';
     
@@ -57,9 +54,9 @@ export async function sendEmailViaBrevoApi(options: EmailOptions): Promise<boole
       body: JSON.stringify(payload)
     });
     
-    // Parse the response
-    const data = await response.json();
-    
+    // Parse the response (error bodies aren't always JSON)
+    const data = await response.json().catch(() => null);
+
     if (!response.ok) {
       throw new Error(`Brevo API error: ${response.status} ${response.statusText} - ${JSON.stringify(data)}`);
     }

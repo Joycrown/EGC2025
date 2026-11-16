@@ -3,15 +3,19 @@
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import ResendVerificationButton from '@/components/auth/ResendVerificationButton';
 
 // Component that uses searchParams
 function RegistrationSuccessContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email') || '';
+  // Registration passes emailSent=0 when the verification email couldn't be sent
+  const emailFailed = searchParams.get('emailSent') === '0';
   const [countdown, setCountdown] = useState(5);
 
-  // Countdown timer to auto-redirect to login
+  // Countdown timer to auto-redirect to login (not when the email failed: they need the resend button)
   useEffect(() => {
+    if (emailFailed) return;
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -24,7 +28,7 @@ function RegistrationSuccessContent() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [emailFailed]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-gray-50">
@@ -48,6 +52,11 @@ function RegistrationSuccessContent() {
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">Thank you for registering!</h3>
+            {emailFailed ? (
+              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 max-w-xs mx-auto">
+                Your account was created, but we couldn&apos;t send the verification email{email ? <> to <span className="font-semibold">{email}</span></> : null}. Please tap &quot;Resend verification email&quot; below.
+              </p>
+            ) : (
             <p className="text-sm text-gray-600 max-w-xs mx-auto">
               {email ? (
                 <>We&apos;ve sent a verification link to <span className="font-semibold">{email}</span>. Please check your email to verify your account and join your team.</>
@@ -55,12 +64,21 @@ function RegistrationSuccessContent() {
                 <>We&apos;ve sent a verification link to your email. Please check your inbox to verify your account and join your team.</>
               )}
             </p>
+            )}
+            {email && (
+              <div className="mt-4">
+                {!emailFailed && <p className="text-xs text-gray-500">Didn&apos;t get it? Check your spam folder, or</p>}
+                <ResendVerificationButton email={email} className="mt-1" />
+              </div>
+            )}
           </div>
           
           <div className="text-center">
-            <p className="text-sm text-gray-500 mb-4">
-              You will be redirected to the login page in {countdown} seconds...
-            </p>
+            {!emailFailed && (
+              <p className="text-sm text-gray-500 mb-4">
+                You will be redirected to the login page in {countdown} seconds...
+              </p>
+            )}
             <Link 
               href="/login"
               className="inline-block w-full sm:w-auto px-6 py-3 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150 ease-in-out"
